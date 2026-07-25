@@ -5,7 +5,7 @@ from werkzeug.security import check_password_hash
 import extensions
 from app.routes.app_bp import AppBlueprint
 from core.utils import get_client_ip, make_response
-from ..db.get_db import get_database
+from ..db.get_db import get_database_flask
 from .exceptions import *
 from app.routes.field import RequestField, NotEmpty
 
@@ -34,7 +34,7 @@ def login():
     
     
     # 连接数据库
-    main_db = get_database()
+    main_db = get_database_flask()
     
     # 查询用户
     account = main_db.users.get_from_username(username)
@@ -159,3 +159,17 @@ def test_api():
         0,
         "Test Pass"
     )
+
+@accounts_bp.route("/test_print")
+def test_print():
+    from app.printer.receipt import Receipt
+
+    receipt = Receipt()
+    
+    receipt.build.text("123")
+    receipt.build.qr_code("https://baidu.com")
+
+    
+    extensions.print_manager.new(receipt)
+
+    return "ok"

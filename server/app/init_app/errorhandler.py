@@ -5,7 +5,7 @@ from werkzeug.exceptions import UnsupportedMediaType
 
 from core.log.console import get_console_logger
 
-from ..db.get_db import close_database
+from ..db.get_db import close_database_flask
 from core.utils import make_response
 import extensions
 import traceback
@@ -64,7 +64,7 @@ def handle_sqlite_error(e: sqlite3.Error):
 
 
 def teardown_appcontext(error):
-        close_database()
+        close_database_flask()
         if error is not None:
             logs = {
                     "error": {

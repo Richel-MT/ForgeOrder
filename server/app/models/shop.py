@@ -7,7 +7,7 @@ from core.db.exceptions import ColumnNotFoundError, NotFoundError
 from core.utils import make_response
 from app.routes.app_bp import AppBlueprint
 from app.db.exceptions import CategoryNotFoundError
-from ..db.get_db import get_database
+from ..db.get_db import get_database_flask
 from app.routes.field import *
 
 shop_bp = AppBlueprint("shop", __name__)
@@ -46,7 +46,7 @@ def set_business_state():
 # 菜品
 @shop_bp.get("/api/shop/dishes/getAll" , auth=True)
 def get_all_dishes():
-    meta_db = get_database()
+    meta_db = get_database_flask()
 
     dishes, categories = meta_db.dishes.get_all()
 
@@ -66,7 +66,7 @@ def get_dish():
     dish_id = g.args["id"]
 
 
-    meta_db = get_database()
+    meta_db = get_database_flask()
 
     try:
         dish = meta_db.dishes.get_from_id(dish_id)
@@ -94,7 +94,7 @@ def update_dish():
     changed_items : dict = g.args["changed_items"]
     changed_choices : list = g.args["changed_choices"]
 
-    meta_db = get_database()
+    meta_db = get_database_flask()
 
 
     if Not(AllOf(
@@ -137,7 +137,7 @@ def update_dish():
 def delete_dish():
     dish_id: int = g.args["dish_id"]
 
-    meta_db = get_database()
+    meta_db = get_database_flask()
 
     try:
         meta_db.dishes.delete(dish_id)
@@ -169,7 +169,7 @@ def new_dish():
     is_available: bool = g.args["is_available"]
     choices: dict = g.args["choices"]
 
-    meta_db = get_database()
+    meta_db = get_database_flask()
 
     try:
         dish_id = meta_db.dishes.create(
@@ -203,7 +203,7 @@ def new_dish():
 def delete_category():
     category_id: int = g.args["category_id"]
 
-    meta_db = get_database()
+    meta_db = get_database_flask()
 
     # 删除该分类下的所有菜品
     meta_db.dishes.delete_by_category(category_id)
@@ -234,7 +234,7 @@ def delete_category():
 
 @shop_bp.get("/api/shop/category/getAll" , auth=True)
 def get_all_categories():
-    meta_db = get_database()
+    meta_db = get_database_flask()
 
     categories = meta_db.category.get_all()
     categories = [dict(category) for category in categories]
@@ -256,7 +256,7 @@ def edit_category():
     category_id: int = g.args["category_id"]
     category_name: str = g.args["category_name"]
 
-    meta_db = get_database()
+    meta_db = get_database_flask()
 
     try:
         meta_db.category.set_name(category_id, category_name)
@@ -278,7 +278,7 @@ def new_category():
     
     name: str = g.args["name"]
 
-    meta_db = get_database()
+    meta_db = get_database_flask()
 
     try:
         category_id = meta_db.category.new(name)
