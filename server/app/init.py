@@ -4,6 +4,7 @@ import sys
 from venv import logger
 
 from app.app_settings.global_connection import SettingsConnection
+from app.printer.service import PrintManager
 from core.utils import get_local_ip
 import extensions
 from app.models.exceptions import *
@@ -150,7 +151,7 @@ def init():
 
     extensions.app_settings = SettingsConnection(extensions.config.get("database.path"))
     
-    
+    extensions.print_manager = PrintManager(extensions.logger)
 
 def shutdown():
     # 关闭数据库日志记录器线程
@@ -161,5 +162,12 @@ def shutdown():
     extensions.db_logger_queue.put(None)
 
     extensions.db_logger_thread.join()
+
+
+    extensions.app_settings.db.close()
+
+
+    extensions.print_manager.shutdown()
+
 
     logging.shutdown()

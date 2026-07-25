@@ -281,5 +281,13 @@ VALUES (?, ?)
 ON CONFLICT(key) DO UPDATE SET value = excluded.value
 
 
+-- printtask
+
+-- command: print_task.new
+INSERT INTO print_task (id, content, context, created_at)
+VALUES (?, ?, ?, ?)
+
+-- command: print_task.get
+SELECT * FROM print_task WHERE id = ?
 
 
