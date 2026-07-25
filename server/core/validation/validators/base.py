@@ -4,10 +4,10 @@ from typing import Any
 class Validator:
     allow_types : type | None = None # None 表示接收任意类型
 
-    def validate(self, value: Any = None) -> ValidationResult:
+    def validate(self, value: Any = None, context: Any = None) -> ValidationResult:
         if self.allow_types is None or isinstance(value, self.allow_types):
 
-            result =  self._validate(value)
+            result =  self._validate(value, context)
             
             return ValidationResult(result.success, result.error)
         else:
@@ -15,7 +15,7 @@ class Validator:
         
             raise UnsupportedTypeError(self, self.allow_types, type(value)) #type: ignore
         
-    def _validate(self, value: Any) -> ValidationResult: #type: ignore
+    def _validate(self, value: Any, context: Any = None) -> ValidationResult: #type: ignore
         pass
 
     def __call__(self, value: Any) -> ValidationResult:

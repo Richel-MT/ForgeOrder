@@ -14,11 +14,11 @@ class AnyOf(Validator):
     def __init__(self, *validators: Validator):
         self.validators = validators
     
-    def _validate(self, value: Any):
+    def _validate(self, value: Any, context: Any = None):
         errors = []
         
         for validator in self.validators:
-            result = validator.validate(value)
+            result = validator.validate(value, context)
             if result.success:
                 return result
             else:
@@ -41,11 +41,11 @@ class AllOf(Validator):
     def __init__(self, *validators: Validator):
         self.validators = validators
     
-    def _validate(self, value: Any):
+    def _validate(self, value: Any, context: Any = None):
         errors = []
 
         for validator in self.validators:
-            result = validator.validate(value)
+            result = validator.validate(value, context)
             if not result.success:
                 errors.append(result.error)
             
@@ -62,8 +62,8 @@ class Not(Validator):
     def __init__(self, validator: Validator):
         self.validator = validator
 
-    def _validate(self, value: Any):
-        result = self.validator.validate(value)
+    def _validate(self, value: Any, context: Any = None):
+        result = self.validator.validate(value, context)
         if result.success:
             return ValidationResult(False, ValidationError("value must failed to validate."))
         else:
@@ -79,9 +79,11 @@ class If(Validator):
 
         self.else_validator = None
     
-    def _validate(self, value: Any):
-        if self.condition.check():
-            return self.validator.validate(value)
+    def _validate(self, value: Any, context: Any = None):
+        if self.condition.check(context):
+            return self.validator.validate(value, context)
+        elif self.else_validator is not None:
+            return self.else_validator.validate(value, context)
         else:
             return ValidationResult(True)
 
@@ -102,5 +104,5 @@ class Else(Validator):
     def __init__(self, validator: Validator):
         self.validator = validator
 
-    def _validate(self, value: Any):
+    def _validate(self, value: Any, context: Any = None):
         return self.validator.validate(value)

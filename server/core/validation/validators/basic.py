@@ -12,7 +12,7 @@ class NotEmpty(Validator):
     '''
     allow_types = str | dict | list | None #type: ignore
 
-    def _validate(self, value: Any):
+    def _validate(self, value: Any, context: Any = None):
         is_error = False
 
         if value is not None :
@@ -77,7 +77,7 @@ class Interval(Validator):
 
 
         
-    def _validate(self, value: Any):
+    def _validate(self, value: Any, context: Any = None):
         if self.min_value.value is not None:
             if self.min_value.inclusive and value >= self.min_value.value:
                 pass
@@ -123,7 +123,7 @@ class Length(Validator):
         self.min_value = min_value
         self.max_value = max_value
         
-    def _validate(self, value: Any):
+    def _validate(self, value: Any, context: Any = None):
         if not isinstance(value, str):
             return ValidationResult(False, LengthError(self.min_value, self.max_value))
 
@@ -143,7 +143,7 @@ class Choices(Validator):
     def __init__(self, *choices):
         self.choices = choices
         
-    def _validate(self, value: Any):
+    def _validate(self, value: Any, context: Any = None):
         if value in self.choices:
             return ValidationResult(True)
         else:
@@ -160,7 +160,7 @@ class FunctionHandler(Validator):
     def __init__(self, func: Callable):
         self.func = func
         
-    def _validate(self, value: Any):
+    def _validate(self, value: Any, context: Any = None):
         result = self.func(value)
         
         if isinstance(result, ValidationResult):
