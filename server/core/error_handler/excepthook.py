@@ -27,6 +27,12 @@ def excepthook(type, value, tb, thread: threading.Thread = None):
         generate_user_error_info(value)
         return 
 
+    if issubclass(type, KeyboardInterrupt):
+        logger = get_console_logger("errorHandler")
+        logger.error("KeyboardInterrupt")
+
+        return 
+
     if hasattr(extensions, 'logger') and isinstance(extensions.logger, Logger):
         
         if thread:

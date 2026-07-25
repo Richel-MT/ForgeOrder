@@ -39,6 +39,7 @@ class Formatter(logging.Formatter):
 def get_console_logger(name: str) -> logging.Logger:
 
     logger = logging.getLogger(name)
+    logger.propagate = False 
 
     logger.setLevel(logging.INFO)
     
