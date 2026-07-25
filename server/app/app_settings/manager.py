@@ -30,6 +30,7 @@ class SettingsManager:
         self.db = db
             
     def _init(self):
+
         for prop in SETTINGS:
 
             row = self.db.settings.get(prop.key)
@@ -45,23 +46,15 @@ class SettingsManager:
                     value = con_manager.convert(row["value"], prop.value_type)
                 except TypeConvertError:
                     raise SettingsInitError(f"类型转换错误，{row["value"]}不能转换为{prop.value_type}。")
-                
-                try:
-                    if prop.validator:
-                        prop.validator.validate(value)
-                    
-                except SettingsException as e:
-                    msg = f"设置项'{prop.key}'验证失败："
-                    
-                    if isinstance(e, SettingNotFoundError):
-                        msg += f"设置项是一个无效的项。"
-                    elif isinstance(e, SettingTypingError):
-                        msg += f"类型错误，应为{e.expected_type}，但实际为{e.value_type}。"
 
-                    elif isinstance(e, SettingVerifyError):
-                        msg += f"{e.msg}。"
 
-                    raise SettingsInitError(msg)
+                if prop.validator:
+                    result = prop.validator.validate(value)
+                        
+
+                    if not result.success:
+                        raise SettingsInitError(f"AppSettings错误。{prop.key}验证失败，{result.error}")
+                    
 
 
     def get(self, key: str):
