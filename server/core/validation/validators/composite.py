@@ -76,9 +76,31 @@ class If(Validator):
     def __init__(self, condition: Condition, validator: Validator):
         self.condition = condition
         self.validator = validator
+
+        self.else_validator = None
     
     def _validate(self, value: Any):
-        if self.condition.(value):
+        if self.condition.check():
             return self.validator.validate(value)
         else:
             return ValidationResult(True)
+
+    def Elif(self, condition: Condition, validator: Validator):
+        self.else_validator = Elif(condition, validator)
+
+        return self.else_validator
+    def Else(self, validator: Validator):
+        self.else_validator = Else(validator)
+        return self.else_validator
+    
+class Elif(If):
+    pass
+
+class Else(Validator):
+    allow_types = None
+
+    def __init__(self, validator: Validator):
+        self.validator = validator
+
+    def _validate(self, value: Any):
+        return self.validator.validate(value)
