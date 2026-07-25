@@ -1,44 +1,9 @@
 from typing import Any, Callable
-from dataclasses import dataclass
 
-from .base import ValidationResult
-from .errors import *
-from .exceptions import UnsupportedVerifyHandlerError
-
-class Validator:
-    allow_types : type | None = None # None 表示接收任意类型
-
-    def validate(self, value: Any = None) -> ValidationResult:
-        if self.allow_types is None or isinstance(value, self.allow_types):
-
-            result =  self._validate(value)
-            
-            return ValidationResult(result.success, result.error)
-        else:
-            # return VerifyResult(False, ValueTypeError(self.allow_types))
-        
-            raise UnsupportedTypeError(self, self.allow_types, type(value)) #type: ignore
-        
-    def _validate(self, value: Any) -> ValidationResult: #type: ignore
-        pass
-
-    def __call__(self, value: Any) -> ValidationResult:
-        return self.validate(value)
-
-    def bind(self, value: Any) -> 'ValidatorWithValue':
-        return ValidatorWithValue(self, value)
-
-class ValidatorWithValue(Validator):
-
-    def __init__(self, validator: Validator, value: Any):
-        self.validator = validator
-        self.value = value
-
-    def validate(self, value = None) -> ValidationResult:
-        if value is not None:
-            raise ValueError("The value must be None when using 'ValidatorWithValue'.")
-        
-        return self.validator.validate(self.value)
+from .base import Validator
+from ..base import ValidationResult
+from ..errors import *
+from ..exceptions import UnsupportedVerifyHandlerError
 
 class NotEmpty(Validator):
     '''
@@ -202,69 +167,3 @@ class FunctionHandler(Validator):
             return result   
         else:
             raise UnsupportedVerifyHandlerError(self.__class__)
-
-
-class AnyOf(Validator):
-    '''
-    限制值必须匹配任意一个验证器。
-    允许的类型：Any
-    '''
-    allow_types = None
-    
-    def __init__(self, *validators: Validator):
-        self.validators = validators
-    
-    def _validate(self, value: Any):
-        errors = []
-        
-        for validator in self.validators:
-            result = validator.validate(value)
-            if result.success:
-                return result
-            else:
-                errors.append(result.error)
-        
-        if len(errors) == 1:
-            return ValidationResult(False, errors[0])
-        else:
-            return ValidationResult(False, AnyOfError(*errors))
-
-
-class AllOf(Validator):
-    '''
-    限制值必须匹配所有指定验证器。
-
-    允许的类型：Any
-    '''
-    allow_types = None
-    
-    def __init__(self, *validators: Validator):
-        self.validators = validators
-    
-    def _validate(self, value: Any):
-        errors = []
-
-        for validator in self.validators:
-            result = validator.validate(value)
-            if not result.success:
-                errors.append(result.error)
-            
-        if len(errors) == 0:
-            return ValidationResult(True)
-        elif len(errors) == 1:
-            return ValidationResult(False, errors[0])
-        else:
-            return ValidationResult(False, AllOfError(*errors))
-
-class Not(Validator):
-    allow_types = None
-
-    def __init__(self, validator: Validator):
-        self.validator = validator
-
-    def _validate(self, value: Any):
-        result = self.validator.validate(value)
-        if result.success:
-            return ValidationResult(False, ValidationError("value must failed to validate."))
-        else:
-            return ValidationResult(True)
