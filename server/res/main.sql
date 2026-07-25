@@ -1,6 +1,8 @@
 -- command: init
 PRAGMA foreign_keys = ON;
 
+PRAGMA journal_mode = WAL;
+
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
@@ -101,11 +103,11 @@ CREATE TABLE IF NOT EXISTS settings(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     key TEXT NOT NULL UNIQUE,
     value TEXT NOT NULL
-)
+);
 
 CREATE TABLE If NOT EXISTS print_task (
     id TEXT PRIMARY KEY, -- uuid v7
-    status INTEGER DEFAULT 0，   -- 0：等待中 -- 1：打印中 -- 2：成功 --3：错误
+    status INTEGER DEFAULT 0,  -- 0：等待中 -- 1：打印中 -- 2：成功 --3：错误
     
     content TEXT NOT NULL, -- Receipt JSON
     context TEXT, -- 上下文
@@ -117,7 +119,6 @@ CREATE TABLE If NOT EXISTS print_task (
     started_at TIMESTAMP, -- 开始打印的时间
     finished_at TIMESTAMP -- 打印完成时间（错误也用这个）
 
-    
 
 )
 
