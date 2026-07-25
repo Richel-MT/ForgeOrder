@@ -12,3 +12,6 @@ class Ref:
             return context.get(self.name)
         else:
             raise ContextMissingError(context)
+
+    def __str__(self):
+        return self.name

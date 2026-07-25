@@ -81,11 +81,17 @@ class If(Validator):
     
     def _validate(self, value: Any, context: Any = None):
         if self.condition.check(context):
-            return self.validator.validate(value, context)
+            return self._format_result(self.validator.validate(value, context))
         elif self.else_validator is not None:
-            return self.else_validator.validate(value, context)
+            return self._format_result(self.else_validator.validate(value, context))
         else:
             return ValidationResult(True)
+
+    def _format_result(self, result: ValidationResult):
+        if result.success:
+            return result
+        else:
+            return ValidationResult(False, ValidationError(f"When the condition: '{self.condition}' pass, {result.error}"))
 
     def Elif(self, condition: Condition, validator: Validator):
         self.else_validator = Elif(condition, validator)
