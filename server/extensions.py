@@ -3,6 +3,7 @@ from queue import Queue
 from threading import Thread
 import os
 
+from app.app_settings.global_connection import SettingsConnection
 from core.auth import AuthManager
 from core.config.json_config import JSONConfig
 from core.log.context import LogContext, get_log_context
@@ -28,5 +29,4 @@ root_dir = os.path.dirname(os.path.abspath(__file__))
 
 route_manager: RouteManager
 
-# accounts_logger: LogHandler
-# shop_logger: LogHandler
+app_settings: Settings

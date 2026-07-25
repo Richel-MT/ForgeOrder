@@ -3,6 +3,7 @@ import os
 import sys
 from venv import logger
 
+from app.app_settings.global_connection import SettingsConnection
 from core.utils import get_local_ip
 import extensions
 from app.models.exceptions import *
@@ -69,46 +70,27 @@ def init_log():
         for error in CLIENT_ERROR:
             extensions.logger.setIgnoreAction(error)
 
-
-def init():
-
-    console_logger.info("正在初始化...")
-
-    # 创建data目录
+def init_config():
     if not os.path.exists("data"):
-        os.makedirs("data")
+            os.makedirs("data")
+
     # 加载配置文件
     extensions.config = setup_config()
-
-
     
-    # 初始化日志记录器
-    init_log()
 
 
-    # 初始化认证管理器
-    extensions.auth_manager = AuthManager(
-            extensions.config.get("auth.secret_key"),
-            int(extensions.config.get("auth.available_time")),
-        )
+def init_args():
+    parser = create_parser()
 
-    # 取本地ip
-    extensions.local_ip = get_local_ip()
+    args = parser.parse_args()
+
+    if len(sys.argv) > 1:
+        console_logger.info(f"命令行参数：{' '.join(sys.argv[1:])}")
+
+    return execute_command(args)
 
 
-    # 初始化ArgumentsManager
-    extensions.route_manager = RouteManager()
-
-    # print(extensions.config.get("server.first_start"))
-    if extensions.config.get("server.first_start"):
-        init_root_user()
-
-    stop_running = init_args()
-
-    if stop_running:
-        shutdown()
-        sys.exit(0)
-
+def verify_config_and_settings():
     # 验证配置项
     try:
         verify_config()
@@ -125,19 +107,48 @@ def init():
             console_logger.error(f"启动失败：{e} \n {e.hint}")
             sys.exit(1)
 
+def init():
+
+    console_logger.info("正在初始化...")
+
+    # 初始化设置
+    init_config()
+
     
+    # 初始化日志记录器
+    init_log()
+
+
+    # 初始化认证管理器
+    extensions.auth_manager = AuthManager(
+            extensions.config.get("auth.secret_key"),
+            int(extensions.config.get("auth.available_time")),
+        )
     
 
-def init_args():
-    parser = create_parser()
+    # 取本地ip
+    extensions.local_ip = get_local_ip()
 
-    args = parser.parse_args()
 
-    if len(sys.argv) > 1:
-        console_logger.info(f"命令行参数：{' '.join(sys.argv[1:])}")
+    # 初始化ArgumentsManager
+    extensions.route_manager = RouteManager()
 
-    return execute_command(args)
 
+    if extensions.config.get("server.first_start"):
+        init_root_user()
+
+
+    stop_running = init_args()
+
+    if stop_running:
+        shutdown()
+        sys.exit(0)
+
+
+    verify_config_and_settings()
+
+
+    extensions.app_settings = SettingsConnection(extensions.config.get("database.path"))
     
     
 
