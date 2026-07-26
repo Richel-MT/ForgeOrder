@@ -8,7 +8,7 @@ class Command:
 class Text(Command):
     text: str
 
-    font: Literal["A", "B"] = 'A'
+    font: Literal["a", "b"] = 'a'
     align: Literal["left", "center", "right"] = 'left'
     bold: bool  = False
     underline: int = 0 #0:无下划线 #1:但下划线
@@ -46,7 +46,7 @@ class CommandBuilder:
 
     def text(self,
              text: str,
-            font: Literal["A", "B"] = "A",
+            font: Literal["a", "b"] = "a",
             align: Literal["left", "center", "right"] = "left",
             bold: bool = False,
             underline: int = 0, #0:无下划线 #1:但下划线
