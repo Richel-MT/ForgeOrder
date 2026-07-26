@@ -227,7 +227,7 @@ import '@mdui/icons/list.js';
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { useAuth } from '@/composables/auth.js'
+
 import request from '@/utils/request.js'
 import { pushWithFrom } from '@/utils/routerHelper'
 import { t } from '@/locales/index.js'
@@ -248,7 +248,14 @@ onMounted(async () => {
     // console.log(isAdmin.value)
 
     const response = await request.get('/shop/getBusinessState');
-    isBusiness.value = response.data.data;
+    
+    if (response.data.status == 0) {
+      isBusiness.value = response.data.data;
+    } else {
+      snackbar({
+        message: t("home.snackbar.failed_get_business_state"),
+      })
+    }
 
   }
 })

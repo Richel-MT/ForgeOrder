@@ -120,6 +120,10 @@
           "text": "正在切换营业状态"
         }
       }
+    },
+
+    "snackbar": {
+      "failed_get_business_state": "获取营业状态失败。"
     }
 
     
