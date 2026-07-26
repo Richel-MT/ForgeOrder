@@ -872,6 +872,23 @@ class _PrintTask:
             raise NotFoundError(str(id))
         
         return dict(cursor.fetchone())
+
+    def update(self,
+            id: str,
+            status: int,
+            error_message: str = None,
+            started_at: datetime.datetime = None,
+            finished_at: datetime.datetime = None):
+
+        cursor = self.conn.execute(self.sql_parse.get("print_task.update"),
+                                  (status, error_message, started_at, finished_at, id))
+        
+        self.conn.commit()
+
+        if cursor.rowcount == 0:
+            raise NotFoundError(str(id))
+        
+        
     
 class MainDatabase(Database):
     def __init__(self, db_name: str) -> None:

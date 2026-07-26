@@ -290,4 +290,8 @@ VALUES (?, ?, ?, ?)
 -- command: print_task.get
 SELECT * FROM print_task WHERE id = ?
 
+-- command: print_task.update
+UPDATE print_task SET status = ?, error_message = ?, started_at = ?, finished_at = ? WHERE id = ?
+
+
 
