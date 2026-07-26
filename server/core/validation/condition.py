@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 
 from .reference import Ref
 
@@ -11,14 +11,17 @@ class Condition:
 
 
 class Equal(Condition):
-    def __init__(self, left_value: Ref | Any, right_value: Ref | Any):
+    def __init__(self, left_value:  Any, right_value:  Any):
         self.left_value = left_value
         self.right_value = right_value
 
     def check(self, context: Any = None):
-        left_value = self.left_value.get(context) if isinstance(self.left_value, Ref) else self.left_value
+        if hasattr(self.left_value, "get") and isinstance(self.left_value.get, Callable):
+            left_value = self.left_value.get(context)
 
-        right_value = self.right_value.get(context) if isinstance(self.right_value, Ref) else self.right_value
+        if hasattr(self.right_value, "get") and isinstance(self.right_value.get, Callable):
+            right_value = self.right_value.get(context)
+
 
         return left_value == right_value
 
