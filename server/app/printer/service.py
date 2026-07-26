@@ -41,6 +41,11 @@ class PrintManager:
 
         self.queue.put(id)
 
+
+        self.logger.info({
+            "id": id,
+        }, "PRINTER", "PrintTaskCreated")
+
         return id
 
 
