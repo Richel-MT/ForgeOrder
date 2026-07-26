@@ -8,8 +8,9 @@ from core.validation.condition import RefIs
 SETTINGS = [
     FieldDefinition("shop.name", str, "ForgeOrder", NotEmpty()),
 
-    FieldDefinition("printer.enabled", bool, False), # 是否启用打印机
+    FieldDefinition("shop.isBusiness", bool, False), # 是否是营业状态
 
+    FieldDefinition("printer.enabled", bool, False), # 是否启用打印机
 
     FieldDefinition("printer.connection.type", str, "", 
                     If(RefIs("printer.enabled", True),Choices("Network", "Usb", "Win32Raw",))),
@@ -42,5 +43,5 @@ SETTINGS = [
     FieldDefinition("printer.QRCode.native", bool, False), # 是打印机生成qrcode还是escpos库生成
     FieldDefinition("printer.QRCode.correction", str, "Q", Choices("L", "M", "Q", "H")), # 错误纠正等级
 
-
+    
 ]

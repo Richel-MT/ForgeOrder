@@ -1,7 +1,10 @@
+from operator import is_
+from pkgutil import get_data
 import time
 
 from flask import g, request
 
+from app.app_settings.manager import SettingsManager
 import extensions
 from core.db.exceptions import ColumnNotFoundError, NotFoundError
 from core.utils import make_response
@@ -15,9 +18,14 @@ shop_bp = AppBlueprint("shop", __name__)
 # 店铺状态
 @shop_bp.get("/api/shop/getBusinessState" , auth=True)
 def get_business_state():
+    db = get_database_flask()
+    sm = SettingsManager(db)
+
+    is_business = sm.get("shop.isBusiness")
+    
     return make_response(
         0,
-        extensions.is_business
+        is_business
     )
 
 @shop_bp.post("/api/shop/setBusinessState",
@@ -29,9 +37,13 @@ def get_business_state():
 def set_business_state():
     is_business = g.args["is_business"]
     
-    extensions.is_business = is_business
+    db = get_database_flask()
+    sm = SettingsManager(db)
 
-    extensions.shop_logger.info({
+    sm.set("shop.isBusiness", is_business)
+
+    g.logger.set_category("SHOP")
+    g.logger.info({
         "is_business": is_business,
         "operator": g.user_info["user"]["id"]
     },  "UpdateBusinessState")

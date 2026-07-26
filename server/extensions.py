@@ -22,7 +22,6 @@ auth_manager : AuthManager
 config : JSONConfig
 
 
-is_business: bool = True
 
 
 local_ip: str = ""
