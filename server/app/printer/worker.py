@@ -26,10 +26,10 @@ def connect_printer(connect_info: dict) -> Escpos: #type: ignore
         return Win32Raw(connect_info["name"], profile=connect_info["profile"], encoding=connect_info["encoding"])
 
 
-def print_task(commands: list, printer: Escpos, qr_info: dict):
+def print_task(commands: list, printer: Escpos, qr_info: dict, dots: int):
     renderer = Renderer(printer, qr_info)
 
-    renderer.render(commands)
+    renderer.render(commands, dots)
 
     printer.cut()
 
@@ -67,6 +67,8 @@ def print_worker(q: Queue, logger: Logger):
     qr_info["model"] = sm.get("printer.QRCode.model")
     qr_info["native"] = sm.get("printer.QRCode.native")
     qr_info["correction"] = sm.get("printer.QRCode.correction")
+
+    dots = sm.get("printer.dotsPerLine")
 
     printer: Escpos | None = None
     retry_connect_count = 0
@@ -155,7 +157,7 @@ def print_worker(q: Queue, logger: Logger):
 
         # 打印任务
         try:
-            print_task(content["commands"], printer, qr_info)
+            print_task(content["commands"], printer, qr_info, dots)
         except Exception as e:
             log_ctx.warning({
                 "id": entry,

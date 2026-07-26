@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from decimal import DivisionImpossible
 from typing import Literal
 
 class Command:
@@ -44,6 +45,50 @@ class QRCode(Command):
         }
 
 
+@dataclass
+class Divider(Command):
+    pass
+
+
+
+class Row:
+    def __init__(self, *contents, divider: bool = False):
+        self.contents: list[str] = list(contents)
+
+        self.divider: bool = divider
+
+    def to_dict(self):
+        return {
+            "contents": self.contents,
+            "divider": self.divider,
+        }
+
+class Column:
+    def __init__(self, width: int, spacing: int = 1):
+        self.width: int = width
+        self.spacing: int = spacing
+
+    def to_dict(self):
+        return {
+            "width": self.width,
+            "spacing": self.spacing,
+        }
+    
+@dataclass 
+class Table(Command):
+    def __init__(self, columns: list[Column], rows: list[Row]):
+        self.columns: list[Column] = columns
+        self.rows: list[Row] = rows
+
+
+    def to_dict(self):
+
+        return {
+            "columns": [column.to_dict() for column in self.columns],
+            "rows": [row.to_dict() for row in self.rows],
+        }
+
+
 
 
 class CommandBuilder:
@@ -78,3 +123,20 @@ class CommandBuilder:
         self.receipt.add(qr_code_command)
 
         return qr_code_command
+
+    def divider(self):
+        divider = Divider()
+
+        self.receipt.add(divider)
+
+        return divider
+
+    def table(self,
+               columns: list[Column],
+               rows: list[Row],
+               ):
+        table = Table(columns, rows)
+
+        self.receipt.add(table)
+
+        return table
