@@ -64,10 +64,7 @@ class Receipt:
                 case QRCode():
                     receipt_info["commands"].append({
                         "type": "qr_code",
-                        "value": {
-                            "content": command.content,
-                            "size": command.size,
-                        }
+                        "value": command.to_dict()
                     })
 
         return json.dumps(receipt_info, ensure_ascii=False, indent=4)

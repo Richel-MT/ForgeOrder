@@ -6,82 +6,32 @@ import datetime
 
 from escpos.printer import Usb, Network, Win32Raw
 from escpos.escpos import Escpos
-import win32print
 
-from app.db.main_db import MainDatabase
+
 from app.app_settings.manager import SettingsManager
 from core.log.console import get_console_logger
 from core.log.context import get_log_context
 from core.log.logger import Logger
 from app.db.get_db import get_database
 from core.db.exceptions import NotFoundError
+from .renderer import Renderer
 
 
 def connect_printer(connect_info: dict) -> Escpos: #type: ignore
     if connect_info["type"] == "Network":
-        return Network(connect_info["ip"], connect_info["port"], connect_info["timeout"])
+        return Network(connect_info["ip"], connect_info["port"], connect_info["timeout"], profile=connect_info["profile"], encoding=connect_info["encoding"])
     elif connect_info["type"] == "Usb":
-        return Usb(connect_info["vid"], connect_info["pid"])
+        return Usb(connect_info["vid"], connect_info["pid"], encoding=connect_info["encoding"], profile=connect_info["profile"])
     elif connect_info["type"] == "Win32Raw":
-        return Win32Raw(connect_info["name"])
-
-def check_printer_status(printer_name):
-    try:
-        h_printer = win32print.OpenPrinter(printer_name)
-        # 获取打印机信息 (索引2对应 PRINTER_INFO_2)
-        printer_info = win32print.GetPrinter(h_printer, 2)
-        win32print.ClosePrinter(h_printer)
-
-        # 检查离线标志位 (PRINTER_ATTRIBUTE_WORK_OFFLINE = 0x00000400)
-        if printer_info['Attributes'] & 0x00000400:
-            print(f"打印机 '{printer_name}' 处于离线状态。")
-            return False
-
-            
-        return True
-    except Exception as e:
-        return False
+        return Win32Raw(connect_info["name"], profile=connect_info["profile"], encoding=connect_info["encoding"])
 
 
-def print_text(printer: Escpos, cmd_info :dict):
-    args = cmd_info["style"].copy()
+def print_task(commands: list, printer: Escpos, qr_info: dict):
+    renderer = Renderer(printer, qr_info)
 
-    if "font" in args:
-        args["font"] = args["font"].lower()
+    renderer.render(commands)
 
-    if "scale" in args:
-        args["width"] = args["scale"][0]
-        args["height"] = args["scale"][1]
-        del args["scale"]
-
-        args["custom_size"] = True
-    
-    printer.set(**args)
-
-    if cmd_info["newline"]:
-        printer.textln(cmd_info["text"])
-    else:
-        printer.text(cmd_info["text"])
-
-def print_qr(printer: Escpos, cmd_info :dict):
-    pass
-
-
-def print_task(commands: list, printer: Escpos):
-    for command in commands:
-
-        match command["type"]:
-            case "text":
-                print_text(printer, command["value"])
-
-            case "qr_code":
-                args = command["value"].copy()
-                del args["content"]
-
-                printer.qr(command["value"]["content"], **args)
-
-
-    printer.cut(mode="FULL")
+    printer.cut()
 
 
 def print_worker(q: Queue, logger: Logger):
@@ -91,6 +41,7 @@ def print_worker(q: Queue, logger: Logger):
 
     db = get_database()
     sm = SettingsManager(db)
+
 
     # 初始化连接信息
     connect_info = {}
@@ -109,9 +60,15 @@ def print_worker(q: Queue, logger: Logger):
         connect_info["name"] = sm.get("printer.connection.win32.name")
 
     connect_info["encoding"] = sm.get("printer.encoding")
+    connect_info["profile"] = sm.get("printer.profile")
+
+
+    qr_info = {}
+    qr_info["model"] = sm.get("printer.QRCode.model")
+    qr_info["native"] = sm.get("printer.QRCode.native")
+    qr_info["correction"] = sm.get("printer.QRCode.correction")
 
     printer: Escpos | None = None
-
     retry_connect_count = 0
 
     while True:
@@ -164,6 +121,8 @@ def print_worker(q: Queue, logger: Logger):
 
                 continue
 
+            retry_connect_count = 0
+
         log_ctx.debug("连接打印机成功", "DebugMsg")
         # 读取设置
         try:
@@ -196,7 +155,7 @@ def print_worker(q: Queue, logger: Logger):
 
         # 打印任务
         try:
-            print_task(content["commands"], printer)
+            print_task(content["commands"], printer, qr_info)
         except Exception as e:
             log_ctx.warning({
                 "id": entry,
@@ -208,6 +167,10 @@ def print_worker(q: Queue, logger: Logger):
             }, "PrintTaskError")
             now = datetime.datetime.now()
             db.print_task.update(entry, 3, "PrintTaskError", started_time, now)
+
+            printer.close()
+            printer = None
+
             continue
 
         now = datetime.datetime.now()
@@ -230,7 +193,7 @@ def print_worker(q: Queue, logger: Logger):
 
         
 
-def create_print_worker( logger: Logger):
+def create_print_worker(logger: Logger):
     q = Queue()
 
     thread = threading.Thread(target=print_worker, args=( q, logger), name="PrintWorker")

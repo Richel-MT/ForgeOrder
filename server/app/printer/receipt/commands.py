@@ -34,6 +34,14 @@ class QRCode(Command):
     content: str
 
     size: int = 3 # 二维码大小
+    center: bool = False
+
+    def to_dict(self):
+        return {
+            "content": self.content,
+            "size": self.size,
+            "center": self.center,
+        }
 
 
 
@@ -63,8 +71,9 @@ class CommandBuilder:
     def qr_code(self,
                  content: str,
                  size: int = 3,
+                 center: bool = False
                  ):
-        qr_code_command = QRCode(content, size)
+        qr_code_command = QRCode(content, size, center)
 
         self.receipt.add(qr_code_command)
 
