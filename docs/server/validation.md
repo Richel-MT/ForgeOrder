@@ -1,4 +1,4 @@
-[返回](./index.md)
+[返回](../index.md)
 
 *本文档介绍后端[core.validation](/server/core/validation/)模块。*
 

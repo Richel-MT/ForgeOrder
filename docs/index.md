@@ -7,11 +7,9 @@
 - [日志](server/logs.md)
 - [AppBlueprint](server/app_blueprint.md)
 - [Route Manager](server/route_manager.md)
-- [参数验证](server/args_verify.md)
+- [声明式数据验证](server/validation.md)
 
-- [用户认证](auth.md)
-- [API接口](api.md)
-
-## 设计思路
 
 ## 其他
+- [用户认证](auth.md)
+- [API接口](api.md)
