@@ -59,7 +59,7 @@
     })
 
 
-    // console.log(props.money_input)
+
 
     const currentText = ref('0')
 

@@ -1,8 +1,6 @@
 <template>
     <div>
-        <!-- 关键修改：Transition 直接包裹组件，不要多余的 div -->
         <Transition :name="transitionName" mode="out-in">
-            <!-- 使用动态组件或 v-if/v-else 切换 -->
             <component :is="currentComponent" :key="index" />
         </Transition>
         
@@ -11,13 +9,16 @@
 </template>
 
 <script setup>
-    import BottomBar from '@/components/BottomBar.vue'
-    import Home from './Home.vue'
-    import Orders from './Orders.vue'
-    import Me from './Me.vue'
+    import { ref, watch, computed, onMounted, defineAsyncComponent } from 'vue'
+    import { useRoute,  useRouter } from 'vue-router'
 
-    import { ref, watch, computed, onMounted, shallowRef } from 'vue'
-    import { useRoute, onBeforeRouteUpdate, useRouter } from 'vue-router'
+    import BottomBar from '@/components/BottomBar.vue'
+
+    const Home = defineAsyncComponent(() => import('./Home.vue'))
+    const Orders = defineAsyncComponent(() => import('./Orders.vue'))
+    const Me = defineAsyncComponent(() => import('./Me.vue'))
+
+
 
     const route = useRoute()
     const router = useRouter()

@@ -262,13 +262,13 @@ const deleteDish = () => {
                                 })
                             } 
                             else {
-                                console.log(res.data)
+
                                 snackbar({
                                     "message": t("shop.all_dishes.snackbar_delete_dish.unknown")
                                 })
                             }
                         } catch (error) {
-                            console.log(error)
+
                             snackbar({
                                 "message": t("shop.all_dishes.snackbar_delete_dish.unknown")
                             })
@@ -283,12 +283,12 @@ const deleteDish = () => {
 const deleteCategory = (category_id, category_name) => {
     let description = ''
 
-    console.log(dishes.value[category_name].find(dish => dish.category  == category_id) != undefined)
+
     if (dishes.value[category_name].find(dish => dish.category  == category_id) != undefined) {
         // 分类下有菜品
         description = t('shop.all_dishes.delete_category_dialog.description_dish', { name: categories.value[category_id] })
     } else {
-        console.log("1")
+
         // 分类下没有菜品
         description = t('shop.all_dishes.delete_category_dialog.description', { name: categories.value[category_id] })
     }
@@ -327,7 +327,7 @@ const deleteCategory = (category_id, category_name) => {
                                 })
                             }
                         } catch (error) {
-                            console.log(error)
+
                             snackbar({
                                 message: t("shop.all_dishes.snackbar_delete_category.unknown")
                             })
@@ -383,7 +383,7 @@ const editCategory = (category_id, category_name) => {
                     })
                 }
             } catch (error) {
-                console.log(error)
+
                 snackbar({
                     message: t("shop.all_dishes.snackbar_edit_category.unknown")
                 })
@@ -433,7 +433,6 @@ const addCategory = () => {
                 }          
             }
             catch (error) {
-                console.log(error)
 
                 if (error.response.data.status == 2002) {
                     snackbar({

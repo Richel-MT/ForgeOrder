@@ -1,9 +1,11 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import request from '@/utils/request.js'
-// import { er } from 'vue-router/dist/index-BQLwgiyK.js'
+import { createLogger } from '@/utils/log.js'
 
 export function useAuth() {
+    
+
     const router = useRouter()
 
     const token = ref(localStorage.getItem('token') || '')
@@ -12,6 +14,7 @@ export function useAuth() {
     const isLoggedIn = computed(() => token.value != '')
 
     const login = async(username, password, cover) => {
+        const logger = createLogger('Auth.Login')
         try {
             const res = await request.post('/auth/login', {
                 username,
@@ -19,36 +22,36 @@ export function useAuth() {
                 cover
             })
             
-            console.log(res.status, res.data.status)
+
             if (res.status == 200) {
                 if (res.data.status == 0 || res.data.status == 3003) {
                     // 登录成功
-                    // console.log("登录成功")
+                    logger.info("登录成功")
+
                     token.value = res.data.data.token
 
                     userInfo.value = res.data.data.user_info
                     localStorage.setItem('token', token.value)
                     localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
 
-                    console.log(token.value, userInfo.value)
 
                     router.push("/")
 
                     return res.data
+                } else {
+                    // else 登录失败，交给业务层处理
+                    logger.error(`登录失败，${res.data.status}`)
                 }
-                // else 登录失败
-            } // else 登录失败
-
                 
-            // 登录失败
-            // console.log("登录失败")
-            // console.log(res.data)
+            }
+
+
             return res.data
             
 
-            
         } catch (error) {
-            
+            logger.error("登录失败")
+            logger.error(error)
             return {
                 status: -1,
                 data: error
@@ -57,10 +60,12 @@ export function useAuth() {
     }
 
     const logout = async() => {
+        const logger = createLogger('Auth.Logout')
         try {
             const res = await request.post('/auth/logout')
             if (res.status == 200 && res.data.status == 0) {
                 // 退出登录成功
+                logger.info("退出登录成功")
                 token.value = ''
                 userInfo.value = null
                 localStorage.removeItem('token')
@@ -71,7 +76,8 @@ export function useAuth() {
                 return res.data
             } 
         } catch (error) {
-            // console.log(error)
+            logger.error("退出登录失败")
+            logger.error(error)
             return {
                 status: -1,
                 data: error

@@ -66,10 +66,8 @@ router.beforeEach((to, from) => {
     const toDeepth = getPathDeepth(to.path)
     const fromDeepth = getPathDeepth(from.path)
 
-    // console.log(from, to)
 
     if (to.path == from.path) {
-        // console.log("Tab")
         to.meta.transition = ''
     } else {
             if (toDeepth > fromDeepth ) {
@@ -81,7 +79,6 @@ router.beforeEach((to, from) => {
 
     navigationKey.value++
 
-    // console.log(to.meta.transition)
 
     // 用户认证
     const token = localStorage.getItem('token')

@@ -38,7 +38,7 @@ const index = ref(0)
 const bottomBar = ref(null)
 
 const handleClick = (newVal) => {
-  // console.log(newVal)
+
   updateIndex(newVal)
 
   // const url = new URL(window.location.href)
