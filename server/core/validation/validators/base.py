@@ -1,5 +1,6 @@
 from ..base import ValidationResult
 from typing import Any
+from ..exceptions import UnsupportedTypeError
 
 class Validator:
     allow_types : type | None = None # None 表示接收任意类型
@@ -13,7 +14,7 @@ class Validator:
         else:
             # return VerifyResult(False, ValueTypeError(self.allow_types))
         
-            raise UnsupportedTypeError(self, self.allow_types, type(value)) #type: ignore
+            raise UnsupportedTypeError(self, self.allow_types, type(value))
         
     def _validate(self, value: Any, context: Any = None) -> ValidationResult: #type: ignore
         pass

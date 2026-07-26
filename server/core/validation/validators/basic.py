@@ -3,7 +3,7 @@ from typing import Any, Callable
 from .base import Validator
 from ..base import ValidationResult
 from ..errors import *
-from ..exceptions import UnsupportedVerifyHandlerError
+from ..exceptions import UnsupportedTypeError, UnsupportedVerifyHandlerError
 
 class NotEmpty(Validator):
     '''
