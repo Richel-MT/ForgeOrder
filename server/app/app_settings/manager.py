@@ -49,7 +49,7 @@ class SettingsManager:
 
 
                 if prop.validator:
-                    result = prop.validator.validate(value)
+                    result = prop.validator.validate(value, self)
                         
 
                     if not result.success:

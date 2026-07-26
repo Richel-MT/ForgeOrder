@@ -24,3 +24,14 @@ class Equal(Condition):
 
     def __str__(self):
         return f"{self.left_value} == {self.right_value}"
+
+class RefIs(Condition):
+    def __init__(self, name: str, value: Any):
+        self.ref = Ref(name)
+        self.value = value
+
+    def check(self, context: Any = None):
+        return self.ref.get(context) == self.value
+
+    def __str__(self):
+        return f"{self.ref} == {self.value}"

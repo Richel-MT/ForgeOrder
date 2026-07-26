@@ -111,4 +111,4 @@ class Else(Validator):
         self.validator = validator
 
     def _validate(self, value: Any, context: Any = None):
-        return self.validator.validate(value)
+        return self.validator.validate(value, context)
