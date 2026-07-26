@@ -165,7 +165,7 @@ Choices(1, 2, 3) # 表示：限制值必须为1、2或3之一
 Condition用于描述逻辑判断，不直接产生验证错误；Validator用于描述验证失败后的规则结果。
 
 #### 内置的`Condition`
-截止到目前，`Condititon`仅有一个`Equal`条件。
+截止到目前，`Condition`仅有一个`Equal`条件。
 
 ##### Equal
 判断两个值是否相等。

@@ -9,14 +9,45 @@ ForgeOrder 面向餐厅、小吃店、奶茶店等小型商户，支持顾客扫
 
 ## 项目结构
 ```
-ForgeOrder/
-├── server/
-├── web/
-├── scripts/
-├── docs/
-└── README.md
+├─docs
+├─scripts
+├─server
+│  ├─app
+│  │  ├─app_settings
+│  │  ├─cli
+│  │  ├─config
+│  │  ├─db
+│  │  ├─init_app
+│  │  ├─models
+│  │  ├─printer
+│  │  │  ├─receipt
+│  │  │  ├─renderer
+│  │  ├─routes
+│  ├─core
+│  │  ├─auth
+│  │  ├─config
+│  │  ├─db
+│  │  ├─error_handler
+│  │  ├─log
+│  │  ├─utils
+│  │  ├─validation
+│  │  │  ├─validators
+│  ├─res
+└─web
+    ├─public
+    └─src
+        ├─assets
+        ├─components
+        ├─composables
+        ├─locales
+        ├─utils
+        └─views
+            ├─main
+            │  └─components
+            ├─shop
+            └─system
 ```
-其中`web`目录为前端代码，`server`目录为后端代码。
+其中，`web`目录为前端代码；`server`目录为后端代码。
 
 ## 技术架构
 前端：
@@ -32,37 +63,12 @@ ForgeOrder/
 
 ## 快速开始
 
-### 1. 克隆项目
-使用Git克隆项目到本地：
-```bash
-git clone https://github.com/computer-drive/ForgeOrder.git
-```
-
-### 2. 后端操作
-在`server`目录下，使用Poetry安装依赖：
-```bash
-poetry install
-```
-
-### 3. 前端操作
-在`web`目录下，使用npm安装依赖：
-```bash
-npm install
-```
-运行编译命令：
-```bash
-npm run build
-```
-注意：编译后的文件将自动放在`/server/static/`目录下。
-
-### 4. 运行后端
-在`server`目录下，使用Poetry运行后端：
-```bash
-poetry run python app.py
-```
+- [Python 源代码运行](docs/quick_start/source.md)；
+- [构建版本运行](docs/quick_start/release.md)。
 
 ## 文档
-跳转到[文档目录](docs/)。
+[目录](docs/index.md)。
+
 
 ## Todo
 - [ ] Server：所有接口的详细日志输出

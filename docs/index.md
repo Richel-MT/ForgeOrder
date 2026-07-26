@@ -1,6 +1,12 @@
 # ForgeOrder Document
 欢迎来到ForgeOrder文档。
 
+
+## 快速开始
+- [Python 源代码运行](quick_start/source.md)；
+- [构建版本运行](quick_start/release.md)。
+
+
 ## 后端部分
 - [服务器](server/server.md)
 - [配置文件](server/config.md)
