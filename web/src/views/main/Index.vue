@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-    import { ref, watch, computed, onMounted, defineAsyncComponent } from 'vue'
+    import { ref, watch, computed, onMounted, nextTick, defineAsyncComponent } from 'vue'
     import { useRoute,  useRouter } from 'vue-router'
 
     import BottomBar from '@/components/BottomBar.vue'
@@ -27,7 +27,7 @@
     const bottomBar = ref(null)
 
     const lastIndex = ref(0)
-
+    const isInitialized = ref(false)
     const showBottomBar = ref(false)
 
     // 使用动态组件
@@ -42,33 +42,32 @@
     })
 
 
-    onMounted(() => {
+    onMounted(async () => {
+        showBottomBar.value = true
+        await nextTick()
+
         const queryIndex = route.query?.index
-        
         if (queryIndex) {
             bottomBar.value?.updateIndex(Number(queryIndex))
         } else {
             bottomBar.value?.updateIndex(0)
-
         }
         bottomBar.value?.setSelected(index.value.toString() || '0')
 
-        setTimeout(() => {
-            showBottomBar.value = true
-        }, 150)
+        isInitialized.value = true
     })
 
     // 监听 index 变化同步到 URL
     watch(
         () => bottomBar.value?.index ?? -1  , 
         (newVal) => {
+            if (!isInitialized.value) return
             router.replace({
                 query: {
                     ...router.currentRoute.value.query,
                     index: newVal
                 }
             })
-            // console.log(newVal, index.value)
             transitionName.value = newVal > lastIndex.value ? 'tabslide-left' : 'tabslide-right'
             lastIndex.value = newVal
         }
@@ -106,6 +105,4 @@
     transform: translateX(30px);
     opacity: 0;
 }
-
-
 </style>
