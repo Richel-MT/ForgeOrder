@@ -31,8 +31,8 @@ class ValidatorWithValue(Validator):
         self.validator = validator
         self.value = value
 
-    def validate(self, value = None) -> ValidationResult:
+    def validate(self, value = None, context = None) -> ValidationResult:
         if value is not None:
             raise ValueError("The value must be None when using 'ValidatorWithValue'.")
         
-        return self.validator.validate(self.value)
+        return self.validator.validate(self.value, context)
