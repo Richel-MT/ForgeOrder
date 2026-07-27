@@ -1,15 +1,12 @@
-from operator import is_
-from pkgutil import get_data
 import time
 
 from flask import g, request
 
 from app.app_settings.manager import SettingsManager
-import extensions
 from core.db.exceptions import ColumnNotFoundError, NotFoundError
 from core.utils import make_response
 from app.routes.app_bp import AppBlueprint
-from app.db.exceptions import CategoryNotFoundError
+from app.db.main_db.exceptions import CategoryNotFoundError
 from ..db.get_db import get_database_flask
 from app.routes.field import *
 
@@ -99,7 +96,7 @@ def get_dish():
               arguments=[
                   RequestField("dish_id", int, True),
                   RequestField("changed_items", dict, True),
-                  RequestField("changed_choices", dict, True)
+                  RequestField("changed_choices", list, True)
               ])
 def update_dish():
     dish_id: int = g.args["dish_id"]
@@ -108,22 +105,29 @@ def update_dish():
 
     meta_db = get_database_flask()
 
-
-    if Not(AllOf(
-        NotEmpty().bind(changed_items),
-        NotEmpty().bind(changed_choices)
-    )).validate():
+    
+    if AllOf( # failed
+        Not(NotEmpty().bind(changed_items)), # null -> pass
+        Not(NotEmpty().bind(changed_choices))  # null -> pass
+    ).validate():
         
         return make_response(
             3001,
             None
         ), 400 
-        
 
-    extensions.logger.debug([dish_id, changed_items, changed_choices], "UPDATE_DISH_REQUEST", "DebugMsg")
+    g.logger.set_category("SHOP")
+    
+
 
     try:
         meta_db.dishes.update(dish_id, changed_items, changed_choices)
+
+        g.logger.info({
+            "id": dish_id,
+            "changed_items": changed_items,
+            "changed_choices": changed_choices
+        }, "UpdateDish")
         
         return make_response(
             0,
@@ -151,8 +155,17 @@ def delete_dish():
 
     meta_db = get_database_flask()
 
+    g.logger.set_category("SHOP")
+    
+    
     try:
         meta_db.dishes.delete(dish_id)
+
+        g.logger.info({
+                "id": dish_id
+            }, "DeleteDish")
+
+        
         return make_response(
             0,
             None
@@ -183,6 +196,8 @@ def new_dish():
 
     meta_db = get_database_flask()
 
+    g.logger.set_category("SHOP")
+
     try:
         dish_id = meta_db.dishes.create(
             name,
@@ -193,6 +208,17 @@ def new_dish():
             is_available,
             choices
         )
+
+        g.logger.info({
+            "id": dish_id,
+            "name": name,
+            "price": price,
+            "category": category,
+            "description": description,
+            "image": image,
+            "is_available": is_available,
+            "choices": choices
+        }, "NewDish")
 
         return make_response(
             0,
@@ -220,16 +246,19 @@ def delete_category():
     # 删除该分类下的所有菜品
     meta_db.dishes.delete_by_category(category_id)
 
+    g.logger.set_category("SHOP")
+
     try:
         
-
-        # print(category_id)
-
         name = meta_db.category.get_from_id(category_id)["name"]
 
         meta_db.category.set_name(category_id, f"{name}_disabled_{time.time()}")
 
         meta_db.category.delete(category_id)
+
+        g.logger.info({
+                "id": category_id
+            }, "DeleteCategory")
         
         return make_response(
             0,
@@ -270,8 +299,16 @@ def edit_category():
 
     meta_db = get_database_flask()
 
+    g.logger.set_category("SHOP")
+
     try:
         meta_db.category.set_name(category_id, category_name)
+
+        g.logger.info({
+                "id": category_id,
+                "name": category_name
+            }, "UpdateCategory")
+
         return make_response(
             0,
             None
@@ -292,8 +329,16 @@ def new_category():
 
     meta_db = get_database_flask()
 
+    g.logger.set_category("SHOP")
+
     try:
         category_id = meta_db.category.new(name)
+
+        g.logger.info({
+                "id": category_id,
+                "name": name
+            }, "NewCategory")
+        
         return make_response(
                 0,
                 category_id
