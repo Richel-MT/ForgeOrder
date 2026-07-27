@@ -154,14 +154,22 @@
 
 
     onMounted( async () => {
-        const res = await request.get('/system/getSystemInfo')
-        if (res.data.status == 0) {
-            version.value = res.data.data.version
-            isDevelopment.value = true ? res.data.data.env == 'dev' : false
-            ipAddress.value = res.data.data.ip_address
+        let systemInfo = {}
+        if (localStorage.getItem(`systemInfo`)) {
+            systemInfo = JSON.parse(localStorage.getItem(`systemInfo`))
+            
         } else {
-            console.log("获取失败")
-        }
+            const res = await request.get('/system/getSystemInfo')
+            if (res.data.status == 0) {
+                localStorage.setItem(`systemInfo`, JSON.stringify(res.data.data))
+                systemInfo = res.data.data
+            }
+        } 
+
+        version.value = systemInfo.version
+        isDevelopment.value = true ? systemInfo.env == 'dev' : false
+        ipAddress.value = systemInfo.ip_address
+            
     })
     
 
