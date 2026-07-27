@@ -55,20 +55,19 @@ UPDATE dishes_category SET name = ? WHERE id = ?
 -- command: category.delete
 UPDATE dishes_category SET is_deleted = 1 WHERE id = ?;
 
--- command: category.set_name
-UPDATE dishes_category SET name = ? WHERE id = ?;
 
--- Dish 表操作
 
--- command: dishes.create1
+-- 创建操作
+
+-- command: dishes.create
 INSERT INTO dishes (name, price, category, description, image, is_available, created_at)
 VALUES (?, ?, ?, ?, ?, ?, ?);
 
--- command: dishes.create2
+-- command: stats.create
 INSERT INTO dish_stats (id, updated_at)
 VALUES (?, ?);
 
--- command: dishes.create3
+-- command: choices.create
 INSERT INTO dish_choices (dish_id, name, options)
 VALUES (?, ?, ?);
 
@@ -112,7 +111,7 @@ VALUES (?, ?, ?)
 DELETE FROM dish_choices WHERE dish_id = ? AND name = ?
 
 
--- command: choices.get
+-- command: choices.get_options
 SELECT * FROM dish_choices WHERE dish_id = ? AND name = ?
 
 
@@ -128,6 +127,7 @@ DELETE FROM dish_stats WHERE id = ?; -- 删除dish_stats表的项
 -- command: choice.delete
 DELETE FROM dish_choices WHERE dish_id = ?; -- 删除dish_choices表的项
 
--- command: category.delete
+
+-- command: delete_by_category
 UPDATE dishes SET is_deleted = 1 WHERE category = ?;
 
