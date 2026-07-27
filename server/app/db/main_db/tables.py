@@ -1,5 +1,7 @@
+import datetime
 import sqlite3
 
+from core.db.exceptions import NotFoundError
 from core.db.sql_parse import SqlParse
 
 class Tables:
@@ -61,15 +63,52 @@ class Tables:
         if table:
             return table
         return None
-    
-    def get_all_available(self):
-        '''
-        获取所有可用的桌。
 
-        注意：数据库使用了Row factory，返回的桌信息为Row对象列表。
+
+    def get_all(self):
+        '''
+        获取所有餐桌。
+
+        返回字典
         '''
         cursor = self.conn.execute(
-            self.sql_parse.get("tables.get_all_available")
+            self.sql_parse.get("tables.get_all")
             )
+
         tables = cursor.fetchall()
-        return tables
+
+        return [dict(table) for table in tables]
+
+    def update(self, table_id: int, name: str, is_available: bool = True):
+        '''
+        更新桌信息。
+        '''
+
+        if self.get_from_name(name):
+            raise ValueError(f"Table name {name} already exists")
+
+        cursor = self.conn.execute(
+            self.sql_parse.get("tables.update"),
+            (name, is_available, table_id)
+            )
+        
+        self.conn.commit()
+
+        if cursor.rowcount == 0:
+            raise NotFoundError(str(table_id))
+
+
+    def soft_delete(self, table_id: int):
+        '''
+        软删除桌。
+        '''
+        cursor = self.conn.execute(
+            self.sql_parse.get("tables.soft_delete"),
+            (table_id,)
+            )
+
+        if cursor.rowcount ==  0:
+            raise NotFoundError(str(table_id))
+
+        self.conn.commit()
+

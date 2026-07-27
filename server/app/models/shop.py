@@ -1,5 +1,6 @@
 import time
 
+from click import argument
 from flask import g, request
 
 from app.app_settings.manager import SettingsManager
@@ -55,9 +56,9 @@ def set_business_state():
 # 菜品
 @shop_bp.get("/api/shop/dishes/getAll" , auth=True)
 def get_all_dishes():
-    meta_db = get_database_flask()
+    db = get_database_flask()
 
-    dishes, categories = meta_db.dishes.get_all()
+    dishes, categories = db.dishes.get_all()
 
     return make_response(
         0,
@@ -75,10 +76,10 @@ def get_dish():
     dish_id = g.args["id"]
 
 
-    meta_db = get_database_flask()
+    db = get_database_flask()
 
     try:
-        dish = meta_db.dishes.get_from_id(dish_id)
+        dish = db.dishes.get_from_id(dish_id)
 
     except NotFoundError as e:
         return make_response(
@@ -103,7 +104,7 @@ def update_dish():
     changed_items : dict = g.args["changed_items"]
     changed_choices : list = g.args["changed_choices"]
 
-    meta_db = get_database_flask()
+    db = get_database_flask()
 
     
     if AllOf( # failed
@@ -121,7 +122,7 @@ def update_dish():
 
 
     try:
-        meta_db.dishes.update(dish_id, changed_items, changed_choices)
+        db.dishes.update(dish_id, changed_items, changed_choices)
 
         g.logger.info({
             "id": dish_id,
@@ -153,13 +154,13 @@ def update_dish():
 def delete_dish():
     dish_id: int = g.args["dish_id"]
 
-    meta_db = get_database_flask()
+    db = get_database_flask()
 
     g.logger.set_category("SHOP")
     
     
     try:
-        meta_db.dishes.delete(dish_id)
+        db.dishes.delete(dish_id)
 
         g.logger.info({
                 "id": dish_id
@@ -194,12 +195,12 @@ def new_dish():
     is_available: bool = g.args["is_available"]
     choices: dict = g.args["choices"]
 
-    meta_db = get_database_flask()
+    db = get_database_flask()
 
     g.logger.set_category("SHOP")
 
     try:
-        dish_id = meta_db.dishes.create(
+        dish_id = db.dishes.create(
             name,
             price,
             category,
@@ -241,20 +242,20 @@ def new_dish():
 def delete_category():
     category_id: int = g.args["category_id"]
 
-    meta_db = get_database_flask()
+    db = get_database_flask()
 
     # 删除该分类下的所有菜品
-    meta_db.dishes.delete_by_category(category_id)
+    db.dishes.delete_by_category(category_id)
 
     g.logger.set_category("SHOP")
 
     try:
         
-        name = meta_db.category.get_from_id(category_id)["name"]
+        name = db.category.get_from_id(category_id)["name"]
 
-        meta_db.category.set_name(category_id, f"{name}_disabled_{time.time()}")
+        db.category.update(category_id, f"{name}_disabled_{time.time()}")
 
-        meta_db.category.delete(category_id)
+        db.category.delete(category_id)
 
         g.logger.info({
                 "id": category_id
@@ -275,9 +276,9 @@ def delete_category():
 
 @shop_bp.get("/api/shop/category/getAll" , auth=True)
 def get_all_categories():
-    meta_db = get_database_flask()
+    db = get_database_flask()
 
-    categories = meta_db.category.get_all()
+    categories = db.category.get_all()
     categories = [dict(category) for category in categories]
 
     return make_response(
@@ -297,12 +298,12 @@ def edit_category():
     category_id: int = g.args["category_id"]
     category_name: str = g.args["category_name"]
 
-    meta_db = get_database_flask()
+    db = get_database_flask()
 
     g.logger.set_category("SHOP")
 
     try:
-        meta_db.category.set_name(category_id, category_name)
+        db.category.update(category_id, category_name)
 
         g.logger.info({
                 "id": category_id,
@@ -327,12 +328,12 @@ def new_category():
     
     name: str = g.args["name"]
 
-    meta_db = get_database_flask()
+    db = get_database_flask()
 
     g.logger.set_category("SHOP")
 
     try:
-        category_id = meta_db.category.new(name)
+        category_id = db.category.new(name)
 
         g.logger.info({
                 "id": category_id,
@@ -349,4 +350,115 @@ def new_category():
             None
         ), 400 # 分类名称已存在（3001）
      
+
+@shop_bp.get("/api/shop/tables/getAll", auth=True)
+def get_all_tables():
+    db = get_database_flask()
+
+    tables = db.tables.get_all()
+
+    return make_response(
+        0,
+        tables
+    )
+
+@shop_bp.post("/api/shop/tables/new", auth=True, is_admin=True,
+             arguments=[
+                  RequestField("name", str, True, None, NotEmpty())
+             ])
+def new_table():
+    name: str = g.args["name"]
+
+    db = get_database_flask()
+
+    g.logger.set_category("SHOP")
+
+    try:
+        table_id = db.tables.new(name, True)
+    except ValueError:
+
+        return make_response(
+            3001, 
+            None
+        ), 400 # 桌名已存在（3001）
+    else:
+        g.logger.info({
+                "id": table_id,
+                "name": name
+            }, "NewTable")
+        
+        return make_response(
+            0,
+            table_id
+        ), 200 # 创建成功
+
+@shop_bp.post("/api/shop/tables/update", auth=True, is_admin=True,
+             arguments=[
+                  RequestField("id", int, True),
+                  RequestField("name", str, True, None, NotEmpty())
+             ])
+def update_table():
+    table_id: int = g.args["id"]
+    new_name: str = g.args["name"]
+
+    db = get_database_flask()
+
+    g.logger.set_category("SHOP")
+
+    try:
+        db.tables.update(table_id, new_name, True)
+    except NotFoundError:
+        return make_response(
+            3001,
+            None
+        ), 404 # 找不到桌（3001）
+
+    except ValueError:
+        return make_response(
+            3002, 
+            None
+        ), 400 # 桌名已存在（3002）
+    
+    else:
+        g.logger.info({
+                "id": table_id,
+                "name": new_name
+            }, "UpdateTable")
+        
+        return make_response(
+            0,
+            None
+        ), 200 # 更新成功
+
+@shop_bp.post("/api/shop/tables/delete", auth=True, is_admin=True,
+             arguments=[
+                  RequestField("id", int, True)
+             ])
+def delete_table():
+    table_id: int = g.args["id"]
+
+
+    db = get_database_flask()
+    g.logger.set_category("SHOP")
+
+    try:
+        db.tables.soft_delete(table_id)
+
+    except NotFoundError:
+        return make_response(
+            3001,
+            None
+        ), 404 # 找不到桌（3001）
+    else:
+        g.logger.info({
+                "id": table_id
+            }, "DeleteTable")
+        
+        return make_response(
+            0,
+            None
+        ), 200 # 删除成功
+
+
+
 

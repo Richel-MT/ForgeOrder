@@ -189,7 +189,7 @@
   "shop": {
     "title": {
       "dishes": "菜品管理",
-      "tables": "餐桌管理",
+      "tables": "桌台管理",
       "edit_dish": "编辑菜品",
       "add_dish": "添加菜品",
       "main": "店铺管理",
@@ -333,6 +333,32 @@
       "error_alert": {
         "headline": "创建失败",
         "message": "网络错误：{error}。"
+      }
+    },
+
+    "tables": {
+      "edit_name": {
+        "headline": "编辑桌台{name}",
+        "description": "请输入桌台的名称：",
+        "error": {
+          "empty": "桌台名称不能为空。",
+          "already_exist": "桌台“{name}”已存在。",
+        },
+        "success": "修改成功。"
+      },
+      "delete_table": {
+        "headline": "删除桌台{name}",
+        "description": "确定删除桌台“{name}”吗？",
+        "success": "删除成功。"
+      },
+      "create_table": {
+        "headline": "添加桌台",
+        "description": "请输入新桌台的名称：",
+        "error": {
+          "empty": "桌台名称不能为空。",
+          "already_exist": "桌台“{name}”已存在。",
+        },
+        "success": "添加成功。"
       }
     }
   },
