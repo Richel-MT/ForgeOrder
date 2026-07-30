@@ -116,6 +116,9 @@
             choices: currentChoices.value
         })
 
+        currentChoices.value = {}
+        dishCount.value = 1
+
 
         addDishDialog.value.open = false
 
