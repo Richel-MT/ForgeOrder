@@ -1,5 +1,5 @@
 <template>
-    <div class="page">
+    <div >
         <TopBar :title="$t('orders.topbar.text')" :showHome="false">
             <template #right >
                 <mdui-text-field variant="outlined" :placeholder="$t('orders.topbar.search.text')" style="width: auto; height: 100%">
@@ -10,9 +10,9 @@
             </template>
         </TopBar>
 
-        <div class="container mdui-prose" >
+        <div class="container mdui-prose">
             <h2>{{$t('orders.main.today')}}</h2>
-            <button @click="router.push('/shop')">shop</button>
+
             <div v-for="i in 10" :key="i">
                 <OrderCard 
             :orderId="2026114514" 
@@ -30,10 +30,18 @@
             />
             </div>
 
-            <mdui-fab size="normal" style="position: fixed; bottom: 100px; right: 20px;" @click="router.push('/order/new')" extended>
+
+                 <mdui-fab 
+                class="create-order-button" 
+                @click="pushWithFrom('/order/new')" 
+                extended
+            >
                 <mdui-icon-edit slot="icon"></mdui-icon-edit>
-                {{$t('orders.main.add')}}
+                {{ $t('orders.main.add') }}
             </mdui-fab>
+
+
+
 
         </div>
 
@@ -44,6 +52,7 @@
 </template>
 
 <script setup>
+    import '@/assets/transition.css'
     import TopBar from '@/components/TopBar.vue'
     import OrderCard from './components/OrderCard.vue'
 
@@ -52,7 +61,24 @@
 
     import '@mdui/icons/search.js';
     import { useRouter } from 'vue-router';
+
+
+    import { pushWithFrom } from '@/utils/routerHelper'
     
     const router = useRouter();
 
+
+
+
 </script>
+
+
+<style>
+    .create-order-button {
+        position: fixed;
+        bottom: 120px;
+        right: 20px;
+        transform: translateX(0);
+
+    }
+</style>

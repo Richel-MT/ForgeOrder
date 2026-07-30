@@ -1,0 +1,30 @@
+.tabslide-left-enter-active,
+.tabslide-left-leave-active,
+.tabslide-right-enter-active,
+.tabslide-right-leave-active {
+    transition:
+        transform .15s cubic-bezier(.22, 1, .36, 1),
+        opacity .15s;
+}
+
+/* 前进 */
+.tabslide-left-enter-from {
+    transform: translateX(30px);
+    opacity: 0;
+}
+
+.tabslide-left-leave-to {
+    transform: translateX(-30px);
+    opacity: 0;
+}
+
+/* 返回 */
+.tabslide-right-enter-from {
+    transform: translateX(-30px);
+    opacity: 0;
+}
+
+.tabslide-right-leave-to {
+    transform: translateX(30px);
+    opacity: 0;
+}

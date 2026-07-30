@@ -1,21 +1,6 @@
 <template>
     <div id="app">
         
-        <!-- <div v-if="route.meta.transition">
-            {{ route.meta.transition }}
-                <router-view v-slot="{ Component, route }">
-                    <Transition :name="route.meta.transition" mode="out-in">
-                    <component :is="Component" :key="route.fullPath" />
-                    </Transition>
-                </router-view>
-            </div>
-
-        
-            
-        <div v-else>
-            no-transition
-            <router-view/>
-        </div> -->
 
         <router-view v-slot="{ Component, route }">
             <Transition :name="route.meta.transition" mode="out-in">
@@ -26,10 +11,6 @@
         </router-view>
         
 
-        <!-- <RouterView v-slot="{ Component, route }">
-            <component :is="Component" :key="route.fullPath" />
-        </RouterView> -->
-        <!-- <router-view /> -->
       
     </div>
 </template>

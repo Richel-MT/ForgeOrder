@@ -1,6 +1,6 @@
 <template>
 
-    <div class="page">
+    <div >
       <TopBar :title="$t('home.topbar.text')">
         <template #right>
           <!-- <!-- 右上角的按钮 -->
@@ -13,7 +13,7 @@
 
             <mdui-menu>
               
-            
+      
               <div v-if="isAdmin">
                 <mdui-menu-item @click="pushWithFrom('/shop/settings')">{{$t('home.topbar.menu.shop')}}
                   <mdui-icon-shopping-cart slot="icon"></mdui-icon-shopping-cart>
@@ -226,6 +226,8 @@ import '@mdui/icons/list.js';
 
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+
+import { snackbar } from 'mdui/functions/snackbar.js';
 
 
 import request from '@/utils/request.js'

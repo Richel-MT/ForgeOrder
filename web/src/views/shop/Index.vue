@@ -15,10 +15,10 @@
                 </template>
             </slot>
         </template>
-    </TopBar>
+        </TopBar>
 
-    <Main v-if="route.path == '/shop' || route.path == '/shop/' "/>
-    <router-view/>
+        <Main v-if="route.path == '/shop' || route.path == '/shop/' "/>
+        <router-view/>
     
     </div>
 </template> 

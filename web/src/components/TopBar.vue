@@ -44,7 +44,7 @@
     const props = defineProps({
       title: {
         type: String,
-        default: null
+        default: null 
       },
       showHome: {
         type: Boolean,

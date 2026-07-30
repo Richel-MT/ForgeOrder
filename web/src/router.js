@@ -2,6 +2,7 @@ import { createRouter ,createWebHashHistory } from 'vue-router'
 import mainRouter from './views/main/router.js'
 import  shopRouter from './views/shop/router.js'
 import systemRouter from './views/system/router.js'
+import orderRouter from './views/order/router.js'
 
 import { getPathDeepth } from '@/utils/utils.js'
 
@@ -11,6 +12,7 @@ const routes = [
     mainRouter,
     shopRouter,
     systemRouter,
+    orderRouter,
     {
         path: '/:pathMatch(.*)*',
         name: 'NotFound',
