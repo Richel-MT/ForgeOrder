@@ -28,7 +28,7 @@
         if (result) {
             emit('update:modelValue', props.modelValue + 1)
         } else {
-            console.log("false", result)
+            // console.log("false", result)
         }
     }
     const removeNumber = () => {
