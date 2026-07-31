@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS orders (
     table_id INTEGER, -- 桌号id，打包时为NULL
 
     note TEXT,
+
+    party_size INTEGER NOT NULL DEFAULT 1, -- 人数，默认1人
     
     FOREIGN KEY (table_id) REFERENCES tables (id),
     FOREIGN KEY (creator) REFERENCES users (id)
