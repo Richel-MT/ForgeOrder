@@ -81,7 +81,7 @@ class DishesCategory:
         '''
         更新分类名称。
         '''
-        cursor = self.conn.execute(self.sql_parse.get("dishes.category.set_name"), (name, id))
+        cursor = self.conn.execute(self.sql_parse.get("dishes.category.update"), (name, id))
         if cursor.rowcount == 0:
                     raise NotFoundError(str(id))
         self.conn.commit()
