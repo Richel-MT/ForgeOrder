@@ -1,9 +1,12 @@
+from http.client import responses
 import time
+from urllib import response
 
 from click import argument
 from flask import g, request
 
 from app.app_settings.manager import SettingsManager
+from app.routes.response import ResponseInfo
 from core.db.exceptions import ColumnNotFoundError, NotFoundError
 from core.utils import make_response
 from app.routes.app_bp import AppBlueprint
@@ -14,14 +17,17 @@ from app.routes.field import *
 shop_bp = AppBlueprint("shop", __name__)
 
 # 店铺状态
-@shop_bp.get("/api/shop/getBusinessState" , auth=True)
+@shop_bp.get("/api/shop/getBusinessState" , auth=True, 
+             responses=[
+                 ResponseInfo(0, "OK", bool)
+             ])
 def get_business_state():
     db = get_database_flask()
     sm = SettingsManager(db)
 
     is_business = sm.get("shop.isBusiness")
     
-    return make_response(
+    return g.res.OK(
         0,
         is_business
     )
@@ -31,6 +37,9 @@ def get_business_state():
             is_admin=True,
             arguments=[
                 RequestField("is_business", bool, True)
+            ],
+            responses=[
+                ResponseInfo(0, "OK", None)
             ])
 def set_business_state():
     is_business = g.args["is_business"]
@@ -41,27 +50,27 @@ def set_business_state():
     sm.set("shop.isBusiness", is_business)
 
     g.logger.set_category("SHOP")
+
     g.logger.info({
         "is_business": is_business,
         "operator": g.user_info["user"]["id"]
     },  "UpdateBusinessState")
 
-    return make_response(
-        0,
-        None
-    )
+    return g.res.OK()
 
 
 
 # 菜品
-@shop_bp.get("/api/shop/dishes/getAll" , auth=True)
+@shop_bp.get("/api/shop/dishes/getAll" , auth=True,
+             responses=[
+                 ResponseInfo(0, "OK", dict)
+             ])
 def get_all_dishes():
     db = get_database_flask()
 
     dishes, categories = db.dishes.get_all()
 
-    return make_response(
-        0,
+    return g.res.OK(
         {
             "dishes": dishes,
             "categories": categories
@@ -71,6 +80,10 @@ def get_all_dishes():
 @shop_bp.post("/api/shop/dishes/get" , auth=True,
               arguments=[
                   RequestField("id", int, True)
+              ],
+              responses=[
+                  ResponseInfo(0, "OK", dict),
+                  ResponseInfo(3001, "DishNotFound", None)
               ])
 def get_dish():
     dish_id = g.args["id"]
@@ -82,22 +95,21 @@ def get_dish():
         dish = db.dishes.get_from_id(dish_id)
 
     except NotFoundError as e:
-        return make_response(
-            3001,
-            None
-        ), 404
+        return g.res.DishNotFound()
 
 
-    return make_response(
-        0,
-        dict(dish)
-    )
+    return g.res.OK(dict(dish))
 
 @shop_bp.post("/api/shop/dishes/update", auth=True, is_admin=True,
               arguments=[
                   RequestField("dish_id", int, True),
                   RequestField("changed_items", dict, True),
                   RequestField("changed_choices", list, True)
+              ],
+              responses=[
+                  ResponseInfo(0, "OK", None),
+                  ResponseInfo(3001, "NoChange", None),
+                  ResponseInfo(3002, "DishNotFound", None)
               ])
 def update_dish():
     dish_id: int = g.args["dish_id"]
@@ -112,10 +124,7 @@ def update_dish():
         Not(NotEmpty().bind(changed_choices))  # null -> pass
     ).validate():
         
-        return make_response(
-            3001,
-            None
-        ), 400 
+        return g.res.NoChange()
 
     g.logger.set_category("SHOP")
     
@@ -130,26 +139,18 @@ def update_dish():
             "changed_choices": changed_choices
         }, "UpdateDish")
         
-        return make_response(
-            0,
-            None
-        ), 200
+        return g.res.OK()
 
-    except ColumnNotFoundError as e:
-        return make_response(
-            3999,
-            [e.table, e.name]
-        ), 404
-    
     except NotFoundError:
-        return make_response(
-            3002,
-            None
-        ), 404
+        return g.res.DishNotFound()
 
 @shop_bp.post("/api/shop/dishes/delete", auth=True, is_admin=True,
                arguments=[
                    RequestField("dish_id", int, True)
+               ],
+               responses=[
+                   ResponseInfo(0, "OK", None),
+                   ResponseInfo(3001, "DishNotFound", None)
                ])
 def delete_dish():
     dish_id: int = g.args["dish_id"]
@@ -167,15 +168,9 @@ def delete_dish():
             }, "DeleteDish")
 
         
-        return make_response(
-            0,
-            None
-        ), 200
+        return g.res.OK()
     except NotFoundError:
-        return make_response(
-            3001,
-            None
-        ), 404
+        return g.res.DishNotFound()
     
 @shop_bp.post("/api/shop/dishes/new", auth=True, is_admin=True, arguments=[
     RequestField("name", str, True, None, NotEmpty()),
@@ -185,7 +180,12 @@ def delete_dish():
     RequestField("image", str, False, ""),
     RequestField("is_available", bool, True),
     RequestField("choices", dict, False, {})
-])
+],
+responses=[
+    ResponseInfo(0, "OK", None),
+    ResponseInfo(3001, "CategoryNotFound", None)
+]
+)
 def new_dish():
     name: str = g.args["name"]
     price: int = g.args["price"]
@@ -221,23 +221,20 @@ def new_dish():
             "choices": choices
         }, "NewDish")
 
-        return make_response(
-            0,
-            dish_id
-        ), 200 # 创建成功
+        return g.res.OK()
     
     except CategoryNotFoundError as e:
-        return make_response(
-            3001,
-            e.category_id
-        ), 404 # 找不到分类（3001）
+        return g.res.CategoryNotFound()
     
 
 # 分类
 @shop_bp.post("/api/shop/category/delete", auth=True, is_admin=True,
               arguments=[
                   RequestField("cateogry_id", int, True)
-
+              ],
+              responses=[
+                  ResponseInfo(0, "OK", None),
+                  ResponseInfo(3001, "CategoryNotFound", None)
               ])
 def delete_category():
     category_id: int = g.args["category_id"]
@@ -261,18 +258,11 @@ def delete_category():
                 "id": category_id
             }, "DeleteCategory")
         
-        return make_response(
-            0,
-            None
-        ), 200
+        return g.res.OK()
     
     except NotFoundError as e :
-        # import traceback
-        # traceback.print_exc()
-        return make_response(
-            3001,
-            None
-        ), 404
+
+        return g.res.CategoryNotFound()
 
 @shop_bp.get("/api/shop/category/getAll" , auth=True)
 def get_all_categories():
@@ -291,6 +281,10 @@ def get_all_categories():
               arguments=[
                   RequestField("category_id", int, True),
                   RequestField("category_name", str, True, None, NotEmpty())
+              ],
+              responses=[
+                  ResponseInfo(0, "OK", None),
+                  ResponseInfo(3001, "CategoryNotFound", None)
               ])
 def edit_category():
 
@@ -310,19 +304,18 @@ def edit_category():
                 "name": category_name
             }, "UpdateCategory")
 
-        return make_response(
-            0,
-            None
-        ), 200
+        return g.res.OK()
+    
     except NotFoundError:
-        return make_response(
-            3001,
-            None
-        ), 404
+        return g.res.CategoryNotFound()
 
 @shop_bp.post("/api/shop/category/new", auth=True, is_admin=True,
               arguments=[
                   RequestField("name", str, True, None, NotEmpty())
+              ],
+              responses=[
+                  ResponseInfo(0, "OK", None),
+                  ResponseInfo(3001, "CategoryNameExist", None)
               ])
 def new_category():
     
@@ -340,31 +333,30 @@ def new_category():
                 "name": name
             }, "NewCategory")
         
-        return make_response(
-                0,
-                category_id
-            ), 200
+        return g.res.OK()
     except ValueError:
-        return make_response(
-            3001, 
-            None
-        ), 400 # 分类名称已存在（3001）
+        return g.res.CategoryNameExist()
      
 
-@shop_bp.get("/api/shop/tables/getAll", auth=True)
+@shop_bp.get("/api/shop/tables/getAll", auth=True, responses=[
+                  ResponseInfo(0, "OK", None)
+              ])
 def get_all_tables():
     db = get_database_flask()
 
     tables = db.tables.get_all()
 
-    return make_response(
-        0,
+    return g.res.OK(
         tables
     )
 
 @shop_bp.post("/api/shop/tables/new", auth=True, is_admin=True,
              arguments=[
                   RequestField("name", str, True, None, NotEmpty())
+             ],
+             responses=[
+                  ResponseInfo(0, "OK", None),
+                  ResponseInfo(3001, "TableNameExist", None)
              ])
 def new_table():
     name: str = g.args["name"]
@@ -377,25 +369,24 @@ def new_table():
         table_id = db.tables.new(name, True)
     except ValueError:
 
-        return make_response(
-            3001, 
-            None
-        ), 400 # 桌名已存在（3001）
+        return g.res.TableNameExist()
     else:
         g.logger.info({
                 "id": table_id,
                 "name": name
             }, "NewTable")
         
-        return make_response(
-            0,
-            table_id
-        ), 200 # 创建成功
+        return g.res.OK()
 
 @shop_bp.post("/api/shop/tables/update", auth=True, is_admin=True,
              arguments=[
                   RequestField("id", int, True),
                   RequestField("name", str, True, None, NotEmpty())
+             ],
+             responses=[
+                  ResponseInfo(0, "OK", None),
+                  ResponseInfo(3001, "TableNotFound", None),
+                  ResponseInfo(3002, "TableNameExist", None)
              ])
 def update_table():
     table_id: int = g.args["id"]
@@ -408,16 +399,10 @@ def update_table():
     try:
         db.tables.update(table_id, new_name, True)
     except NotFoundError:
-        return make_response(
-            3001,
-            None
-        ), 404 # 找不到桌（3001）
+        return g.res.TableNotFound()
 
     except ValueError:
-        return make_response(
-            3002, 
-            None
-        ), 400 # 桌名已存在（3002）
+        return g.res.TableNameExist()
     
     else:
         g.logger.info({
@@ -425,14 +410,15 @@ def update_table():
                 "name": new_name
             }, "UpdateTable")
         
-        return make_response(
-            0,
-            None
-        ), 200 # 更新成功
+        return g.res.OK()
 
 @shop_bp.post("/api/shop/tables/delete", auth=True, is_admin=True,
              arguments=[
                   RequestField("id", int, True)
+             ],
+             responses=[
+                  ResponseInfo(0, "OK", None),
+                  ResponseInfo(3001, "TableNotFound", None)
              ])
 def delete_table():
     table_id: int = g.args["id"]
@@ -445,19 +431,13 @@ def delete_table():
         db.tables.soft_delete(table_id)
 
     except NotFoundError:
-        return make_response(
-            3001,
-            None
-        ), 404 # 找不到桌（3001）
+        return g.res.TableNotFound()
     else:
         g.logger.info({
                 "id": table_id
             }, "DeleteTable")
         
-        return make_response(
-            0,
-            None
-        ), 200 # 删除成功
+        return g.res.OK()
 
 
 

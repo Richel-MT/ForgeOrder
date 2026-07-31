@@ -2,6 +2,7 @@
 from flask import  request, g
 from werkzeug.security import check_password_hash
 
+from app.routes.res_generator import ResponseInfo
 import extensions
 from app.routes.app_bp import AppBlueprint
 from core.utils import get_client_ip, make_response
@@ -18,7 +19,14 @@ accounts_bp = AppBlueprint("accounts", __name__)
         RequestField("cover", bool, False, False)
     ],
     auth=False,
-    is_admin=False
+    is_admin=False,
+    responses=[
+        ResponseInfo(0, "OK", dict),
+        ResponseInfo(3001, "UsernameOrPasswordError", None),
+        ResponseInfo(3002, "UserIsDisabled", None),
+        ResponseInfo(3003, "RepeatLogin", dict),
+        ResponseInfo(3004, "NewDeviceLogin", dict),
+    ]
 )
 def login():
     logger = g.logger.get_log_context("ACCOUNTS")
@@ -49,60 +57,65 @@ def login():
     
     # 检查密码是否正确
     if check_password_hash(account["password"], password):
+        # 密码正确
+
         # 检查用户是否已禁用
         if account["is_available"]:
-            # 添加Token
-            g.logger.debug(f"登录验证成功。设备（{ip}正在尝试登录{username}",  "DebugMsg")
-            g.logger.debug("生成Token...",  "DebugMsg")
+            # 用户未禁用
 
-            if cover:
-                g.logger.debug("注意到cover=True",  "DebugMsg")
-
+            # 在AuthManager上执行登录验证
             status, result = extensions.auth_manager.user_login(
-                dict(account),
+                dict(account), #type: ignore
                 ip, #type: ignore
                 cover
             )
 
             if status:
-                # 成功生成了Token, result为Token值
+                # 登录成功
                 token = result
-                g.logger.debug(f"成功生成Token：{token}",  "DebugMsg")
 
                 logger.info(
                     {
                         "ip": get_client_ip(),
                         "user_id": account["id"],
                         "cover": cover
-                    },  "UserLogin", g.request_id
+                    },  "UserLogin"
                 )
 
                 account = dict(account).copy()
                 account.pop("password", None)
                 
-                return make_response(
-                    0,
-                    {
-                        "user_info": account,
-                        "token": token
-                    }
-                )
+                return g.res.OK({
+                    "user_info": account,
+                    "token": token
+                })
             
             elif result[0] == 0:
                 # 失败，重复登录
-                g.logger.debug(f"生成失败，重复登录。请求ip:{ip}, token中的ip:{result[1]}",  "DebugMsg")
-                return make_response(
-                    3003,
+                logger.info(
                     {
+                        "ip": get_client_ip(),
+                        "user_id": account["id"],
+                        "cover": cover
+                    },  "UserRepeatLogin", g.request_id
+                )
+
+                return g.res.RepeatLogin({
                         "user_info": dict(account),
-                        "token": result[1]["token"]
+                        "token": result[1]["token"] #type: ignore
                     }
                 )
             else:
-                # 失败，设备重复登录
-                g.logger.debug(f"生成失败，有新设备登录。请求ip:{ip}, token中的ip:{result[1]}", "DebugMsg")
-                return make_response(
-                    3004,
+                # 失败，新设备登录
+               
+                logger.info({
+                    "current_ip": ip,
+                    "old_device_ip": result[1],
+                    "user_id": account["id"],
+                    "cover": cover
+                })
+
+                return g.res.NewDeviceLogin(
                     {
                         "old_device_ip": result[1]
                     }
@@ -111,29 +124,27 @@ def login():
 
         
         else:
-            return make_response(
-                3002,
+            # 用户已禁用
+            return g.res.UserIsDisabled(
                 None
             )
     else:
-        return make_response(
-            3001,
+        # 密码错误
+        return g.res.UsernameOrPasswordError(
             None
         )
         
-@accounts_bp.post("/api/auth/logout", auth=True)
+@accounts_bp.post("/api/auth/logout", auth=True,
+                  responses=[
+                      ResponseInfo(0, "OK", None),
+                  ])
 def logout():
     logger = g.logger.get_log_context("ACCOUNTS")
 
     token = request.headers.get("Authorization")
 
-    if not token:
-        return make_response(
-            1001,
-            None
-        )
-    token = token.split(" ")[1] #type: ignore
     
+    token = token.split(" ")[1] #type: ignore
     
     token_item : dict = extensions.auth_manager.user_logout(token) #type: ignore
 
@@ -146,19 +157,13 @@ def logout():
         }, "UserLogout", g.request_id)
     
 
-    return make_response(
+    return g.res.OK(
         0,
         None
     )
     
 
 
-@accounts_bp.route("/api/auth/test", auth=True)
-def test_api():
-    return make_response(
-        0,
-        "Test Pass"
-    )
 
 @accounts_bp.route("/test_print")
 def test_print():

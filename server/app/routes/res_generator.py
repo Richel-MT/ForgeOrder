@@ -8,7 +8,7 @@ class ResponseInfo:
     name: str
     data_type: type | None
 
-    def __call__(self, data: Any):
+    def __call__(self, data: Any = None):
         return make_response(self.status_code, data)
 
 class ResponseGenerator:
