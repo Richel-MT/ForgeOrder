@@ -1,3 +1,4 @@
+from typing import Callable
 
 from flask import request, g 
 
@@ -5,13 +6,13 @@ from core.log.context import LogContext
 from core.log.logger import Logger
 
 class LogContextWithRequestId(LogContext):
-    def __init__(self, logger: Logger, category: str = "", request_id: str = None, before_log = None):
+    def __init__(self, logger: Logger, category: str, request_id: str, before_log: Callable):
         super().__init__(logger, category)
 
         self.request_id = request_id
         self.before_log = before_log
 
-    def log(self, msg: str | dict | list , level: int, action: str, request_id: str = None):
+    def log(self, msg: str | dict | list , level: int, action: str, request_id: str = ""):
         self.before_log()
 
         super().log(msg, level, action, self.request_id)

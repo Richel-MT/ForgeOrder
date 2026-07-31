@@ -1,6 +1,8 @@
 from .schema import RoutesInfo
+from .res_generator import ResponseGenerator, ResponseInfo
 from .exceptions import *
 from .field import RequestField
+
 
 class RouteManager:
     def __init__(self):
@@ -10,7 +12,8 @@ class RouteManager:
     def register(self, path: str,
                  auth: bool= False,
                  is_admin: bool = False,
-                 args: list[RequestField] | None = None):
+                 args: list[RequestField] | None = None,
+                 responses: list[ResponseInfo] | None = None):
 
         if args is None:
             args = []
@@ -26,7 +29,8 @@ class RouteManager:
         self.routes[path] = {
             "is_admin": is_admin,
             "auth": auth,
-            "args": args_
+            "args": args_,
+            "responses": responses,
         }
 
         

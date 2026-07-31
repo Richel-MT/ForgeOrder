@@ -7,6 +7,7 @@ from app.routes.exceptions import ArgumentException
 import extensions
 from core.utils.server import make_response, get_client_ip
 from app.log import RequestLogContext
+from app.routes.res_generator import ResponseGenerator
 
 def _handle_auth():
     logger = g.logger.get_log_context("BEFORE_REQUEST")
@@ -185,8 +186,15 @@ def _handle_request_info():
     
     g.logger = RequestLogContext(extensions.logger, "REQUEST")
 
-
     g.start_time = time.time()
+
+
+    try:
+        responses = extensions.route_manager.routes[request.path]["responses"]
+    except KeyError: 
+        responses = {}
+
+    g.res = ResponseGenerator(responses)
 
     return None
 
