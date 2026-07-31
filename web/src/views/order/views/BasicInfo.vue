@@ -1,9 +1,9 @@
 <template>
-    <div class="main-container" style="position: relative; height: calc(100vh - 145px); width:100vw">
-        <div class="container mdui-prose ">
+    <div class="main-container" style="height: calc(100vh - 64px); width:100vw; display: flex; flex-direction: column; box-sizing: border-box;">    
+        <div class="container mdui-prose " style="display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; width: calc(100% - 24px);">
             <h2>创建订单</h2>
 
-            <mdui-list>
+            <mdui-list style="display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden">
                 <mdui-list-item nonclickable>订单类型
                     <mdui-radio-group value="0" slot="end-icon" v-model="orderType">
                         <mdui-radio value="0">堂食</mdui-radio>
@@ -20,7 +20,7 @@
                     就餐桌台
                 </mdui-list-item>
                 
-                <div v-if="orderType == '0'">
+                <div v-if="orderType == '0'" style="flex: 1; min-height: 0; overflow-y: auto;">
                     <div class="loading-tables" v-if="loadingStatus == 1">
                         <mdui-circular-progress></mdui-circular-progress>
                         正在加载桌台信息
@@ -36,10 +36,14 @@
 
         </div>
 
-        <mdui-bottom-app-bar scroll-target=".main-container">
+        <mdui-bottom-app-bar scroll-target=".main-container" style="position: relative; flex-shrink: 0;">
             
             <div style="flex-grow: 1"></div>
-            <mdui-button @click="nextStep" style="height: 56px; border-radius: var(--mdui-shape-corner-large)">
+            <mdui-button 
+            @click="nextStep" 
+            style="height: 56px; border-radius: var(--mdui-shape-corner-large);"
+            :disabled="orderType == '0' && selectedTable == -1"
+            >
                 下一步
                 <mdui-icon-arrow-forward slot="icon" style="width: 24px; height: 24px;"></mdui-icon-arrow-forward>
             </mdui-button>
@@ -61,7 +65,7 @@
 
     import NumberSelect from '@/components/NumberSelect.vue'
     
-    import TablesContainer from './TablesContainer.vue';
+    import TablesContainer from '../components/TablesContainer.vue';
     import { ref, onMounted } from 'vue'
     import request from '@/utils/request.js'
     
@@ -104,11 +108,19 @@
     })
 
     const nextStep = () => {
+        if (orderType.value == '1') {
+            selectedTable.value = -1
+
+        }
         emit('update:index', props.index + 1)
+
+        const index = tables.value.findIndex(table => table.id == selectedTable.value)
+        console.log(tables.value, index)
         emit('update:orderInfo', {
             "order_type": orderType.value,
             "party_size": partySize.value,
-            "table": selectedTable.value
+            "table_id": selectedTable.value,
+            "table_name": tables.value[index].name
         })
     }
 

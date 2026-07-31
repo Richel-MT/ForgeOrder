@@ -6,7 +6,7 @@
 
                     <div style="margin-left: auto; display: flex; align-items: flex-end; gap: 4px; color: rgba(var(--mdui-color-primary))">
                         <span style="font-size: 16px; line-height: 1;">¥</span>
-                        <span style="font-size: 24px; line-height: 1;">10</span>
+                        <span style="font-size: 24px; line-height: 1;">{{ props.dish.price / 100}}</span>
                     </div>
 
                 </div>
@@ -19,7 +19,6 @@
 
         
 
-        
 
         <div style="display: flex; align-items: center;">
         
@@ -30,7 +29,7 @@
 
     <mdui-dialog
         ref="addDishDialog"
-        headline="添加到购物车"
+        :headline="props.dish.name"
 
         close-on-esc 
         class="add-dish-dialog"
@@ -53,7 +52,8 @@
                 
                 <mdui-list-item v-for="(options, name) in dish.choices" :key="name" nonclickable>
                     <div style="margin-bottom: 16px">{{name}}</div>
-                    <mdui-segmented-button-group selects="single" full-width :value="options[0]" @change="currentChoices[name] = $event.target.value">
+                    <mdui-segmented-button-group selects="single" full-width :value="currentChoices[name] || options[0]" @change="currentChoices[name] = $event.target.value">
+
                         <mdui-segmented-button v-for="(option, id) in options" :key="id" :value="option" >{{option}}</mdui-segmented-button>
                     </mdui-segmented-button-group>
                 </mdui-list-item>
@@ -107,8 +107,9 @@
     }
 
     const addDishToShoppingCart = () => {
+        setDefaultChoice()
 
-
+        // console.log(currentChoices.value)
         emit('update', {
             id: props.dish.id,
             dishInfo: props.dish,
@@ -121,10 +122,26 @@
 
 
         addDishDialog.value.open = false
-
-        
-
     }
+
+    const setDefaultChoice = () => {
+
+        if (Object.keys(currentChoices.value).length > 0) {
+            return
+        }
+
+        if (props.dish.choices) {
+            const firstKey = Object.keys(props.dish.choices)[0]
+            currentChoices.value = {
+                [firstKey]: props.dish.choices[firstKey][0] || {}
+                
+            }
+        }
+    }
+
+    onMounted(() => {
+        setDefaultChoice()
+    })
 
 </script>
 
