@@ -11,6 +11,8 @@ from core.log.logger import Logger
 from app.routes.manager import RouteManager
 from core.log.context import get_log_context
 
+version: str = "0.0.1"
+
 logger: Logger
 db_logger_thread : Thread
 db_logger_queue : Queue

@@ -2,7 +2,6 @@ import time
 import os
 
 from app.init import init, shutdown
-from const import *
 from core.error_handler.excepthook import install
 from core.log import get_console_logger
 import extensions
@@ -24,7 +23,7 @@ if __name__ == "__main__":
     os.environ["ENV"] = extensions.config.get("server.env")
 
     logger = extensions.get_log_context(extensions.logger, "MAIN")
-    logger.debug(f"ForgeOrder版本：%s" % VERSION,"DebugMsg")
+    logger.debug(f"ForgeOrder版本：%s" % extensions.version,"DebugMsg")
 
     
 
