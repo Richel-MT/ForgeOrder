@@ -1,11 +1,10 @@
-from codecs import register
 import os
 
 from flask import Flask
 
-from .before_request import before_request
-from .after_request import after_request
-from .errorhandler import *
+from .hooks.before_request import before_request
+from .hooks.after_request import after_request
+from .hooks.errors import *
 import extensions
 
 def setup_app():

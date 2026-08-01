@@ -5,7 +5,7 @@ from app.init import init, shutdown
 from core.error_handler.excepthook import install
 from core.log import get_console_logger
 import extensions
-from app.init_app import setup_app
+from app.setup import setup_app
 
 
 

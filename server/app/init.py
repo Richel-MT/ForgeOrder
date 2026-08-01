@@ -11,7 +11,7 @@ from core.auth import AuthManager
 from app.config import setup_config
 from core.log.logger import setup_logger
 from app.routes.manager import RouteManager
-from app.init_app.schema import CLIENT_ERROR
+from app.hooks.schema import CLIENT_ERROR
 from app.db.main_db import MainDatabase
 from core.log import get_console_logger
 from app.app_settings.manager import SettingsManager
@@ -161,11 +161,11 @@ def shutdown():
 
     extensions.db_logger_thread.join()
 
-
+    # 关闭全局的AppSettings数据库连接
     extensions.app_settings.db.close()
 
-
+    # 关闭打印服务
     extensions.print_manager.shutdown()
 
-
+    # 关闭日志记录器
     logging.shutdown()

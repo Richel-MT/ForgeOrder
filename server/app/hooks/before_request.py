@@ -10,13 +10,14 @@ from app.log import RequestLogContext
 from app.routes.res_generator import ResponseGenerator
 
 def _handle_auth():
+    # 获取日志上下文
     logger = g.logger.get_log_context("BEFORE_REQUEST")
-    # 判断是否以/api/开头，以及是否在白名单内
+
     if  request.path.startswith("/api/"):
         check_result, route_data = extensions.route_manager.verify_auth(request.path)
         
         if not check_result:
-            
+            # 路由不存在
             return make_response(
                 1003,
                 None
@@ -24,45 +25,45 @@ def _handle_auth():
         
 
         if not route_data["auth"]: #type: ignore
-            # 无需登录
+            # 无需认证的api继续请求
             return None
         else:
-            # 需要登录的api请求，进一步判断token
-            logger.debug("访问需认证接口。", "DebugMsg")
+            # 需要认证的api请求
             pass
     else:
-        # 正常页面，继续访问
-        # print(2)
+        # 非api请求，继续访问
         return None
     
-    # 用户登录状态检查
+    # 从请求头中获取Token
     token = request.headers.get("Authorization", None)
 
-
-    # 判断token是否有效
+    # 检查Token是否存在
     if token is None:
-        logger.debug("无Token。", "DebugMsg")
+        # Token不存在
         return make_response(
             2001,
             None
         ), 401
     
     elif token.startswith("Bearer "):
-        token = token.split(" ")[1]
+        # Token格式正确
+        token = token.split(" ")[1] # 提取token部分
     else:
-        logger.debug("Token格式错误。", "DebugMsg")
+        # Token格式错误
         return make_response(
             2003,
             None
         ), 401
-    
+
+    # 使用AuthManager验证Token
     status, result = extensions.auth_manager.verify(token)
     
-    # token无效。处理错误类型，返回正确的status代码
+    
     if not status:
+        # 验证失败，处理错误
         match result:
             case None:
-                # token无效
+                # Token无效
                 logger.info({
                     "ip": get_client_ip(),
                     "error": "InvalidToken"
@@ -73,17 +74,19 @@ def _handle_auth():
                     None
                 ) , 401
             case "expire":
+                # Token过期
                 logger.info({
                     "ip": get_client_ip(),
                     "error": "TokenExpire"
                 }, "AuthError")
                 
-                # token过期
+
                 return make_response(
                     2004,
                     None
                 ) , 401
             case "logout":
+                # 用户已退出登录
                 logger.info({
                     "ip": get_client_ip(),
                     "error": "TokenLogout"
@@ -94,6 +97,7 @@ def _handle_auth():
                     None
                 ) , 401
             case "old_device":
+                # 旧设备登录
                 logger.info({
                     "ip": get_client_ip(),
                     "error": "OldDevice"
@@ -104,7 +108,9 @@ def _handle_auth():
                     None
                 ) , 401
     else:
-        # token有效，判断ip是否对应
+        # Token有效
+
+        # 判断Token记录的ip与请求的ip是否一致
         if result["device_ip"] != get_client_ip(): # type: ignore
             # ip不一致
             logger.info({
@@ -117,32 +123,32 @@ def _handle_auth():
                 2003,
                 None
             ) , 401
-        
-        # token正确，更新到期时间
-        logger.debug("Token有效。", "DebugMsg")
-        
+        else:
+            # ip一致
+            pass
+            
+        # 用户认证成功，更新Token到期时间
         extensions.auth_manager.update_time(token)
 
-        logger.debug(f"更新Token的有效时间为%s " % result['expire'], "DebugMsg") # type: ignore
-        
-        # token 有效，判断是否为管理员页面
-        if route_data["is_admin"]:
-            # 管理员页面，判断用户是否有权限
-            logger.debug(f"访问管理员接口。", "DebugMsg") # type: ignore
 
-            if not result["user"]["is_admin"] == 1:
+        # 判断是否为管理员页面
+        if route_data["is_admin"]: # type: ignore
+            
+            # 管理员页面，判断用户是否有权限
+            if not result["user"]["is_admin"] == 1: # type: ignore
+                # 非管理员用户，记录日志
                 logger.warning(
                     {
                         "path": request.path,
-                        "user_id": result["user"]["id"],
+                        "user_id": result["user"]["id"], # type: ignore
                         "ip": get_client_ip(),
                     },  "NonAdminUserAccess"
                 )
-                # 非管理员用户，返回错误
                 return make_response( # type: ignore
                 2002,
                 None
             ), 401
+            
         
         # 继续请求
         g.user_info = result
