@@ -1,7 +1,7 @@
-from .models.accounts import accounts_bp
-from .models.basic import basic_bp
-from .models.shop import shop_bp
-from .models.system import system_bp
+from .views.accounts import accounts_bp
+from .views.basic import basic_bp
+from .views.shop import shop_bp
+from .views.system import system_bp
 
 blueprints = [
     basic_bp,

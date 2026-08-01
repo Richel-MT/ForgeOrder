@@ -7,7 +7,6 @@ from app.app_settings.global_connection import SettingsConnection
 from app.printer.service import PrintManager
 from core.utils import get_local_ip
 import extensions
-from app.models.exceptions import *
 from const import *
 from core.auth import AuthManager
 from app.config import setup_config

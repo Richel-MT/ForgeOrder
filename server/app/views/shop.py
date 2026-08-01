@@ -1,12 +1,9 @@
-from http.client import responses
 import time
-from urllib import response
 
-from click import argument
 from flask import g, request
 
 from app.app_settings.manager import SettingsManager
-from app.routes.response import ResponseInfo
+from app.routes.res_generator import ResponseInfo
 from core.db.exceptions import ColumnNotFoundError, NotFoundError
 from core.utils import make_response
 from app.routes.app_bp import AppBlueprint
