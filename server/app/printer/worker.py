@@ -12,7 +12,7 @@ from app.app_settings.manager import SettingsManager
 from core.log.console import get_console_logger
 from core.log.context import get_log_context
 from core.log.logger import Logger
-from app.db.get_db import get_database
+from app.db.connections import get_database_
 from core.db.exceptions import NotFoundError
 from .renderer import Renderer
 
@@ -39,7 +39,7 @@ def print_worker(q: Queue, logger: Logger):
 
     log_ctx = get_log_context(logger, "PRINT_WORKER")
 
-    db = get_database()
+    db = get_database_()
     sm = SettingsManager(db)
 
 

@@ -1,5 +1,6 @@
-from ..repository.manager import RepositoryManager
+from ..repository.manager import RepositoryManagerBase
 
-class Service:
-    def __init__(self, repo_manager: RepositoryManager):
+class ServiceBase:
+    def __init__(self, repo_manager: RepositoryManagerBase):
         self.repo_manager = repo_manager
+

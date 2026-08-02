@@ -4,7 +4,7 @@ import uuid
 import json
 import datetime
 
-from ..db.get_db import get_database
+from ..db.connections import get_database
 from ..db.main_db import MainDatabase
 from .receipt import Receipt
 from app.printer import receipt

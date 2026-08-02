@@ -6,7 +6,7 @@ from app.routes.res_generator import ResponseInfo
 import extensions
 from app.routes.app_bp import AppBlueprint
 from core.utils import get_client_ip, make_response
-from ..db.get_db import get_database_flask
+from ..db.connections import get_database
 from .exceptions import *
 from app.routes.field import RequestField, NotEmpty
 
@@ -42,7 +42,7 @@ def login():
     
     
     # 连接数据库
-    main_db = get_database_flask()
+    main_db = get_database()
     
     # 查询用户
     account = main_db.users.get_from_username(username)

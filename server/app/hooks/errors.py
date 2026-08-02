@@ -5,7 +5,7 @@ from werkzeug.exceptions import UnsupportedMediaType
 
 from core.log.console import get_console_logger
 
-from ..db.get_db import close_database_flask
+from ..db.connections import close_database
 from core.utils import make_response
 import extensions
 import traceback

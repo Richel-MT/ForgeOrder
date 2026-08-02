@@ -14,6 +14,8 @@ class Column:
     not_null: bool = False
     unique: bool = False
 
+    auto_increment: bool = False
+
     foreign: tuple[str, str] | None = None # 外键，格式为 (表名, 列名)
 
     default: Any | None = None
@@ -35,6 +37,9 @@ class Column:
         if self.foreign is not None:
             tags.append(f'REFERENCES {self.foreign[0]} ({self.foreign[1]})')
 
+        if self.auto_increment:
+            tags.append('AUTOINCREMENT')
+            
         return f"{self.name} {self.column_type.origin_type} {' '.join(tags)}"
 
 class Repository:

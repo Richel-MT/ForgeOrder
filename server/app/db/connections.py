@@ -5,7 +5,7 @@ import extensions
 from .main_db import MainDatabase
 
 
-def get_database_flask():
+def get_database():
     if "database" not in g:
         g.database = MainDatabase(extensions.config.get("database.path"))
         
@@ -13,10 +13,10 @@ def get_database_flask():
 
 
 
-def close_database_flask():
+def close_database():
     if "database" in g:
         g.database.close()
 
-def get_database():
+def get_database_():
     return MainDatabase(extensions.config.get("database.path"))
     

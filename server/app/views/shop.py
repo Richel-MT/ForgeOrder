@@ -8,7 +8,7 @@ from core.db.exceptions import ColumnNotFoundError, NotFoundError
 from core.utils import make_response
 from app.routes.app_bp import AppBlueprint
 from app.db.main_db.exceptions import CategoryNotFoundError
-from ..db.get_db import get_database_flask
+from ..db.connections import get_database
 from app.routes.field import *
 
 shop_bp = AppBlueprint("shop", __name__)
@@ -19,7 +19,7 @@ shop_bp = AppBlueprint("shop", __name__)
                  ResponseInfo(0, "OK", bool)
              ])
 def get_business_state():
-    db = get_database_flask()
+    db = get_database()
     sm = SettingsManager(db)
 
     is_business = sm.get("shop.isBusiness")
@@ -41,7 +41,7 @@ def get_business_state():
 def set_business_state():
     is_business = g.args["is_business"]
     
-    db = get_database_flask()
+    db = get_database()
     sm = SettingsManager(db)
 
     sm.set("shop.isBusiness", is_business)
@@ -63,7 +63,7 @@ def set_business_state():
                  ResponseInfo(0, "OK", dict)
              ])
 def get_all_dishes():
-    db = get_database_flask()
+    db = get_database()
 
     dishes, categories = db.dishes.get_all()
 
@@ -86,7 +86,7 @@ def get_dish():
     dish_id = g.args["id"]
 
 
-    db = get_database_flask()
+    db = get_database()
 
     try:
         dish = db.dishes.get_from_id(dish_id)
@@ -113,7 +113,7 @@ def update_dish():
     changed_items : dict = g.args["changed_items"]
     changed_choices : list = g.args["changed_choices"]
 
-    db = get_database_flask()
+    db = get_database()
 
     
     if AllOf( # failed
@@ -152,7 +152,7 @@ def update_dish():
 def delete_dish():
     dish_id: int = g.args["dish_id"]
 
-    db = get_database_flask()
+    db = get_database()
 
     g.logger.set_category("SHOP")
     
@@ -192,7 +192,7 @@ def new_dish():
     is_available: bool = g.args["is_available"]
     choices: dict = g.args["choices"]
 
-    db = get_database_flask()
+    db = get_database()
 
     g.logger.set_category("SHOP")
 
@@ -236,7 +236,7 @@ def new_dish():
 def delete_category():
     category_id: int = g.args["category_id"]
 
-    db = get_database_flask()
+    db = get_database()
 
     # 删除该分类下的所有菜品
     db.dishes.delete_by_category(category_id)
@@ -263,7 +263,7 @@ def delete_category():
 
 @shop_bp.get("/api/shop/category/getAll" , auth=True)
 def get_all_categories():
-    db = get_database_flask()
+    db = get_database()
 
     categories = db.category.get_all()
     categories = [dict(category) for category in categories]
@@ -289,7 +289,7 @@ def edit_category():
     category_id: int = g.args["category_id"]
     category_name: str = g.args["category_name"]
 
-    db = get_database_flask()
+    db = get_database()
 
     g.logger.set_category("SHOP")
 
@@ -318,7 +318,7 @@ def new_category():
     
     name: str = g.args["name"]
 
-    db = get_database_flask()
+    db = get_database()
 
     g.logger.set_category("SHOP")
 
@@ -339,7 +339,7 @@ def new_category():
                   ResponseInfo(0, "OK", None)
               ])
 def get_all_tables():
-    db = get_database_flask()
+    db = get_database()
 
     tables = db.tables.get_all()
 
@@ -358,7 +358,7 @@ def get_all_tables():
 def new_table():
     name: str = g.args["name"]
 
-    db = get_database_flask()
+    db = get_database()
 
     g.logger.set_category("SHOP")
 
@@ -389,7 +389,7 @@ def update_table():
     table_id: int = g.args["id"]
     new_name: str = g.args["name"]
 
-    db = get_database_flask()
+    db = get_database()
 
     g.logger.set_category("SHOP")
 
@@ -421,7 +421,7 @@ def delete_table():
     table_id: int = g.args["id"]
 
 
-    db = get_database_flask()
+    db = get_database()
     g.logger.set_category("SHOP")
 
     try:
