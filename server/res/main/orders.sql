@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS orders (
     party_size INTEGER NOT NULL DEFAULT 1, -- 人数，默认1人
     
     FOREIGN KEY (table_id) REFERENCES tables (id),
-    FOREIGN KEY (creator) REFERENCES users (id)
 );
 
 CREATE TABLE IF NOT EXISTS sub_orders (
