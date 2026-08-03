@@ -9,8 +9,15 @@ export function useAuth() {
     const router = useRouter()
 
     const token = ref(localStorage.getItem('token') || '')
-    const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || 'null'))
-
+    const userInfo = ref(null)
+    try{
+        userInfo.value = JSON.parse(localStorage.getItem('userInfo') || 'null')
+    }
+    catch(error) {
+            console.error(error)
+            userInfo.value = null
+        }
+    
     const isLoggedIn = computed(() => token.value != '')
 
     const login = async(username, password, cover) => {
@@ -30,7 +37,8 @@ export function useAuth() {
 
                     token.value = res.data.data.token
 
-                    userInfo.value = res.data.data.user_info
+                    userInfo.value = res.data.data.user
+
                     localStorage.setItem('token', token.value)
                     localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
 
