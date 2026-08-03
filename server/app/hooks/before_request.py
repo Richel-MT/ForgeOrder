@@ -3,7 +3,8 @@ import time
 
 from flask import request, g
 
-from app.routes.exceptions import ArgumentException
+from app.db.connections import get_database
+from app.service.users import UserService
 import extensions
 from core.utils.server import make_response, get_client_ip
 from app.log import RequestLogContext
@@ -55,14 +56,15 @@ def _handle_auth():
             None
         ), 401
 
-    # 使用AuthManager验证Token
-    status, result = extensions.auth_manager.verify(token)
+    # 使用UserService验证Token
+    service = UserService(g.repos, extensions.config)
+
+    result = service.check_token(token)
     
-    
-    if not status:
+    if result.code != service.AUTH.SUCCESS:
         # 验证失败，处理错误
-        match result:
-            case None:
+        match result.code:
+            case service.AUTH.TOKEN_INVALID:
                 # Token无效
                 logger.info({
                     "ip": get_client_ip(),
@@ -73,7 +75,7 @@ def _handle_auth():
                     2003,
                     None
                 ) , 401
-            case "expire":
+            case service.AUTH.TOKEN_EXPIRED:
                 # Token过期
                 logger.info({
                     "ip": get_client_ip(),
@@ -85,7 +87,7 @@ def _handle_auth():
                     2004,
                     None
                 ) , 401
-            case "logout":
+            case service.AUTH.TOKEN_LOGOUT:
                 # 用户已退出登录
                 logger.info({
                     "ip": get_client_ip(),
@@ -96,7 +98,7 @@ def _handle_auth():
                     2003,
                     None
                 ) , 401
-            case "old_device":
+            case service.AUTH.TOKEN_OLD_DEVICE:
                 # 旧设备登录
                 logger.info({
                     "ip": get_client_ip(),
@@ -111,11 +113,12 @@ def _handle_auth():
         # Token有效
 
         # 判断Token记录的ip与请求的ip是否一致
-        if result["device_ip"] != get_client_ip(): # type: ignore
+        token_info: dict = result.data #type: ignore
+        if token_info["ip"] != get_client_ip(): # type: ignore
             # ip不一致
             logger.info({
                 "ip": get_client_ip(),
-                "token_ip": result["device_ip"],
+                "token_ip": token_info["ip"],
                 "error": "IPNotMatch"
             }, "AuthError") # type: ignore
             
@@ -123,24 +126,19 @@ def _handle_auth():
                 2003,
                 None
             ) , 401
-        else:
-            # ip一致
-            pass
-            
-        # 用户认证成功，更新Token到期时间
-        extensions.auth_manager.update_time(token)
+
 
 
         # 判断是否为管理员页面
         if route_data["is_admin"]: # type: ignore
             
             # 管理员页面，判断用户是否有权限
-            if not result["user"]["is_admin"] == 1: # type: ignore
+            if not token_info["user"]["is_admin"] == True: # type: ignore
                 # 非管理员用户，记录日志
                 logger.warning(
                     {
                         "path": request.path,
-                        "user_id": result["user"]["id"], # type: ignore
+                        "user_id": token_info["user"]["id"], # type: ignore
                         "ip": get_client_ip(),
                     },  "NonAdminUserAccess"
                 )
@@ -151,7 +149,7 @@ def _handle_auth():
             
         
         # 继续请求
-        g.user_info = result
+        g.user_info = result.data
 
 def _handle_args():
     logger = extensions.get_log_context(extensions.logger, "BEFORE_REQUEST")
@@ -189,7 +187,6 @@ def _handle_args():
 def _handle_request_info():
     g.request_id = str(uuid.uuid4())
 
-    
     g.logger = RequestLogContext(extensions.logger, "REQUEST")
 
     g.start_time = time.time()
@@ -201,6 +198,8 @@ def _handle_request_info():
         responses = {}
 
     g.res = ResponseGenerator(responses)
+
+    get_database()
 
     return None
 

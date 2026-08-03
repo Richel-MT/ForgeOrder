@@ -14,4 +14,7 @@ def after_request(response: Response):
         "duration": round(cost, 2), #ms
     }, "ResponseInfo")
 
+    if cost > 500:
+        g.logger.warning('', "TooSlowRequest")
+
     return response

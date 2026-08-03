@@ -1,13 +1,12 @@
 import logging
 import os
 import sys
-from venv import logger
 
+from app.db.respository import RepositoryManager
+from core.database.database import Database
 from app.app_settings.global_connection import SettingsConnection
 from app.printer.service import PrintManager
-from core.utils import get_local_ip
 import extensions
-from core.auth import AuthManager
 from app.config import setup_config
 from core.log.logger import setup_logger
 from app.routes.manager import RouteManager
@@ -117,16 +116,17 @@ def init():
     # 初始化日志记录器
     init_log()
 
+    # 初始化数据库表
+    db = Database(extensions.config.get("database.path"))
+    db.connect()
+    
+    repos = RepositoryManager(db)
+    repos.init()
 
-    # 初始化认证管理器
-    extensions.auth_manager = AuthManager(
-            extensions.config.get("auth.secret_key"),
-            int(extensions.config.get("auth.available_time")),
-        )
     
 
-    # 取本地ip
-    extensions.local_ip = get_local_ip()
+    # 取本地ip（将弃用）
+    extensions.local_ip = "will be deprecated"
 
 
     # 初始化ArgumentsManager

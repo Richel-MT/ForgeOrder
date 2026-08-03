@@ -43,6 +43,8 @@ class Logger(logging.Logger):
         else:
             msg = str(msg)
 
+        extra["origin_msg"] = msg
+
         if category in self.ignore_category or action in self.ignore_action:
             return
         
@@ -93,7 +95,7 @@ class DatabaseHandler(logging.Handler):
             case _:
                 level = logging.INFO
 
-        self.q.put((time, level, record.category, record.action, record.msg, record.request_id))
+        self.q.put((time, level, record.category, record.action, record.origin_msg, record.request_id))
         
         
 
@@ -163,7 +165,7 @@ def setup_logger(name: str, db_name: str, level: str = "info"):
         queue, thread = create_worker(db_name)
 
         db_handler = DatabaseHandler(queue)
-        # db_handler.setFormatter(formatter)
+
         db_handler.setLevel(level_int)
         logger.addHandler(db_handler)
     else:

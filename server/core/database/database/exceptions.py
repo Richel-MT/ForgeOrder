@@ -92,21 +92,21 @@ def convert_error(error: sqlite3.Error):
     sqlite_errorname = getattr(error, "sqlite_errorname", None)
 
     if sqlite_errorcode is None:
-        raise DatabaseError("Unknown database error. " + str(error), error)
+        return  DatabaseError("Unknown database error. " + str(error), error)
 
     match sqlite_errorcode:
         case 5:
-            raise DatabaseLockedError(error)
+            return DatabaseLockedError(error)
         case 2067:
-            raise UniqueConstraintError(error)
+            return UniqueConstraintError(error)
         case 1555:
-            raise PrimaryKeyConstraintError(error)
+            return PrimaryKeyConstraintError(error)
         case 787:
-            raise ForeignKeyConstraintError(error)
+            return ForeignKeyConstraintError(error)
         case 1299:
-            raise NotNullConstraintError(error)
+            return NotNullConstraintError(error)
         case 279:
-            raise CheckConstraintError(error)
+            return CheckConstraintError(error)
         # case 14:
         #     raise DatabaseFileError("Cannot open database file. ", error)
         # case 26:
@@ -115,15 +115,15 @@ def convert_error(error: sqlite3.Error):
         #     raise DatabaseFileError("Disk is full.", error)
 
         case 20:
-            raise DatabaseTypeError(error)
+            return DatabaseTypeError(error)
         
         case _:
             basic_code = get_basic_code(sqlite_errorcode)
 
             match basic_code:
                 case 14:
-                    raise DatabaseCannotOpenError(f"({sqlite_errorcode} {sqlite_errorname}) Cannot open database file. ", error)
+                    return DatabaseCannotOpenError(f"({sqlite_errorcode} {sqlite_errorname}) Cannot open database file. ", error)
                 case _:
-                    raise DatabaseError(f"({basic_code} {sqlite_errorcode} {sqlite_errorname}) Unknown database error. " + str(error), error)
+                    return DatabaseError(f"({basic_code} {sqlite_errorcode} {sqlite_errorname}) Unknown database error. " + str(error), error)
 
         

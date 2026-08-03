@@ -16,16 +16,11 @@ def setup_app():
     for bp in blueprints:
         bp.register_for_app(app, extensions.route_manager)
 
-        
-
-
-    app.errorhandler(405)(method_not_allowed)
-    app.errorhandler(404)(not_found)
-    app.errorhandler(500)(internal_server_error)
-    app.errorhandler(415)(unsupported_media_type)
-    app.teardown_appcontext(teardown_appcontext) # type: ignore
+    
     app.before_request(before_request) # type: ignore
 
     app.after_request(after_request)
+
+    setup_error_handlers(app)
     
     return app

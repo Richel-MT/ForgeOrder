@@ -1,87 +1,78 @@
 import json
 
-from flask import current_app
+from flask import current_app, g
 from werkzeug.exceptions import UnsupportedMediaType
 
 from core.log.console import get_console_logger
 
-from ..db.get_db import close_database_flask
-from core.utils import make_response
+from ..db.connections import close_database
 import extensions
 import traceback
-import sqlite3
-from core.db.exceptions import ExecuteError
+from core.database.database.exceptions import DatabaseLockedError
+from app.routes.schema import GLOBAL
 
+# 415
 def unsupported_media_type(e: UnsupportedMediaType):
-        return make_response(
-            1001,
-            e.description,
-        ), 415
 
+        return GLOBAL.PAYLOAD_ERROR(e.description), 415
+# 405
 def method_not_allowed(e):
-        return make_response(
-            1002,
-            405,
-        ), 405
+        return GLOBAL.METHOD_ERROR(), 405
     
-
+# 404
 def not_found(e):
-        return make_response(
-            1003,
-            404,
-        ), 404
+        return GLOBAL.NOT_FOUND(), 404
 
-
+# 500
 def internal_server_error(e):
-        return make_response(
-            9001,
-            500,
-        ), 500
+        return GLOBAL.SERVER_ERROR(), 500
     
 
-def argument_exception(e):
-        return make_response(
-            1001,
-            e.args_,
-        ), 400
-    
-def handle_execute_error(e: ExecuteError):
-    extensions.logger.error(
-        {"sql": e.sql, "origin_error": str(e.origin_error)},
-        "FLASK_APP",
-        "ExecuteError"
-    )
-    return make_response(9002, 500), 500
+# 数据库错误处理
+def database_locked_error(e: DatabaseLockedError):
+        g.logger.warning({
+                "traceback": traceback.format_exception(type(e), e, e.__traceback__)
+		}, "DatabaseBusy")
+        return GLOBAL.DATABASE_BUSY(), 503
 
-
-def handle_sqlite_error(e: sqlite3.Error):
-    extensions.logger.error(
-        {"type": type(e).__name__, "msg": str(e)},
-        "FLASK_APP",
-        "SqliteError"
-    )
-    return make_response(9002, 500), 500
-
+def database_error(e):
+        return GLOBAL.DATABASE_ERROR(), 500
 
 def teardown_appcontext(error):
-        close_database_flask()
-        if error is not None:
-            logs = {
-                    "error": {
-                        "msg": str(error),
-                        "type": type(error).__name__,
-                    },
-                    "traceback": None
-                    
-                }
-            if isinstance(error, Exception):
-                logs["traceback"] = traceback.format_exception(type(error), error, error.__traceback__) # type: ignore
+	if error is not None:
+			# 有错误，回滚事务
+		if g.database is not None:
+			g.database.rollback()
 
-            logger = get_console_logger("flask")
+		logs = {
+				"error": {
+					"msg": str(error),
+					"type": type(error).__name__,
+				},
+				"traceback": None
+				
+			}
+		if isinstance(error, Exception):
+			logs["traceback"] = traceback.format_exception(type(error), error, error.__traceback__) # type: ignore
 
-            logger.warning('\n'.join(traceback.format_exception(type(error), error, error.__traceback__))) # type: ignore
-            extensions.logger.error(json.dumps(
-                logs
-            ), "FLASK_APP", "RequestError")
+		logger = get_console_logger("flask")
 
-        return current_app
+		logger.warning('\n'.join(traceback.format_exception(type(error), error, error.__traceback__))) # type: ignore
+		extensions.logger.error(json.dumps(
+			logs
+		), "FLASK_APP", "RequestError")
+
+	return current_app
+
+
+
+def setup_error_handlers(app):
+    app.errorhandler(405)(method_not_allowed)
+
+    app.errorhandler(404)(not_found)
+    app.errorhandler(500)(internal_server_error)
+    app.errorhandler(415)(unsupported_media_type)
+
+    app.errorhandler(DatabaseLockedError)(database_locked_error)
+
+    app.teardown_appcontext(teardown_appcontext)

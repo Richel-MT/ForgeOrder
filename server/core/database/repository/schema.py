@@ -38,7 +38,7 @@ class String(ColumnType):
     '''字符串类型，可指定长度'''
     origin_type = "TEXT"
 
-    def __init__(self, length: int):
+    def __init__(self, length: int | None = None):
         self.origin_type = "TEXT"
         self.length = length
 
@@ -48,7 +48,7 @@ class String(ColumnType):
         if value is None:
             return None
         
-        if len(value) > self.length:
+        if self.length is not None and len(value) > self.length:
             raise StringLengthError(self.length, value)
 
         return value

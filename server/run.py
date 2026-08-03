@@ -7,15 +7,13 @@ from core.log import get_console_logger
 import extensions
 from app.setup import setup_app
 
-
+install()
 
 
 if __name__ == "__main__":
 
     console_logger= get_console_logger("main")
     init_time = time.time()
-
-    install()
 
     init()
 

@@ -52,7 +52,7 @@ class Database:
             return cursor
         
         except sqlite3.Error as e:
-            convert_error(e)
+            raise convert_error(e)
 
     def executescript(self, script: str):
         '''执行SQL脚本，返回游标对象'''
@@ -63,7 +63,7 @@ class Database:
 
             return cursor
         except sqlite3.Error as e:
-            convert_error(e)
+            raise convert_error(e)
 
     def commit(self):
         '''提交事务'''
