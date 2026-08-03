@@ -40,27 +40,39 @@ def database_error(e):
 
 def teardown_appcontext(error):
 	if error is not None:
-			# 有错误，回滚事务
+		# 有错误，回滚事务
 		if g.database is not None:
 			g.database.rollback()
-
 		logs = {
-				"error": {
-					"msg": str(error),
-					"type": type(error).__name__,
-				},
-				"traceback": None
-				
-			}
+					"error": {
+						"msg": str(error),
+						"type": type(error).__name__,
+					},
+					"traceback": None
+					
+				}
+                
 		if isinstance(error, Exception):
 			logs["traceback"] = traceback.format_exception(type(error), error, error.__traceback__) # type: ignore
-
+	
 		logger = get_console_logger("flask")
-
+	
 		logger.warning('\n'.join(traceback.format_exception(type(error), error, error.__traceback__))) # type: ignore
 		extensions.logger.error(json.dumps(
 			logs
 		), "FLASK_APP", "RequestError")
+        
+	else:
+		
+		# 无错误，提交事务，防止未提交事务
+		if g.database is not None:
+			g.database.commit()
+
+	# 关闭数据库连接
+	close_database()
+                        
+
+	
 
 	return current_app
 

@@ -3,25 +3,13 @@ from typing import Any
 
 from .exceptions import *
 from app.db.main_db import MainDatabase
-from .registry import SETTINGS
+from ..service.schema import SETTINGS
 from core.type_convert import TypeConverterManager, TypeConvertError
 
 
 
     
-con_manager = TypeConverterManager()
 
-con_manager.register_converter(str, int, int)
-con_manager.register_converter(int, str, str)
-
-con_manager.register_converter(str, bool, lambda x: x == "1")
-con_manager.register_converter(bool, str, lambda x: "1" if x else "0")
-
-con_manager.register_converter(str, list, lambda x: json.loads(x))
-con_manager.register_converter(list, str, lambda x: json.dumps(x))
-
-con_manager.register_converter(str, dict, lambda x: json.loads(x))
-con_manager.register_converter(dict, str, lambda x: json.dumps(x))
 
 
 

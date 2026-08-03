@@ -1,14 +1,11 @@
 from typing import cast
 
 from flask import  request, g
-from werkzeug.security import check_password_hash
 
 from app.routes.res_generator import ResponseInfo
 from app.service.users import UserService
 import extensions
 from app.routes.app_bp import AppBlueprint
-from core.utils import get_client_ip, make_response
-from ..db.connections import get_database
 from .exceptions import *
 from app.routes.field import RequestField, NotEmpty
 
@@ -92,17 +89,3 @@ def logout():
     
 
 
-
-@accounts_bp.route("/test_print")
-def test_print():
-    from app.printer.receipt import Receipt
-
-    receipt = Receipt()
-    
-    receipt.build.text("123")
-    receipt.build.qr_code("https://baidu.com")
-
-    
-    extensions.print_manager.new(receipt)
-
-    return "ok"

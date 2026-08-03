@@ -60,6 +60,8 @@ class UserService(Service):
         用户登录操作。
         '''
 
+        repeat_login = False
+
         users = self.repo_manager.users.get(username=username)
 
         if users is None:
@@ -77,39 +79,40 @@ class UserService(Service):
             return Result(self.LOGIN.USER_DISABLED)
         
         # 检查token是否存在
-        token = self.repo_manager.tokens.get(user_id=users["id"])
+        token_info = self.repo_manager.tokens.get(user_id=users["id"])
 
-        if token is None:
+        if token_info is None:
             # token不存在，生成新的token
             token = self._generate_token()
             expire_time = datetime.now() + timedelta(days=self.available_time)
 
             self._insert_token(users["id"], token, expire_time, ip)
+            
 
         else:
             # token存在
-
+            token = token_info["token"]
 
             # 判断是否有效
-            if token["status"] != 0 or token["expire_time"] < datetime.now():
+            if token_info["status"] != 0 or token_info["expire_time"] < datetime.now():
                 # token无效
                 # 删除旧token
                 self.repo_manager.tokens.update(
-                    where={"id": token["id"]},
+                    where={"id": token_info["id"]},
                     data={"status": 3}
                 )
         
             # 判断ip是否匹配，token是否过期，token是否已注销
-            if token["ip"] != ip:
+            if token_info["ip"] != ip:
                 # token有效
                 if not cover:
                     return Result(self.LOGIN.NEW_DEVICE, {
-                        "old_device": token["ip"]
+                        "old_device": token_info["ip"]
                     })
                 else:
                     # 删除旧token
                     self.repo_manager.tokens.update(
-                        where={"id": token["id"]},
+                        where={"id": token_info["id"]},
                         data={"status": 3}
                     )
 
@@ -127,8 +130,10 @@ class UserService(Service):
 
             else:
                 # ip相同，同一设备的重复登录
-                return Result(self.LOGIN.REPEAT_LOGIN)
+                repeat_login = True
+
             
+                           
             
         # 删除敏感信息
         user_info = users.copy()
@@ -142,7 +147,9 @@ class UserService(Service):
 
         self.repo_manager.users.commit()
         # 返回结果
-        return Result(self.LOGIN.SUCCESS, {
+
+
+        return Result(self.LOGIN.SUCCESS if not repeat_login else self.LOGIN.REPEAT_LOGIN, {
             "token": token,
             "user": user_info,
         })
