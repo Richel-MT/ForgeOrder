@@ -1,13 +1,9 @@
 from queue import Queue
 from threading import Thread
-import uuid
-import json
-import datetime
 
-from ..db.connections import get_database
-from ..db.main_db import MainDatabase
+from ..service.print_task import PrintTaskService
+
 from .receipt import Receipt
-from app.printer import receipt
 from .worker import create_print_worker
 from  core.log.logger import Logger
 
@@ -25,32 +21,24 @@ class PrintManager:
     def _init(self):
         self.queue, self.worker_thread = create_print_worker(self.logger)
 
-    def new(self, content: Receipt, context: dict = {}, db: MainDatabase | None = None):
-        if db is None:
-            db = get_database()
+    def new(self, content: Receipt, service: PrintTaskService, context: dict = {}, ):
+
             
-        id = str(uuid.uuid7())
+        result = service.create(content, context)
 
-        content_str = content.render_json()
+        task_id = result.data
 
-        context_str = json.dumps(context)
-
-        now = datetime.datetime.now()
-
-        db.print_task.new(id, content_str, now, context_str)
-
-        self.queue.put(id)
+        self.queue.put(task_id)
 
 
         self.logger.info({
-            "id": id,
+            "id": task_id,
         }, "PRINTER", "PrintTaskCreated")
 
-        return id
+        return task_id
 
 
     def shutdown(self):
-        # self.queue.join()
         self.queue.put(None)
 
         self.worker_thread.join()
@@ -62,6 +50,6 @@ if __name__ == "__main__":
 
     
 
-    pm.new(receipt, {"fuck": "fuck"})
+    # pm.new(receipt, {"fuck": "fuck"})
 
 

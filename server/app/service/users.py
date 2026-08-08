@@ -101,8 +101,14 @@ class UserService(Service):
                     where={"id": token_info["id"]},
                     data={"status": 3}
                 )
+
+                # 生成新的token
+                token = self._generate_token()
+                expire_time = datetime.now() + timedelta(days=self.available_time)
+
+                self._insert_token(users["id"], token, expire_time, ip)
         
-            # 判断ip是否匹配，token是否过期，token是否已注销
+                
             if token_info["ip"] != ip:
                 # token有效
                 if not cover:

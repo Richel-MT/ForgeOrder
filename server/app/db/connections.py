@@ -8,8 +8,7 @@ from core.database.database import Database
 
 def get_database():
     if "database" not in g:
-        g.database = Database(extensions.config.get("database.path"))
-        g.database.connect()
+        g.database = get_database_()
 
     if "repos" not in g:
         g.repos = RepositoryManager(g.database)
@@ -25,5 +24,12 @@ def close_database():
         g.database.close()
 
 def get_database_():
-    return Database(extensions.config.get("database.path"))
+    db =  Database(extensions.config.get("database.path"))
+
+    try:
+        db._is_available()
+    except:
+        db.connect()
+
+    return db
     

@@ -3,7 +3,7 @@ from typing import Any
 
 from ..database import Database
 from .schema import ColumnType
-from .exceptions import ColumnNotFoundError, EmptyQueryCriteriaError
+from .exceptions import ColumnNotFoundError, EmptyQueryCriteriaError, RecordNotFoundError
 
 @dataclass
 class Column:
@@ -167,8 +167,10 @@ SET {', '.join([f'{key} = ?' for key in data.keys()])}
 WHERE {' AND '.join([f'{key} = ?' for key in where.keys()])}
 
 '''
-        self.db.execute(sql, tuple(data.values()) + tuple(where.values()))
+        cursor = self.db.execute(sql, tuple(data.values()) + tuple(where.values()))
 
+        if cursor.rowcount == 0:
+            raise RecordNotFoundError(where)
 
     def delete(self, where: dict):
         '''根据where删除表中的值'''

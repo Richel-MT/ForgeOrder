@@ -34,7 +34,7 @@ root_dir = os.path.dirname(os.path.abspath(__file__))
 route_manager: RouteManager
 
 
-app_settings: SettingsConnection
+
 
 
 print_manager: PrintManager

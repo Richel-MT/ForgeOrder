@@ -8,6 +8,8 @@ from escpos.printer import Usb, Network, Win32Raw
 from escpos.escpos import Escpos
 
 
+from app.db.respository import RepositoryManager
+from app.service import SettingsService
 from core.log.console import get_console_logger
 from core.log.context import get_log_context
 from core.log.logger import Logger
@@ -39,38 +41,46 @@ def print_worker(q: Queue, logger: Logger):
     log_ctx = get_log_context(logger, "PRINT_WORKER")
 
     db = get_database_()
-    sm = SettingsManager(db)
+    db.connect()
+
+    repos = RepositoryManager(db)
+    settings_service = SettingsService(repos)
 
 
     # 初始化连接信息
     connect_info = {}
 
-    connect_info["type"] = sm.get("printer.connection.type")
+    connect_info["type"] = settings_service.get("printer.connection.type")
     if connect_info["type"] == "Network":
-        connect_info["ip"] = sm.get("printer.connection.network.ip")
-        connect_info["port"] = sm.get("printer.connection.network.port")
-        connect_info["timeout"] = sm.get("printer.connection.network.timeout")
+        connect_info["ip"] = settings_service.get("printer.connection.network.ip")
+        connect_info["port"] = settings_service.get("printer.connection.network.port")
+        connect_info["timeout"] = settings_service.get("printer.connection.network.timeout")
     elif connect_info["type"] == "Usb":
 
-        connect_info["vid"] = sm.get("printer.connection.usb.vid")
-        connect_info["pid"] = sm.get("printer.connection.usb.pid")
+        connect_info["vid"] = settings_service.get("printer.connection.usb.vid")
+        connect_info["pid"] = settings_service.get("printer.connection.usb.pid")
 
     elif connect_info["type"] == "Win32Raw":
-        connect_info["name"] = sm.get("printer.connection.win32.name")
+        connect_info["name"] = settings_service.get("printer.connection.win32.name")
 
-    connect_info["encoding"] = sm.get("printer.encoding")
-    connect_info["profile"] = sm.get("printer.profile")
+    connect_info["encoding"] = settings_service.get("printer.encoding")
+    connect_info["profile"] = settings_service.get("printer.profile")
 
 
     qr_info = {}
-    qr_info["model"] = sm.get("printer.QRCode.model")
-    qr_info["native"] = sm.get("printer.QRCode.native")
-    qr_info["correction"] = sm.get("printer.QRCode.correction")
+    qr_info["model"] = settings_service.get("printer.QRCode.model")
+    qr_info["native"] = settings_service.get("printer.QRCode.native")
+    qr_info["correction"] = settings_service.get("printer.QRCode.correction")
 
-    dots = sm.get("printer.dotsPerLine")
+    dots = settings_service.get("printer.dotsPerLine")
 
     printer: Escpos | None = None
     retry_connect_count = 0
+
+    log_ctx.info({
+        "connect_info": connect_info,
+        "qr_info": qr_info,
+    }, "WorkerStarted")
 
     while True:
         # 从队列中获取任务
@@ -184,11 +194,11 @@ def print_worker(q: Queue, logger: Logger):
             "id": entry,
         }, "PrintTaskFinished")
 
-           
+    db.close()       
 
-    db.close()
+    log_ctx.info("", "WorkerStopped")
 
-    log_ctx.info("", "StoppedWorker")
+    
 
 
 

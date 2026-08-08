@@ -44,3 +44,11 @@ class EmptyQueryCriteriaError(RepositoryError):
         super().__init__(
             f'Missing query criteria.'
         )
+
+class RecordNotFoundError(RepositoryError):
+    '''记录不存在'''
+
+    def __init__(self, where: dict):
+        super().__init__(
+            f'Record not found: {where}'
+        )

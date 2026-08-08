@@ -162,8 +162,7 @@ def shutdown():
 
     extensions.db_logger_thread.join()
 
-    # 关闭全局的AppSettings数据库连接
-    extensions.app_settings.db.close()
+
 
     # 关闭打印服务
     extensions.print_manager.shutdown()
