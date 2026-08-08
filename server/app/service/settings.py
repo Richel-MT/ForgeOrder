@@ -24,6 +24,9 @@ converter.register_converter(dict, str, lambda x: json.dumps(x))
 class SettingsService(Service):
 
     def _init(self):
+        '''
+        初始化设置项。
+        '''
         for prop in SETTINGS:
 
             row = self.repo_manager.settings.get(key=prop.key)
@@ -52,7 +55,9 @@ class SettingsService(Service):
                         raise SettingsInitError(f"AppSettings错误。{prop.key}验证失败，{result.error}")
 
     def get(self, key: str):
-        
+        '''
+        获取设置项的值。
+        '''
         prop = next((prop for prop in SETTINGS if prop.key == key), None)
         
         if prop is None:
@@ -70,6 +75,9 @@ class SettingsService(Service):
             raise SettingTypingError(key, prop.value_type, type(row["value"]))
 
     def set(self, key: str, value: Any):
+        '''
+        设置设置项的值。
+        '''
         prop = next((prop for prop in SETTINGS if prop.key == key), None)
         
         if prop is None:

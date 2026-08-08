@@ -37,9 +37,13 @@ class UserService(Service):
     AUTH = AuthResult
 
     def _generate_token(self):
+        '''使用secrets库生成随机token'''
         return secrets.token_urlsafe(32)
 
     def _insert_token(self, user_id: int, token: str, expire_time: datetime, ip: str):
+        '''
+        将一条token插入到表中。
+        '''
         self.repo_manager.tokens.insert(
             user_id=user_id,
             token=token,

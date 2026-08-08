@@ -329,7 +329,7 @@ def new_category():
     except ValueError:
         return g.res.CategoryNameExist()
      
-
+# 桌台
 @shop_bp.get("/api/shop/tables/getAll", auth=True, responses=[
                   ResponseInfo(0, "OK", None)
               ])

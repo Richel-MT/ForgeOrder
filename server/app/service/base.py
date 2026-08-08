@@ -10,5 +10,9 @@ class Service(ServiceBase):
 
 @dataclass
 class Result:
-      code: Any
-      data: Any | None = None
+    code: Any
+    data: Any | None = None
+
+
+    def __iter__(self):
+        return iter((self.code, self.data))
