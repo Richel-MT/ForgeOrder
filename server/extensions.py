@@ -3,7 +3,6 @@ from queue import Queue
 from threading import Thread
 import os
 
-from app.app_settings.global_connection import SettingsConnection
 from app.printer.service import PrintManager
 from core.auth import AuthManager
 from core.config.json_config import JSONConfig

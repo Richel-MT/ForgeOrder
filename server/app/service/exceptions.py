@@ -1,3 +1,5 @@
+from app.exceptions import UserError
+
 class SettingsInitError(UserError):
     def __init__(self, msg: str):
         self.msg = msg

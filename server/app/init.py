@@ -3,8 +3,9 @@ import os
 import sys
 
 from app.db.respository import RepositoryManager
+from app.service.settings import SettingsService
 from core.database.database import Database
-from app.app_settings.global_connection import SettingsConnection
+
 from app.printer.service import PrintManager
 import extensions
 from app.config import setup_config
@@ -13,7 +14,7 @@ from app.routes.manager import RouteManager
 from app.hooks.schema import CLIENT_ERROR
 from app.db.main_db import MainDatabase
 from core.log import get_console_logger
-from app.app_settings.manager import SettingsManager
+
 from app.cli import create_parser, execute_command
 from app.config.verify import verify_config
 from app.exceptions import UserError
@@ -88,18 +89,18 @@ def init_args():
     return execute_command(args)
 
 
-def verify_config_and_settings():
+def verify_config_and_settings(repos: RepositoryManager):
     # 验证配置项
     try:
         verify_config()
 
 
-        # 验证数据库的settings
-        db = MainDatabase(extensions.config.get("database.path"))
-        manager = SettingsManager(db)
 
+        service = SettingsService(repos)
 
-        manager._init()
+        service._init()
+
+        return service
 
     except UserError as e:
             console_logger.error(f"启动失败：{e} \n {e.hint}")
@@ -144,10 +145,10 @@ def init():
         sys.exit(0)
 
 
-    verify_config_and_settings()
+    settings_service = verify_config_and_settings(repos)
 
 
-    extensions.app_settings = SettingsConnection(extensions.config.get("database.path"))
+    extensions.app_settings = settings_service
     
     extensions.print_manager = PrintManager(extensions.logger)
 

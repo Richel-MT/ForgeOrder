@@ -2,13 +2,10 @@ import time
 
 from flask import g, request
 
-from app.app_settings.manager import SettingsManager
 from app.routes.res_generator import ResponseInfo
-from core.db.exceptions import ColumnNotFoundError, NotFoundError
+from app.service import SettingsService
 from core.utils import make_response
 from app.routes.app_bp import AppBlueprint
-from app.db.main_db.exceptions import CategoryNotFoundError
-from ..db.connections import get_database
 from app.routes.field import *
 
 shop_bp = AppBlueprint("shop", __name__)
@@ -19,13 +16,12 @@ shop_bp = AppBlueprint("shop", __name__)
                  ResponseInfo(0, "OK", bool)
              ])
 def get_business_state():
-    db = get_database()
-    sm = SettingsManager(db)
 
-    is_business = sm.get("shop.isBusiness")
+    service = SettingsService(g.repos)
+
+    is_business = service.get("shop.isBusiness")
     
     return g.res.OK(
-        0,
         is_business
     )
 
@@ -41,10 +37,9 @@ def get_business_state():
 def set_business_state():
     is_business = g.args["is_business"]
     
-    db = get_database()
-    sm = SettingsManager(db)
+    service = SettingsService(g.repos)
 
-    sm.set("shop.isBusiness", is_business)
+    service.set("shop.isBusiness", is_business)
 
     g.logger.set_category("SHOP")
 

@@ -6,7 +6,7 @@ from enum import Enum, auto
 from werkzeug.security import check_password_hash
 
 from core.config.json_config import JSONConfig
-from . import Service, Result
+from .base import Service, Result
 from ..db.respository import RepositoryManager
 
 class LoginResult(Enum):
@@ -221,7 +221,7 @@ class UserService(Service):
             # token未过期，更新过期时间
             self.repo_manager.tokens.update(
                 where={"token": token},
-                data={"expire_time": now + timedelta(days=self.available_time)}
+                data={"expire_time": now + timedelta(minutes=self.available_time)}
             )
 
 

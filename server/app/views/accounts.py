@@ -8,6 +8,7 @@ import extensions
 from app.routes.app_bp import AppBlueprint
 from .exceptions import *
 from app.routes.field import RequestField, NotEmpty
+from core.utils import get_client_ip
 
 accounts_bp = AppBlueprint("accounts", __name__)
 

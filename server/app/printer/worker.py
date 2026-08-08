@@ -8,7 +8,6 @@ from escpos.printer import Usb, Network, Win32Raw
 from escpos.escpos import Escpos
 
 
-from app.app_settings.manager import SettingsManager
 from core.log.console import get_console_logger
 from core.log.context import get_log_context
 from core.log.logger import Logger

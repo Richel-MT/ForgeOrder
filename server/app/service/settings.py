@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from . import Service
+from .base import Service
 from .schema import SETTINGS
 from .exceptions import *
 from core.type_convert import TypeConverterManager, TypeConvertError
@@ -78,7 +78,7 @@ class SettingsService(Service):
         if not isinstance(value, prop.value_type):
             raise SettingTypingError(key, prop.value_type, type(value))
         
-        value_str = converter.convert(value, prop.value_type)
+        value_str = converter.convert(value, str)
         
         self.repo_manager.settings.update(
             where={"key": key},
