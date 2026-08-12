@@ -15,7 +15,7 @@ def _handle_auth():
     logger = g.logger.get_log_context("BEFORE_REQUEST")
 
     if  request.path.startswith("/api/"):
-        check_result, route_data = extensions.route_manager.verify_auth(request.path)
+        check_result, route_data = extensions.routeManager.verify_auth(request.path)
         
         if not check_result:
             # 路由不存在
@@ -154,14 +154,14 @@ def _handle_auth():
 def _handle_args():
     logger = extensions.get_log_context(extensions.logger, "BEFORE_REQUEST")
 
-    if not extensions.route_manager.has_args(request.path):
+    if not extensions.routeManager.has_args(request.path):
         logger.debug("请求路径 %s，无需验证参数" % request.path, "DebugMsg")
         return None
     
     
     body = request.get_json()
 
-    result, data = extensions.route_manager.validate_args(request.path, body)
+    result, data = extensions.routeManager.validate_args(request.path, body)
 
     if result:
         g.args = data
@@ -193,7 +193,7 @@ def _handle_request_info():
 
 
     try:
-        responses = extensions.route_manager.routes[request.path]["responses"]
+        responses = extensions.routeManager.routes[request.path]["responses"]
     except KeyError: 
         responses = {}
 

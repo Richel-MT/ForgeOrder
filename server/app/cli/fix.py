@@ -2,7 +2,7 @@
 import sys
 import time
 
-from core.log import get_console_logger
+from core.log import getConsoleLogger
 
 
 def _fix_config():
@@ -11,7 +11,7 @@ def _fix_config():
     # from core.config.validation import 
     from app.config.verify import verify_config
 
-    logger = get_console_logger("fix")
+    logger = getConsoleLogger("fix")
 
     errors = verify_config(True)
 
@@ -38,7 +38,7 @@ def _fix_config():
 
 
 def fix(exit: bool = True):
-    logger = get_console_logger("fix")
+    logger = getConsoleLogger("fix")
     start_time = time.time()
 
     

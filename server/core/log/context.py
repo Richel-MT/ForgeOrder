@@ -26,7 +26,7 @@ class LogContext:
     def critical(self, msg: str | dict | list , action: str, request_id: str = None):
         self.log(msg, logging.CRITICAL, action, request_id)
 
-def get_log_context(logger: Logger, category: str):
+def getLogContext(logger: Logger, category: str):
 
     
     return LogContext(logger, category)

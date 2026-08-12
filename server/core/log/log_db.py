@@ -21,7 +21,7 @@ class LogDatabase(Database):
     def _init(self):
         # 获取当前脚本所在目录
         import extensions
-        res_path = os.path.join(extensions.root_dir, "res")
+        res_path = os.path.join(extensions.rootDir, "res")
         sql_file = os.path.join(res_path, "log.sql")
         self.parser = SqlParse(sql_file)
 

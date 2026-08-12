@@ -4,7 +4,7 @@ from typing import Any
 from .base import Service
 from .schema import SETTINGS
 from .exceptions import *
-from core.type_convert import converter, TypeConvertError
+from core.typeConvert import converter, TypeConvertError
 
 
 

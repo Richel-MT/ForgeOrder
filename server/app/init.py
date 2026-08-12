@@ -14,13 +14,13 @@ from app.config import setup_config
 from core.log.logger import setup_logger
 from app.routes.manager import RouteManager
 from app.hooks.schema import CLIENT_ERROR
-from core.log import get_console_logger
+from core.log import getConsoleLogger
 
 from app.cli import create_parser, execute_command
 from app.config.verify import verify_config
 from app.exceptions import UserError
 
-console_logger= get_console_logger("startup")
+console_logger= getConsoleLogger("startup")
 
 def init_root_user(reset = False):
 
@@ -65,7 +65,7 @@ def init_log():
                 extensions.config.get("log.level")) #type: ignore
 
     extensions.logger = logger
-    extensions.db_logger_thread = thread
+    extensions.dbLoggerThread = thread
     extensions.db_logger_queue = queue
 
 
@@ -132,7 +132,7 @@ def init():
 
 
     # 初始化ArgumentsManager
-    extensions.route_manager = RouteManager()
+    extensions.routeManager = RouteManager()
 
 
     if extensions.config.get("server.first_start"):
@@ -150,22 +150,22 @@ def init():
 
 
     
-    extensions.print_manager = PrintManager(extensions.logger)
+    extensions.printManager = PrintManager(extensions.logger)
 
 def shutdown():
     # 关闭数据库日志记录器线程
-    if extensions.db_logger_thread is None:
+    if extensions.dbLoggerThread is None:
         return
     
     extensions.db_logger_queue.join()
     extensions.db_logger_queue.put(None)
 
-    extensions.db_logger_thread.join()
+    extensions.dbLoggerThread.join()
 
 
 
     # 关闭打印服务
-    extensions.print_manager.shutdown()
+    extensions.printManager.shutdown()
 
     # 关闭日志记录器
     logging.shutdown()

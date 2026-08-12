@@ -10,7 +10,7 @@ import extensions
 class JSONProvider(DefaultJSONProvider):
     ensure_ascii = False
 
-    def default(self, obj):
+    def default(self, obj): # type: ignore
         if isinstance(obj, datetime.datetime):
             print(obj)
             return obj.isoformat()
@@ -19,15 +19,15 @@ class JSONProvider(DefaultJSONProvider):
 
 
 
-def setup_app():
-    app = Flask(__name__, static_folder=os.path.join(extensions.root_dir, "static"), template_folder="res", static_url_path="/")
+def setupApp():
+    app = Flask(__name__, static_folder=os.path.join(extensions.rootDir, "static"), template_folder="res", static_url_path="/")
 
     app.json_provider_class = JSONProvider
     app.json = JSONProvider(app)
 
     from app import blueprints
     for bp in blueprints:
-        bp.register_for_app(app, extensions.route_manager)
+        bp.register_for_app(app, extensions.routeManager)
 
     
     app.before_request(before_request) # type: ignore

@@ -2,34 +2,34 @@ import time
 import os
 
 from app.init import init, shutdown
-from core.error_handler.excepthook import install
-from core.log import get_console_logger
+from core.errorHandler.excepthook import install
+from core.log import getConsoleLogger
 import extensions
-from app.setup import setup_app
+from app.setup import setupApp
 
 install()
 
 
 if __name__ == "__main__":
 
-    console_logger= get_console_logger("main")
-    init_time = time.time()
+    consoleLogger= getConsoleLogger("main")
+    initTime = time.time()
 
     init()
 
     ## 设置环境变量
     os.environ["ENV"] = extensions.config.get("server.env")
 
-    logger = extensions.get_log_context(extensions.logger, "MAIN")
+    logger = extensions.getLogContext(extensions.logger, "MAIN")
     
     logger.debug(f"ForgeOrder版本：%s" % extensions.version,"DebugMsg")
 
     
 
     # 初始化flask
-    app = setup_app()
+    app = setupApp()
     
-    console_logger.info("正在启动HTTP服务...")
+    consoleLogger.info("正在启动HTTP服务...")
 
     host = extensions.config.get("server.host")
     port = extensions.config.get("server.port")
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         },  "StartServer")
 
 
-        console_logger.info(f"启动成功({int((time.time() - init_time) * 1000)}ms)")
+        consoleLogger.info(f"启动成功({int((time.time() - initTime) * 1000)}ms)")
 
 
         serve(app, host=host, port=port)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     else:
         logger.debug("开发环境运行。", "DebugMsg")
 
-        console_logger.info(f"启动成功({int((time.time() - init_time) * 1000)}ms)")
+        consoleLogger.info(f"启动成功({int((time.time() - initTime) * 1000)}ms)")
         
         app.run(
             host=host,

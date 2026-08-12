@@ -8,36 +8,28 @@ from core.auth import AuthManager
 from core.config.json_config import JSONConfig
 from core.log.logger import Logger
 from app.routes.manager import RouteManager
-from core.log.context import get_log_context
+from core.log.context import getLogContext
 
 version: str = "0.0.1"
 
 logger: Logger
-db_logger_thread : Thread
-db_logger_queue : Queue
-
-
-auth_manager : AuthManager
+dbLoggerThread : Thread
+dbLoggerQueue : Queue
 
 
 config : JSONConfig
 
 
+rootDir = os.path.dirname(os.path.abspath(__file__))
 
 
-local_ip: str = ""
-
-
-root_dir = os.path.dirname(os.path.abspath(__file__))
-
-
-route_manager: RouteManager
+routeManager: RouteManager
 
 
 
 
 
-print_manager: PrintManager
+printManager: PrintManager
 
 
 

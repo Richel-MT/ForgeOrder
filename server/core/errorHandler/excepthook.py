@@ -7,14 +7,14 @@ import traceback
 from core.log.logger import Logger
 from .error_report import generate_error_report
 from app.exceptions import UserError
-from core.log import get_console_logger
+from core.log import getConsoleLogger
 
 def generate_user_error_info(error: UserError):
     info = f'''程序无法继续运行。原因：
 {error.__class__.__name__}: {error.msg}
 
 {error.hint}'''
-    logger = get_console_logger("errorHandler")
+    logger = getConsoleLogger("errorHandler")
     logger.error(info)
 
     sys.exit(1)
@@ -28,7 +28,7 @@ def excepthook(type, value, tb, thread: threading.Thread = None):
         return 
 
     if issubclass(type, KeyboardInterrupt):
-        logger = get_console_logger("errorHandler")
+        logger = getConsoleLogger("errorHandler")
         logger.error("KeyboardInterrupt")
 
         return 
@@ -57,7 +57,7 @@ def excepthook(type, value, tb, thread: threading.Thread = None):
             action="UncaughtException",
         )
     else:
-        logger = get_console_logger("errorHandler")
+        logger = getConsoleLogger("errorHandler")
         logger.error(f"{'Threaded' if thread else ''} Uncaught exception: {type.__name__}: {value}  {f'in thread {thread.name}' if thread else ''}")
         
         logger.error(traceback.format_exc())

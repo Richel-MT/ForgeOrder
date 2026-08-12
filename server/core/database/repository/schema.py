@@ -4,7 +4,7 @@ import json
 import datetime
 
 from .exceptions import *
-from core.type_convert import converter, TypeConvertError
+from core.typeConvert import converter, TypeConvertError
 
 @dataclass
 class ColumnType:

@@ -11,7 +11,7 @@ basic_bp = AppBlueprint("basic", __name__)
 def route_info():
     route_name: str = request.args.get("path") #type: ignore
 
-    route = extensions.route_manager.routes.get(route_name)
+    route = extensions.routeManager.routes.get(route_name)
 
     if route is None:
             return {

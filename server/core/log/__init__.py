@@ -1,1 +1,1 @@
-from .console import get_console_logger
+from .console import getConsoleLogger

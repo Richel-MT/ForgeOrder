@@ -10,8 +10,8 @@ from escpos.escpos import Escpos
 
 from app.db.respository import RepositoryManager
 from app.service import SettingsService
-from core.log.console import get_console_logger
-from core.log.context import get_log_context
+from core.log.console import getConsoleLogger
+from core.log.context import getLogContext
 from core.log.logger import Logger
 from app.db.connections import get_database_
 from core.db.exceptions import NotFoundError
@@ -36,9 +36,9 @@ def print_task(commands: list, printer: Escpos, qr_info: dict, dots: int):
 
 
 def print_worker(q: Queue, logger: Logger):
-    c_logger = get_console_logger("printWorker")
+    c_logger = getConsoleLogger("printWorker")
 
-    log_ctx = get_log_context(logger, "PRINT_WORKER")
+    log_ctx = getLogContext(logger, "PRINT_WORKER")
 
     db = get_database_()
     db.connect()
