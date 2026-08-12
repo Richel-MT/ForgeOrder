@@ -76,7 +76,8 @@ CREATE TABLE IF NOT EXISTS {self.table_name} (
             if column_type is None:
                 raise ColumnNotFoundError(key)
             
-            column_type.column_type.validate_type(value)
+            value = column_type.column_type.validate_type(value)
+
             result[key] = column_type.column_type.convert_to(value)
         
         return result

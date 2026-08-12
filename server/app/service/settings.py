@@ -4,22 +4,10 @@ from typing import Any
 from .base import Service
 from .schema import SETTINGS
 from .exceptions import *
-from core.type_convert import TypeConverterManager, TypeConvertError
+from core.type_convert import converter, TypeConvertError
 
 
-converter = TypeConverterManager()
 
-converter.register_converter(str, int, int)
-converter.register_converter(int, str, str)
-
-converter.register_converter(str, bool, lambda x: x == "1")
-converter.register_converter(bool, str, lambda x: "1" if x else "0")
-
-converter.register_converter(str, list, lambda x: json.loads(x))
-converter.register_converter(list, str, lambda x: json.dumps(x))
-
-converter.register_converter(str, dict, lambda x: json.loads(x))
-converter.register_converter(dict, str, lambda x: json.dumps(x))
 
 class SettingsService(Service):
 

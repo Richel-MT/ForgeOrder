@@ -1,8 +1,10 @@
 import logging
 import os
 import sys
+from typing import cast
 
 from app.db.respository import RepositoryManager
+from app.service import init_service
 from app.service.settings import SettingsService
 from core.database.database import Database
 
@@ -12,7 +14,6 @@ from app.config import setup_config
 from core.log.logger import setup_logger
 from app.routes.manager import RouteManager
 from app.hooks.schema import CLIENT_ERROR
-from app.db.main_db import MainDatabase
 from core.log import get_console_logger
 
 from app.cli import create_parser, execute_command
@@ -24,21 +25,23 @@ console_logger= get_console_logger("startup")
 def init_root_user(reset = False):
 
     import random
-    from werkzeug.security import generate_password_hash
-    from app.db.main_db import MainDatabase
+    from app.service import init_service, UserService
 
 
     password = "".join(random.choices("abcdefghijklmnopqrstuvwxyz1234567890", k=8))
-    password_hash = generate_password_hash(password)
 
-    database = MainDatabase(extensions.config.get("database.path"))
+    db, _, service = cast(tuple[Database, None, UserService], init_service(extensions.config.get("database.path"), UserService))
+    
 
     if reset:
-        root_user = database.users.get_from_username("root")
-        if root_user:
+        status, root_user = service.get(username="root")
+
+        root_user = cast(dict, root_user)
+
+        if status is service.USER.SUCCESS:
             root_user_id = root_user['id']
 
-            database.users.change_pasword(root_user_id, password_hash)
+            service.change_password_force(root_user_id, password)
 
             console_logger.info("重置root用户密码：%s" % password)
             return
@@ -46,11 +49,13 @@ def init_root_user(reset = False):
         else:
             console_logger.warning("root用户不存在，无法重置密码")
 
-    database.users.new_s("root", password_hash, True, True)
-    console_logger.info("创建root用户，密码：%s" % password)
-    database.close()
+    service.create("root", password, True, True)
 
-    
+
+    console_logger.info("创建root用户，密码：%s" % password)
+
+
+    db.close()
     
     extensions.config.set("server.first_start", False)
 
@@ -89,18 +94,21 @@ def init_args():
     return execute_command(args)
 
 
-def verify_config_and_settings(repos: RepositoryManager):
+def verify_config_and_settings():
     # 验证配置项
     try:
         verify_config()
 
 
 
-        service = SettingsService(repos)
+        db, _, service = init_service(extensions.config.get("database.path"), SettingsService)
+
+        service  = cast(SettingsService, service)
 
         service._init()
 
-        return service
+        db.close()
+
 
     except UserError as e:
             console_logger.error(f"启动失败：{e} \n {e.hint}")
@@ -117,14 +125,7 @@ def init():
     # 初始化日志记录器
     init_log()
 
-    # 初始化数据库表
-    db = Database(extensions.config.get("database.path"))
-    db.connect()
-    
-    repos = RepositoryManager(db)
-    repos.init()
 
-    
 
     # 取本地ip（将弃用）
     extensions.local_ip = "will be deprecated"
@@ -145,10 +146,9 @@ def init():
         sys.exit(0)
 
 
-    settings_service = verify_config_and_settings(repos)
+    verify_config_and_settings()
 
 
-    extensions.app_settings = settings_service
     
     extensions.print_manager = PrintManager(extensions.logger)
 

@@ -58,9 +58,9 @@ def teardown_appcontext(error):
 		logger = get_console_logger("flask")
 	
 		logger.warning('\n'.join(traceback.format_exception(type(error), error, error.__traceback__))) # type: ignore
-		extensions.logger.error(json.dumps(
+		extensions.logger.error(
 			logs
-		), "FLASK_APP", "RequestError")
+		, "FLASK_APP", "RequestError")
         
 	else:
 		

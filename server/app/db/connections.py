@@ -7,6 +7,10 @@ from core.database.database import Database
 
 
 def get_database():
+    '''
+    获取一个数据库连接，如果不存在则创建。
+    注意：需在请求上下文中调用。
+    '''
     if "database" not in g:
         g.database = get_database_()
 
@@ -17,6 +21,9 @@ def get_database():
 
 
 def close_database():
+    '''
+    关闭数据库连接
+    '''
     if "repos" in g:
         g.repos = None
         
@@ -24,6 +31,10 @@ def close_database():
         g.database.close()
 
 def get_database_():
+    '''
+    获取一个数据库连接，返回数据库连接对象。
+    与`get_database`方法不同的是，此方法不一定需要请求上下文。
+    '''
     db =  Database(extensions.config.get("database.path"))
 
     try:

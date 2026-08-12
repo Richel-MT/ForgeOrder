@@ -1,4 +1,6 @@
 from typing import Callable, Any
+import json
+from datetime import datetime
 
 class TypeConvertError(Exception):
     def __init__(self, source_type : type, target_type: type):
@@ -26,4 +28,23 @@ class TypeConverterManager:
             return converter(value)
         else:
             raise TypeConvertError(value, target_type)
+
+
+converter = TypeConverterManager()
+
+converter.register_converter(str, int, int)
+converter.register_converter(int, str, str)
+
+converter.register_converter(str, bool, lambda x: x == "1")
+converter.register_converter(bool, str, lambda x: "1" if x else "0")
+
+converter.register_converter(str, list, lambda x: json.loads(x))
+converter.register_converter(list, str, lambda x: json.dumps(x))
+
+converter.register_converter(str, dict, lambda x: json.loads(x))
+converter.register_converter(dict, str, lambda x: json.dumps(x))
+
+converter.register_converter(datetime, str, lambda x: x.isoformat())
+converter.register_converter(str, datetime, lambda x: datetime.fromisoformat(x))
+
 

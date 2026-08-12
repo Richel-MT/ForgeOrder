@@ -1,9 +1,10 @@
 import time
+from typing import cast
 
-from flask import g, request
+from flask import g
 
 from app.routes.res_generator import ResponseInfo
-from app.service import SettingsService
+from app.service import SettingsService, ShopService
 from core.utils import make_response
 from app.routes.app_bp import AppBlueprint
 from app.routes.field import *
@@ -58,9 +59,12 @@ def set_business_state():
                  ResponseInfo(0, "OK", dict)
              ])
 def get_all_dishes():
-    db = get_database()
 
-    dishes, categories = db.dishes.get_all()
+    service = ShopService(g.repos)
+
+    _, data = service.dishes.get_all_v1()
+
+    categories, dishes = cast(tuple, data)
 
     return g.res.OK(
         {
@@ -81,16 +85,17 @@ def get_dish():
     dish_id = g.args["id"]
 
 
-    db = get_database()
+    service = ShopService(g.repos)
 
-    try:
-        dish = db.dishes.get_from_id(dish_id)
 
-    except NotFoundError as e:
+    status, data = service.dishes.get(dish_id)
+
+    if status == service.RESULT.DISH_NOT_FOUND:
         return g.res.DishNotFound()
 
+    
 
-    return g.res.OK(dict(dish))
+    return g.res.OK(data)
 
 @shop_bp.post("/api/shop/dishes/update", auth=True, is_admin=True,
               arguments=[
@@ -101,14 +106,17 @@ def get_dish():
               responses=[
                   ResponseInfo(0, "OK", None),
                   ResponseInfo(3001, "NoChange", None),
-                  ResponseInfo(3002, "DishNotFound", None)
+                  ResponseInfo(3002, "DishNotFound", None),
+                  ResponseInfo(3003, "ChangedItemsNotFound", None), # 更改的信息不存在
+                  ResponseInfo(3004, "ChangedItemsValueError", None), # 更改的信息 值非法
+                  ResponseInfo(3005, "ChoiceNotFound", None) # 更改的选项不存在
               ])
 def update_dish():
     dish_id: int = g.args["dish_id"]
     changed_items : dict = g.args["changed_items"]
     changed_choices : list = g.args["changed_choices"]
 
-    db = get_database()
+    service = ShopService(g.repos)
 
     
     if AllOf( # failed
@@ -122,19 +130,43 @@ def update_dish():
     
 
 
-    try:
-        db.dishes.update(dish_id, changed_items, changed_choices)
+    status, data = service.dishes.update(dish_id, changed_items, changed_choices)
 
-        g.logger.info({
-            "id": dish_id,
-            "changed_items": changed_items,
-            "changed_choices": changed_choices
-        }, "UpdateDish")
-        
-        return g.res.OK()
+    match status:
+        case service.RESULT.SUCCESS:
 
-    except NotFoundError:
-        return g.res.DishNotFound()
+            g.logger.info({
+                "id": dish_id,
+                "changed_items": changed_items,
+                "changed_choices": changed_choices
+            }, "UpdateDish")
+            
+            return g.res.OK()
+
+        case service.RESULT.CHANGED_ITEMS_NOT_FOUND:
+            return g.res.ChangedItemsNotFound({
+                "id": dish_id,
+                "key": data
+            })
+
+        case service.RESULT.DISH_NOT_FOUND:
+            return g.res.DishNotFound({
+                "id": dish_id
+            })
+
+        case service.RESULT.VALUE_ERROR:
+            return g.res.ChangedItemsValueError({
+                "id": dish_id,
+            })
+
+        case service.RESULT.CHOICE_NOT_FOUND:
+            return g.res.ChoiceNotFound({
+                "id": dish_id,
+                "name": data
+            })
+
+
+
 
 @shop_bp.post("/api/shop/dishes/delete", auth=True, is_admin=True,
                arguments=[
@@ -147,22 +179,17 @@ def update_dish():
 def delete_dish():
     dish_id: int = g.args["dish_id"]
 
-    db = get_database()
+    service = ShopService(g.repos)
 
     g.logger.set_category("SHOP")
     
     
-    try:
-        db.dishes.delete(dish_id)
+    status, data = service.dishes.delete(dish_id)
 
-        g.logger.info({
-                "id": dish_id
-            }, "DeleteDish")
-
-        
-        return g.res.OK()
-    except NotFoundError:
+    if status == service.RESULT.DISH_NOT_FOUND:
         return g.res.DishNotFound()
+
+    return g.res.OK()
     
 @shop_bp.post("/api/shop/dishes/new", auth=True, is_admin=True, arguments=[
     RequestField("name", str, True, None, NotEmpty()),
@@ -187,36 +214,17 @@ def new_dish():
     is_available: bool = g.args["is_available"]
     choices: dict = g.args["choices"]
 
-    db = get_database()
+    service = ShopService(g.repos)
 
     g.logger.set_category("SHOP")
 
-    try:
-        dish_id = db.dishes.create(
-            name,
-            price,
-            category,
-            description,
-            image,
-            is_available,
-            choices
-        )
+    status, data = service.dishes.create(name, price, category, description, is_available, choices)
 
-        g.logger.info({
-            "id": dish_id,
-            "name": name,
-            "price": price,
-            "category": category,
-            "description": description,
-            "image": image,
-            "is_available": is_available,
-            "choices": choices
-        }, "NewDish")
-
-        return g.res.OK()
-    
-    except CategoryNotFoundError as e:
+    if status == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
+
+    return g.res.OK()
+    
     
 
 # 分类
@@ -231,41 +239,30 @@ def new_dish():
 def delete_category():
     category_id: int = g.args["category_id"]
 
-    db = get_database()
-
-    # 删除该分类下的所有菜品
-    db.dishes.delete_by_category(category_id)
 
     g.logger.set_category("SHOP")
 
-    try:
-        
-        name = db.category.get_from_id(category_id)["name"]
+    service = ShopService(g.repos)
 
-        db.category.update(category_id, f"{name}_disabled_{time.time()}")
+    status, data = service.dishes.delete_by_category(category_id)
 
-        db.category.delete(category_id)
-
-        g.logger.info({
-                "id": category_id
-            }, "DeleteCategory")
-        
-        return g.res.OK()
-    
-    except NotFoundError as e :
-
+    if status == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
 
-@shop_bp.get("/api/shop/category/getAll" , auth=True)
+    service.dishes_category.delete(category_id)
+    
+    return g.res.OK()
+
+@shop_bp.get("/api/shop/category/getAll" , auth=True, 
+             responses=[
+                 ResponseInfo(0, "OK", None)
+             ])
 def get_all_categories():
-    db = get_database()
 
-    categories = db.category.get_all()
-    categories = [dict(category) for category in categories]
+    service = ShopService(g.repos)
 
-    return make_response(
-        0,
-        categories
+    return g.res.OK(
+        service.dishes_category.get_all().data
     )
 
 
@@ -279,27 +276,19 @@ def get_all_categories():
                   ResponseInfo(3001, "CategoryNotFound", None)
               ])
 def edit_category():
-
-
     category_id: int = g.args["category_id"]
     category_name: str = g.args["category_name"]
 
-    db = get_database()
+    service = ShopService(g.repos)
 
     g.logger.set_category("SHOP")
 
-    try:
-        db.category.update(category_id, category_name)
+    status = service.dishes_category.update(category_id, category_name)
 
-        g.logger.info({
-                "id": category_id,
-                "name": category_name
-            }, "UpdateCategory")
-
-        return g.res.OK()
-    
-    except NotFoundError:
+    if status == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
+
+    return g.res.OK()
 
 @shop_bp.post("/api/shop/category/new", auth=True, is_admin=True,
               arguments=[
@@ -313,21 +302,17 @@ def new_category():
     
     name: str = g.args["name"]
 
-    db = get_database()
 
     g.logger.set_category("SHOP")
 
-    try:
-        category_id = db.category.new(name)
 
-        g.logger.info({
-                "id": category_id,
-                "name": name
-            }, "NewCategory")
-        
-        return g.res.OK()
-    except ValueError:
+    service = ShopService(g.repos)
+    status, data = service.dishes_category.create(name)
+
+    if status == service.RESULT.CATEGORY_ALREADY_EXIST:
         return g.res.CategoryNameExist()
+    
+    return g.res.OK()
      
 # 桌台
 @shop_bp.get("/api/shop/tables/getAll", auth=True, responses=[

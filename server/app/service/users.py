@@ -2,12 +2,13 @@
 import secrets
 from datetime import datetime, timedelta
 from enum import Enum, auto
-
-from werkzeug.security import check_password_hash
+from typing import cast 
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from core.config.json_config import JSONConfig
 from .base import Service, Result
 from ..db.respository import RepositoryManager
+from core.database.repository.exceptions import RecordNotFoundError
 
 class LoginResult(Enum):
     SUCCESS = auto()
@@ -28,6 +29,14 @@ class AuthResult(Enum):
     TOKEN_LOGOUT = auto()
     TOKEN_OLD_DEVICE = auto()
 
+class UserResult(Enum):
+    SUCCESS = auto()
+
+    MISSING_QUERY = auto() # 缺失查询条件
+
+    USER_NOT_FOUND = auto()
+
+    OLD_PASSWORD_ERROR = auto() # 再更改密码操作中，旧密码错误
 
 
 
@@ -35,6 +44,7 @@ class UserService(Service):
     LOGIN = LoginResult
     LOGOUT = LogoutResult
     AUTH = AuthResult
+    USER = UserResult
 
     def _generate_token(self):
         '''使用secrets库生成随机token'''
@@ -242,3 +252,94 @@ class UserService(Service):
 
         token_info["user"] = user_info
         return Result(self.AUTH.SUCCESS, token_info)
+
+
+    def get(self, user_id: int | None = None, username: str | None = None):
+        '''
+        通过id或用户名获取用户信息。
+        '''
+
+        if not user_id and not username:
+            return Result(self.USER.MISSING_QUERY)
+
+        elif user_id:
+            result = self.repo_manager.users.get(id=user_id)
+        elif username:
+            result = self.repo_manager.users.get(username=username)
+
+        else:
+            return Result(self.USER.USER_NOT_FOUND)
+
+        return Result(self.USER.SUCCESS, result)
+
+
+    def change_password_force(self, user_id: int, new_password: str):
+        '''
+        强制更改用户的密码。
+
+        注意：本方法直接更改用户的密码，在一般场景，请勿使用。
+        '''
+
+        
+        password_hash = generate_password_hash(new_password)
+
+        try:
+            self.repo_manager.users.update(
+                where={"id": user_id},
+                data={"password": password_hash}
+            )
+        except RecordNotFoundError:
+            return Result(self.USER.USER_NOT_FOUND)
+
+        return Result(self.USER.SUCCESS)
+        
+    def change_password(self, user_id: int, old_password: str, new_password: str):
+        '''
+        更改用户的密码。
+
+        传入用户id、旧密码（明文）、新密码（明文）。
+        '''
+
+        status, user = self.get(user_id=user_id)
+        
+        if status != self.USER.SUCCESS:
+            return Result(status)
+
+        user = cast(dict, user)
+
+    
+        if not check_password_hash(user["password"], old_password):
+            # 旧密码错误
+            return Result(self.USER.OLD_PASSWORD_ERROR)
+
+        # 旧密码正确
+
+        self.change_password_force(user_id, new_password)
+
+        return Result(self.USER.SUCCESS)
+
+        
+    def create(self,
+                username: str,
+                password: str,
+                is_admin: bool,
+                is_available: bool,
+                ):
+
+        create_time = datetime.now()
+
+        password_hash = generate_password_hash(password)
+
+        user_id = self.repo_manager.users.insert(
+            username=username,
+            password=password_hash,
+            is_admin=is_admin,
+            is_available=is_available,
+            created_at=create_time,
+        )
+
+        return Result(self.USER.SUCCESS, user_id)
+
+    
+
+

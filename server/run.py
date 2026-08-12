@@ -21,6 +21,7 @@ if __name__ == "__main__":
     os.environ["ENV"] = extensions.config.get("server.env")
 
     logger = extensions.get_log_context(extensions.logger, "MAIN")
+    
     logger.debug(f"ForgeOrder版本：%s" % extensions.version,"DebugMsg")
 
     

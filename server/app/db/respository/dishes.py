@@ -46,4 +46,5 @@ class DishChoicesRepository(Repository):
 
         Column("name", String(), not_null=True),  # 名称
         Column("options", JSON(), not_null=True),  # 选项
+
     ]

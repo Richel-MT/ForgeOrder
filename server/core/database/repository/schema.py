@@ -4,6 +4,7 @@ import json
 import datetime
 
 from .exceptions import *
+from core.type_convert import converter, TypeConvertError
 
 @dataclass
 class ColumnType:
@@ -12,24 +13,33 @@ class ColumnType:
     py_type: type | tuple[type, ...]
 
     
-    def validate_type(self, value: Any) -> bool:
+    def validate_type(self, value: Any) -> Any:
         '''验证值是否符合类型要求'''
         if value is not None and not isinstance(value, self.py_type):
-            raise TypeMismatchError(self.py_type, type(value)) #type: ignore
+            # 类型不正确，尝试转换
+            try:
+                value_new = converter.convert(value, self.py_type)
+
+
+                return value_new
+            except TypeConvertError:
+                # 无法转换，抛出异常
+                raise TypeMismatchError(self.py_type, type(value)) #type: ignore
         else:
-            return True
+            return value
 
     def convert_to(self, value: Any) -> Any:
         '''将值转换为数据库可用的类型'''
         if value is None:
-                    return None
+            return None
         
         return value
 
     def convert_from(self, value: Any) -> Any:
         '''将数据库可用的类型转换为原始类型'''
+
         if value is None:
-                    return None
+            return None
         
         return value
 
