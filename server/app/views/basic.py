@@ -2,12 +2,12 @@
 import os
 
 from flask import (Blueprint, current_app, send_from_directory, request)
-from app.routes.app_bp import AppBlueprint
+from app.routes.blueprint import AppBlueprint
 import extensions
 
 basic_bp = AppBlueprint("basic", __name__)
 
-@basic_bp.route("/routeInfo", no_register=True)
+@basic_bp.route("/routeInfo", noRegister=True)
 def route_info():
     route_name: str = request.args.get("path") #type: ignore
 
@@ -24,7 +24,7 @@ def route_info():
     for _, argument in route["args"].items():
          arguments.append({
             "key": argument.key,
-            "type": str(argument.value_type),
+            "type": str(argument.valueType),
             "required": argument.required,
             "default": argument.default,
         })
@@ -41,14 +41,14 @@ def route_info():
 
     return {
             "path": route_name,
-            "auth": route["auth"],
-            "is_admin": route["is_admin"],
+            "auth": route["requiresAuth"],
+            "is_admin": route["isAdmin"],
             "arguments": arguments,
             "responses": responses,
         }
 
-@basic_bp.route("/", defaults={"path": ""}, no_register=True)
-@basic_bp.route("/<path:path>", no_register=True)
+@basic_bp.route("/", defaults={"path": ""}, noRegister=True)
+@basic_bp.route("/<path:path>", noRegister=True)
 def index(path: str = ""):
     if "." in path:
         file_path = os.path.join(current_app.static_folder, path) #type: ignore

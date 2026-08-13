@@ -27,13 +27,13 @@ def setupApp():
 
     from app import blueprints
     for bp in blueprints:
-        bp.register_for_app(app, extensions.routeManager)
+        bp.registerForApp(app, extensions.routeManager)
 
     
     app.before_request(before_request) # type: ignore
 
     app.after_request(after_request)
 
-    setup_error_handlers(app)
+    setupErrorHandlers(app)
     
     return app

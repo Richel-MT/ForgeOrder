@@ -2,12 +2,12 @@ from typing import TypedDict, Any
 from dataclasses import dataclass
 
 from .field import RequestField
-from .res_generator import ResponseInfo
+from .responseGenerator import ResponseInfo
 
 
 class RoutesInfo(TypedDict):
-    is_admin: bool
-    auth: bool
+    isAdmin: bool
+    requiresAuth: bool
     args: dict[str, RequestField]
     responses: list[ResponseInfo]
 

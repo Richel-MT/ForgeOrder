@@ -4,9 +4,9 @@ from flask import g, Response
 
 
 def after_request(response: Response):
-    g.end_time = time.time()
+    g.endTime = time.time()
 
-    cost: float = (g.end_time - g.start_time) * 1000 # 转换为毫秒
+    cost: float = (g.endTime - g.startTime) * 1000 # 转换为毫秒
 
     g.logger.info({
         "status": response.status_code,

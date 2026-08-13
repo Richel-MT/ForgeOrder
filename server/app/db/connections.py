@@ -6,13 +6,13 @@ from .respository import RepositoryManager
 from core.database.database import Database
 
 
-def get_database():
+def getDatabase():
     '''
     获取一个数据库连接，如果不存在则创建。
     注意：需在请求上下文中调用。
     '''
     if "database" not in g:
-        g.database = get_database_()
+        g.database = getDatabase_()
 
     if "repos" not in g:
         g.repos = RepositoryManager(g.database)
@@ -20,7 +20,7 @@ def get_database():
     return g.repos
 
 
-def close_database():
+def closeDatabase():
     '''
     关闭数据库连接
     '''
@@ -30,7 +30,7 @@ def close_database():
     if "database" in g:
         g.database.close()
 
-def get_database_():
+def getDatabase_():
     '''
     获取一个数据库连接，返回数据库连接对象。
     与`get_database`方法不同的是，此方法不一定需要请求上下文。
@@ -38,7 +38,7 @@ def get_database_():
     db =  Database(extensions.config.get("database.path"))
 
     try:
-        db._is_available()
+        db._isAvailable()
     except:
         db.connect()
 

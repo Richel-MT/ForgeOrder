@@ -3,7 +3,7 @@ import argparse
 import extensions
 
 
-def create_parser():
+def createParser():
     parser = argparse.ArgumentParser(
         prog="ForgeOrder",
         description=f"ForgeOrder 服务器命令行工具 {extensions.version}",

@@ -10,55 +10,55 @@ from .schema import CONFIG_ITEMS
 from core.validation.base import ValidationResult
 from core.validation.errors import *
 
-def verify_error_to_str(error: ValidationResult):
-    error_str = ''
+def validateErrorToStr(error: ValidationResult):
+    errorString = ''
     match error:
         case EmptyError():
-            error_str = '不能为空'
+            errorString = '不能为空'
         case IntervalError():
-            error_str = f'数值必须在区间{error.interval}内'
+            errorString = f'数值必须在区间{error.interval}内'
         case LengthError():
-            error_str = f"字符串长度必须在{error.min}到{error.max}之间"
+            errorString = f"字符串长度必须在{error.min}到{error.max}之间"
         case ChoicesError():
-            error_str = f"只能是{','.join(map(str, error.choices))}"
+            errorString = f"只能是{','.join(map(str, error.choices))}"
         case AnyOfError():
-            children_error_str = ''
+            childrenErrorString = ''
             for children in error.children:
-                children_error_str += ' -' + verify_error_to_str(children) + '\n'
-            error_str = f'''必须满足以下条件中的一个：
-{children_error_str}
+                childrenErrorString += ' -' + validateErrorToStr(children) + '\n'
+            errorString = f'''必须满足以下条件中的一个：
+{childrenErrorString}
 '''
         case AllOfError():
-            children_error_str = ''
+            childrenErrorString = ''
             for children in error.children:
-                children_error_str += ' -' + verify_error_to_str(children) + '\n'
+                childrenErrorString += ' -' + validateErrorToStr(children) + '\n'
 
-            error_str = f'''必须满足以下所有条件：
-{children_error_str}'''
+            errorString = f'''必须满足以下所有条件：
+{childrenErrorString}'''
             
         case ValueTypeError():
-            error_str = f'必须是{error.expected_type.__name__}类型'
+            errorString = f'必须是{error.expected_type.__name__}类型'
         
         case _:
-            error_str = str(error)
+            errorString = str(error)
 
-    return error_str
+    return errorString
 
-def errors_to_str(errors: dict[str, ValidationResult]):
+def errorsToString(errors: dict[str, ValidationResult]):
     errors_list = []
     for key, result in errors.items():
-        errors_list.append(f"{key}: {verify_error_to_str(result.error)}")
+        errors_list.append(f"{key}: {validateErrorToStr(result.error)}")
 
     return errors_list
 
 
-def verify_config(fix=False):
+def validateConfig(fix=False):
     errors: dict[str, ValidationResult] = {}
 
     for item in CONFIG_ITEMS:
         value = extensions.config.get(item.key)
 
-        result = item.verify_value(value)
+        result = item.validate(value)
                     
         if not result.success:
             errors[item.key] = result
@@ -73,7 +73,7 @@ def verify_config(fix=False):
         if fix:
             return errors
         else:
-            raise ConfigError(errors_to_str(errors))
+            raise ConfigError(errorsToString(errors))
     
 
     # print("pass")

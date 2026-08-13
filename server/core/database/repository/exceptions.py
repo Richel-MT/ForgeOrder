@@ -6,9 +6,9 @@ class RepositoryError(Exception):
 class TypeMismatchError(RepositoryError):
     '''列的类型与值类型不匹配'''
 
-    def __init__(self, expected_type: type, got_type: type):
+    def __init__(self, expectedType: type, gotType: type):
         super().__init__(
-            f'Expect {expected_type}, but got {got_type}'
+            f'Expect {expectedType}, but got {gotType}'
         )
 
 class StringLengthError(RepositoryError):
@@ -22,19 +22,19 @@ class StringLengthError(RepositoryError):
 class InvalidJsonError(RepositoryError):
     '''列的类型为Json，JSON字符串无效'''
 
-    def __init__(self, origin_error: Exception):
-        self.origin_error = origin_error
+    def __init__(self, originError: Exception):
+        self.originError = originError
 
         super().__init__(
-            f'Invalid JSON: {origin_error}'
+            f'Invalid JSON: {originError}'
         )
 
 class ColumnNotFoundError(RepositoryError):
     '''列名不存在'''
 
-    def __init__(self, column_name: str):
+    def __init__(self, columnName: str):
         super().__init__(
-            f'Column {column_name} not found'
+            f'Column {columnName} not found'
         )
 
 class EmptyQueryCriteriaError(RepositoryError):

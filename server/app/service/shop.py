@@ -33,7 +33,7 @@ class DishCategory:
         '''
         获取所有菜品的分类。
         '''
-        result = self.repos.dishes_category.get_all(is_deleted=False)
+        result = self.repos.dishesCategory.get_all(isDeleted=False)
         return Result(self.parent.RESULT.SUCCESS, result)
 
     def create(self, name: str):
@@ -41,11 +41,11 @@ class DishCategory:
         创建菜品分类。
         '''
         try:
-            category_id = self.repos.dishes_category.insert(name=name)
+            category_id = self.repos.dishesCategory.insert(name=name)
         except UniqueConstraintError:
             return Result(self.parent.RESULT.CATEGORY_ALREADY_EXIST)
 
-        self.repos.dishes_category.commit()
+        self.repos.dishesCategory.commit()
 
         return Result(self.parent.RESULT.SUCCESS, category_id)
 
@@ -54,12 +54,12 @@ class DishCategory:
         更新菜品分类的名称。
         '''
         try:
-            self.repos.dishes_category.update(
-                where={"id": category_id, "is_deleted": False},
+            self.repos.dishesCategory.update(
+                where={"id": category_id, "isDeleted": False},
                 data={"name": name}
             )
 
-            self.repos.dishes_category.commit()
+            self.repos.dishesCategory.commit()
         except RecordNotFoundError:
             return Result(self.parent.RESULT.CATEGORY_NOT_FOUND)
 
@@ -72,12 +72,12 @@ class DishCategory:
         name = datetime.datetime.now().strftime("deleted_at_%Y%m%d%H%M%S")
 
         try:
-            self.repos.dishes_category.update(
+            self.repos.dishesCategory.update(
                 where={"id": category_id},
-                data={"is_deleted": True, "name": name}
+                data={"isDeleted": True, "name": name}
             )
 
-            self.repos.dishes_category.commit()
+            self.repos.dishesCategory.commit()
         except RecordNotFoundError:
             return Result(self.parent.RESULT.CATEGORY_NOT_FOUND)
 
@@ -90,8 +90,8 @@ class DishCategory:
         获取一个菜品分类。
         '''
 
-        category = self.repos.dishes_category.get(
-                id=category_id, is_deleted=False
+        category = self.repos.dishesCategory.get(
+                id=category_id, isDeleted=False
             )
 
         if not category:
@@ -117,9 +117,9 @@ class Dishes:
         # 获取菜品分类、菜品、菜品统计信息、菜品选项
         category_rows = cast(list, self.parent.dishes_category.get_all().data)
 
-        dish_rows = self.repos.dishes.get_all(is_deleted=False)
-        dish_stats_rows = self.repos.dish_stats.get_all()
-        dish_choices_rows = self.repos.dish_choices.get_all()
+        dish_rows = self.repos.dishes.get_all(isDeleted=False)
+        dish_stats_rows = self.repos.dishStats.get_all()
+        dish_choices_rows = self.repos.dishChoices.get_all()
 
         # 处理返回值
         # 1、处理菜品分类信息，将其转换为{id:名称}的形式
@@ -129,12 +129,12 @@ class Dishes:
         result_dishes = {row["name"]: [] for row in category_rows}
 
         # 3、构建菜品统计信息和菜品选项信息的索引以快速访问
-        dish_stats_index = {row["dish_id"]: row for row in dish_stats_rows}
+        dish_stats_index = {row["id"]: row for row in dish_stats_rows}
 
         dish_choices_index = {}
 
         for choice in dish_choices_rows:
-            dish_id = choice["dish_id"]
+            dish_id = choice["dishId"]
 
             if dish_id not in dish_choices_index:
                 dish_choices_index[dish_id] = {}
@@ -150,8 +150,9 @@ class Dishes:
             category_name = result_categories[category_id]
 
             # 将菜品的统计信息添加到菜品信息中
-            dish_ = dish.copy()
-            dish_["stats"] = dish_stats_index.get(dish_["id"], {})
+            dish_ = dict(dish.copy())
+            
+            dish_["stats"] = dish_stats_index.get(dish_['id'], {})
 
             # 将菜品的选项信息添加到菜品信息中
             dish_["choices"] = dish_choices_index.get(dish_["id"], {})
@@ -188,8 +189,8 @@ class Dishes:
             description=description,
             image="",
             category=category_id,
-            is_available=is_available,
-            created_at=create_time
+            isAvailable=is_available,
+            createdAt=create_time
         )
 
         self.repos.dishes.commit()
@@ -205,8 +206,10 @@ class Dishes:
         if not dish:
             return Result(self.parent.RESULT.DISH_NOT_FOUND)
         
-        dish_stats = self.repos.dish_stats.get(id=dish_id)
-        dish_choices = self.repos.dish_choices.get_all(dish_id=dish_id)
+        dish_stats = self.repos.dishStats.get(id=dish_id)
+        dish_choices = self.repos.dishChoices.get_all(dishId=dish_id)
+
+        dish = dict(dish)
 
         dish["stats"] = dish_stats
         dish["choices"] = dish_choices
@@ -235,12 +238,12 @@ class Dishes:
                 data={"is_deleted": True, "name": deleted_name}
             )
 
-            self.repos.dish_stats.delete(
+            self.repos.dishStats.delete(
                 where={"dish_id": dish_id}
             )
 
 
-            self.repos.dish_choices.delete(
+            self.repos.dishChoices.delete(
                 where={"dish_id": dish_id}
             )
 
@@ -255,10 +258,10 @@ class Dishes:
         删除一个分类下的所有菜品
         '''
 
-        dishes = self.repos.dishes.get_all(category=category_id, is_deleted=False)
+        dishes = self.repos.dishes.get_all(category=category_id, isDeleted=False)
 
-        if not dishes:
-            return Result(self.parent.RESULT.CATEGORY_NOT_FOUND)
+        # if not dishes:
+        #     return Result(self.parent.RESULT.CATEGORY_NOT_FOUND)
 
         for dish in dishes:
 
@@ -269,11 +272,11 @@ class Dishes:
                 data={"is_deleted": True, "name": deleted_name}
             )
 
-            self.repos.dish_stats.delete(
+            self.repos.dishStats.delete(
                 where={"dish_id": dish["id"]}
             )
 
-            self.repos.dish_choices.delete(
+            self.repos.dishChoices.delete(
                 where={"dish_id": dish["id"]}
             )
 
@@ -351,7 +354,7 @@ class Dishes:
                 # self.conn.execute(self.sql_parse.get("dishes.choices.new"),
                 #                     (dish_id, action["name"], json.dumps([]), ))
 
-                self.repos.dish_choices.insert(
+                self.repos.dishChoices.insert(
                     dish_id=dish_id,
                     name=action["name"],
                     options=[]
@@ -363,7 +366,7 @@ class Dishes:
 
                 now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                self.repos.dish_choices.update(
+                self.repos.dishChoices.update(
                     where={"dish_id": dish_id, "name": action["name"]},
                     data={"is_deleted": True, "name": f"{action["name"]}-{now}"}
                 )
@@ -393,7 +396,7 @@ class Dishes:
                 #                     (json.dumps(options), dish_id, action["name"], ))
 
                 # 获取选项
-                choice = self.repos.dish_choices.get(dish_id=dish_id, name=action["name"])
+                choice = self.repos.dishChoices.get(dish_id=dish_id, name=action["name"])
 
                 if not choice:
                     return Result(self.parent.RESULT.CHOICE_NOT_FOUND, action["name"])
@@ -405,12 +408,12 @@ class Dishes:
                 else:
                     options.remove(action["option"])
 
-                self.repos.dish_choices.update(
+                self.repos.dishChoices.update(
                     where={"id": choice["id"]},
                     data={"options": options}
                 )
 
-        self.repos.dish_choices.commit()
+        self.repos.dishChoices.commit()
 
 
 
@@ -423,7 +426,7 @@ class Dishes:
             result = self._update_dish_items(dish_id, changed_items)
 
             if result.code != self.parent.RESULT.SUCCESS:
-                self.repos.dish_choices.rollback()
+                self.repos.dishChoices.rollback()
 
                 return result
         
@@ -432,7 +435,7 @@ class Dishes:
             result = self._update_dish_choices(dish_id, changed_choices)
 
             if result.code != self.parent.RESULT.SUCCESS:
-                self.repos.dish_choices.rollback()
+                self.repos.dishChoices.rollback()
 
                 return result
 

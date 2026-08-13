@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
-from core.utils.server import make_response
+from core.utils.server import makeResponse
 
 @dataclass
 class ResponseInfo:
@@ -9,7 +9,7 @@ class ResponseInfo:
     data_type: type | None
 
     def __call__(self, data: Any = None):
-        return make_response(self.status_code, data)
+        return makeResponse(self.status_code, data)
 
 class ResponseGenerator:
     def __init__(self, responses: list[ResponseInfo]):

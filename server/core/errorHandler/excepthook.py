@@ -9,7 +9,7 @@ from .error_report import generate_error_report
 from app.exceptions import UserError
 from core.log import getConsoleLogger
 
-def generate_user_error_info(error: UserError):
+def generateUserErrorInfo(error: UserError):
     info = f'''程序无法继续运行。原因：
 {error.__class__.__name__}: {error.msg}
 
@@ -20,53 +20,49 @@ def generate_user_error_info(error: UserError):
     sys.exit(1)
 
 
-def excepthook(type, value, tb, thread: threading.Thread = None):
+def excepthook(type, value, tb, thread: threading.Thread | None = None):
     import extensions
 
     if issubclass(type, UserError):
-        generate_user_error_info(value)
+        generateUserErrorInfo(value)
         return 
 
     if issubclass(type, KeyboardInterrupt):
         logger = getConsoleLogger("errorHandler")
         logger.error("KeyboardInterrupt")
-
         return 
+
+    
+    
+    if not thread:
+        thread = threading.current_thread()
 
     if hasattr(extensions, 'logger') and isinstance(extensions.logger, Logger):
         
-        if thread:
-            extensions.logger.error(
+
+        extensions.logger.error(
                 {
                 "type": type.__name__,
-                "value": traceback.format_exception(type, value, tb),
+                "value": str(value),
+                "traceback": traceback.format_exception(type, value, tb),
                 "thread": thread.name,
             }, 
             category="ERROR_HANDLER",
-            action="ThreadedUncaughtException",
-        )
-            
-        else:
-            extensions.logger.error(
-            {
-                "type": type.__name__,
-                "value": traceback.format_exception(type, value, tb),
-                # "traceback": str(tb),
-            },
-            category="ERROR_HANDLER",
             action="UncaughtException",
         )
-    else:
-        logger = getConsoleLogger("errorHandler")
-        logger.error(f"{'Threaded' if thread else ''} Uncaught exception: {type.__name__}: {value}  {f'in thread {thread.name}' if thread else ''}")
+            
         
-        logger.error(traceback.format_exc())
+        
+    logger = getConsoleLogger("errorHandler")
+    logger.error(f"Uncaught exception: {type.__name__}: {value}  in thread {thread.name}")
+    
+    logger.error(''.join(traceback.format_exception(type, value, tb)))
 
     generate_error_report(
-        error_type="critical",
-        error_title=f"{'Threaded ' if thread else ''}{'Uncaught Exception' if thread else 'Uncaught Exception'}",
-        error_description=str(value),
-        error_detail=traceback.format_exception(type, value, tb),
+        errorType="critical",
+        errorTitle=f"{'Threaded ' if thread else ''}{'Uncaught Exception' if thread else 'Uncaught Exception'}",
+        errorDescription=str(value),
+        errorDetail=traceback.format_exception(type, value, tb),
         time=datetime.datetime.now(),
     )
 

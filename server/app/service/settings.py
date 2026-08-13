@@ -17,11 +17,11 @@ class SettingsService(Service):
         '''
         for prop in SETTINGS:
 
-            row = self.repo_manager.settings.get(key=prop.key)
+            row = self.repositoryManager.settings.get(key=prop.key)
 
             if row is None:
                 # 不存在则创建
-                self.repo_manager.settings.insert(
+                self.repositoryManager.settings.insert(
                     key=prop.key,
                     value=prop.default
                 )
@@ -31,9 +31,9 @@ class SettingsService(Service):
                 
                 # 转换类型
                 try:
-                    value = converter.convert(row["value"], prop.value_type)
+                    value = converter.convert(row["value"], prop.valueType)
                 except TypeConvertError:
-                    raise SettingsInitError(f"类型转换错误，{row["value"]}不能转换为{prop.value_type}。")
+                    raise SettingsInitError(f"类型转换错误，{row["value"]}不能转换为{prop.valueType}。")
                 
                 if prop.validator:
                     result = prop.validator.validate(value, self)
@@ -51,16 +51,16 @@ class SettingsService(Service):
         if prop is None:
             raise SettingNotFoundError(key)
         
-        row = self.repo_manager.settings.get(key=key)
+        row = self.repositoryManager.settings.get(key=key)
 
         if row is None:
             return prop.default
 
         try:
-            return converter.convert(row["value"], prop.value_type) # 可能抛出TypeConvertError
+            return converter.convert(row["value"], prop.valueType) # 可能抛出TypeConvertError
         
         except TypeConvertError:
-            raise SettingTypingError(key, prop.value_type, type(row["value"]))
+            raise SettingTypingError(key, prop.valueType, type(row["value"]))
 
     def set(self, key: str, value: Any):
         '''
@@ -71,12 +71,12 @@ class SettingsService(Service):
         if prop is None:
             raise SettingNotFoundError(key)
         
-        if not isinstance(value, prop.value_type):
-            raise SettingTypingError(key, prop.value_type, type(value))
+        if not isinstance(value, prop.valueType):
+            raise SettingTypingError(key, prop.valueType, type(value))
         
         value_str = converter.convert(value, str)
         
-        self.repo_manager.settings.update(
+        self.repositoryManager.settings.update(
             where={"key": key},
             data={"value": value_str}
         )

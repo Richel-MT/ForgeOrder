@@ -9,7 +9,7 @@ class AnyOf(Validator):
     限制值必须匹配任意一个验证器。
     允许的类型：Any
     '''
-    allow_types = None
+    allowTypes = None
     
     def __init__(self, *validators: Validator):
         self.validators = validators
@@ -36,7 +36,7 @@ class AllOf(Validator):
 
     允许的类型：Any
     '''
-    allow_types = None
+    allowTypes = None
     
     def __init__(self, *validators: Validator):
         self.validators = validators
@@ -57,7 +57,7 @@ class AllOf(Validator):
             return ValidationResult(False, AllOfError(*errors))
 
 class Not(Validator):
-    allow_types = None
+    allowTypes = None
     
     def __init__(self, validator: Validator):
         self.validator = validator
@@ -71,41 +71,41 @@ class Not(Validator):
 
 
 class If(Validator):
-    allow_types = None
+    allowTypes = None
     
     def __init__(self, condition: Condition, validator: Validator):
         self.condition = condition
         self.validator = validator
 
-        self.else_validator = None
+        self.elseValidator = None
     
     def _validate(self, value: Any, context: Any = None):
         if self.condition.check(context):
-            return self._format_result(self.validator.validate(value, context))
-        elif self.else_validator is not None:
-            return self._format_result(self.else_validator.validate(value, context))
+            return self._formatResult(self.validator.validate(value, context))
+        elif self.elseValidator is not None:
+            return self._formatResult(self.elseValidator.validate(value, context))
         else:
             return ValidationResult(True)
 
-    def _format_result(self, result: ValidationResult):
+    def _formatResult(self, result: ValidationResult):
         if result.success:
             return result
         else:
             return ValidationResult(False, ValidationError(f"When the condition: '{self.condition}' pass, {result.error}"))
 
     def Elif(self, condition: Condition, validator: Validator):
-        self.else_validator = Elif(condition, validator)
+        self.elseValidator = Elif(condition, validator)
 
-        return self.else_validator
+        return self.elseValidator
     def Else(self, validator: Validator):
-        self.else_validator = Else(validator)
-        return self.else_validator
+        self.elseValidator = Else(validator)
+        return self.elseValidator
     
 class Elif(If):
     pass
 
 class Else(Validator):
-    allow_types = None
+    allowTypes = None
 
     def __init__(self, validator: Validator):
         self.validator = validator

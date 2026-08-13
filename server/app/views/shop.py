@@ -3,16 +3,16 @@ from typing import cast
 
 from flask import g
 
-from app.routes.res_generator import ResponseInfo
+from app.routes.responseGenerator import ResponseInfo
 from app.service import SettingsService, ShopService
-from core.utils import make_response
-from app.routes.app_bp import AppBlueprint
+from app.routes.blueprint import AppBlueprint
 from app.routes.field import *
+from app.db.connections import getDatabase
 
 shop_bp = AppBlueprint("shop", __name__)
 
 # 店铺状态
-@shop_bp.get("/api/shop/getBusinessState" , auth=True, 
+@shop_bp.get("/api/shop/getBusinessState" , requiresAuth=True, 
              responses=[
                  ResponseInfo(0, "OK", bool)
              ])
@@ -27,8 +27,8 @@ def get_business_state():
     )
 
 @shop_bp.post("/api/shop/setBusinessState",
-            auth=True,
-            is_admin=True,
+            requiresAuth=True,
+            isAdmin=True,
             arguments=[
                 RequestField("is_business", bool, True)
             ],
@@ -42,7 +42,7 @@ def set_business_state():
 
     service.set("shop.isBusiness", is_business)
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
 
     g.logger.info({
         "is_business": is_business,
@@ -54,7 +54,7 @@ def set_business_state():
 
 
 # 菜品
-@shop_bp.get("/api/shop/dishes/getAll" , auth=True,
+@shop_bp.get("/api/shop/dishes/getAll" , requiresAuth=True,
              responses=[
                  ResponseInfo(0, "OK", dict)
              ])
@@ -73,7 +73,7 @@ def get_all_dishes():
         }
     )
 
-@shop_bp.post("/api/shop/dishes/get" , auth=True,
+@shop_bp.post("/api/shop/dishes/get" , requiresAuth=True,
               arguments=[
                   RequestField("id", int, True)
               ],
@@ -97,7 +97,7 @@ def get_dish():
 
     return g.res.OK(data)
 
-@shop_bp.post("/api/shop/dishes/update", auth=True, is_admin=True,
+@shop_bp.post("/api/shop/dishes/update", requiresAuth=True, isAdmin=True,
               arguments=[
                   RequestField("dish_id", int, True),
                   RequestField("changed_items", dict, True),
@@ -126,7 +126,7 @@ def update_dish():
         
         return g.res.NoChange()
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
     
 
 
@@ -168,7 +168,7 @@ def update_dish():
 
 
 
-@shop_bp.post("/api/shop/dishes/delete", auth=True, is_admin=True,
+@shop_bp.post("/api/shop/dishes/delete", requiresAuth=True, isAdmin=True,
                arguments=[
                    RequestField("dish_id", int, True)
                ],
@@ -181,7 +181,7 @@ def delete_dish():
 
     service = ShopService(g.repos)
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
     
     
     status, data = service.dishes.delete(dish_id)
@@ -191,7 +191,7 @@ def delete_dish():
 
     return g.res.OK()
     
-@shop_bp.post("/api/shop/dishes/new", auth=True, is_admin=True, arguments=[
+@shop_bp.post("/api/shop/dishes/new", requiresAuth=True, isAdmin=True, arguments=[
     RequestField("name", str, True, None, NotEmpty()),
     RequestField("price", int, True, None, Interval(Open(0), None)),
     RequestField("category", int, True),
@@ -216,7 +216,7 @@ def new_dish():
 
     service = ShopService(g.repos)
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
 
     status, data = service.dishes.create(name, price, category, description, is_available, choices)
 
@@ -228,9 +228,9 @@ def new_dish():
     
 
 # 分类
-@shop_bp.post("/api/shop/category/delete", auth=True, is_admin=True,
+@shop_bp.post("/api/shop/category/delete", requiresAuth=True, isAdmin=True,
               arguments=[
-                  RequestField("cateogry_id", int, True)
+                  RequestField("category_id", int, True)
               ],
               responses=[
                   ResponseInfo(0, "OK", None),
@@ -240,20 +240,20 @@ def delete_category():
     category_id: int = g.args["category_id"]
 
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
 
     service = ShopService(g.repos)
 
-    status, data = service.dishes.delete_by_category(category_id)
+    service.dishes.delete_by_category(category_id)
 
-    if status == service.RESULT.CATEGORY_NOT_FOUND:
+    result, data = service.dishes_category.delete(category_id)
+
+    if result == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
-
-    service.dishes_category.delete(category_id)
     
     return g.res.OK()
 
-@shop_bp.get("/api/shop/category/getAll" , auth=True, 
+@shop_bp.get("/api/shop/category/getAll" , requiresAuth=True, 
              responses=[
                  ResponseInfo(0, "OK", None)
              ])
@@ -266,7 +266,7 @@ def get_all_categories():
     )
 
 
-@shop_bp.post("/api/shop/category/update", auth=True, is_admin=True, 
+@shop_bp.post("/api/shop/category/update", requiresAuth=True, isAdmin=True, 
               arguments=[
                   RequestField("category_id", int, True),
                   RequestField("category_name", str, True, None, NotEmpty())
@@ -281,7 +281,7 @@ def edit_category():
 
     service = ShopService(g.repos)
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
 
     status = service.dishes_category.update(category_id, category_name)
 
@@ -290,7 +290,7 @@ def edit_category():
 
     return g.res.OK()
 
-@shop_bp.post("/api/shop/category/new", auth=True, is_admin=True,
+@shop_bp.post("/api/shop/category/new", requiresAuth=True, isAdmin=True,
               arguments=[
                   RequestField("name", str, True, None, NotEmpty())
               ],
@@ -303,7 +303,7 @@ def new_category():
     name: str = g.args["name"]
 
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
 
 
     service = ShopService(g.repos)
@@ -315,7 +315,7 @@ def new_category():
     return g.res.OK()
      
 # 桌台
-@shop_bp.get("/api/shop/tables/getAll", auth=True, responses=[
+@shop_bp.get("/api/shop/tables/getAll", requiresAuth=True, responses=[
                   ResponseInfo(0, "OK", None)
               ])
 def get_all_tables():
@@ -327,7 +327,7 @@ def get_all_tables():
         tables
     )
 
-@shop_bp.post("/api/shop/tables/new", auth=True, is_admin=True,
+@shop_bp.post("/api/shop/tables/new", requiresAuth=True, isAdmin=True,
              arguments=[
                   RequestField("name", str, True, None, NotEmpty())
              ],
@@ -340,7 +340,7 @@ def new_table():
 
     db = get_database()
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
 
     try:
         table_id = db.tables.new(name, True)
@@ -355,7 +355,7 @@ def new_table():
         
         return g.res.OK()
 
-@shop_bp.post("/api/shop/tables/update", auth=True, is_admin=True,
+@shop_bp.post("/api/shop/tables/update", requiresAuth=True, isAdmin=True,
              arguments=[
                   RequestField("id", int, True),
                   RequestField("name", str, True, None, NotEmpty())
@@ -371,7 +371,7 @@ def update_table():
 
     db = get_database()
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
 
     try:
         db.tables.update(table_id, new_name, True)
@@ -389,7 +389,7 @@ def update_table():
         
         return g.res.OK()
 
-@shop_bp.post("/api/shop/tables/delete", auth=True, is_admin=True,
+@shop_bp.post("/api/shop/tables/delete", requiresAuth=True, isAdmin=True,
              arguments=[
                   RequestField("id", int, True)
              ],
@@ -402,7 +402,7 @@ def delete_table():
 
 
     db = get_database()
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("SHOP")
 
     try:
         db.tables.soft_delete(table_id)

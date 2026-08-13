@@ -8,20 +8,20 @@ from core.log.logger import Logger
 
 
 def generate_error_report(
-    error_type: Literal["error", "critical"],
-    error_title: str,
-    error_description: str,
-    error_detail: str,
+    errorType: Literal["error", "critical"],
+    errorTitle: str,
+    errorDescription: str,
+    errorDetail: str,
     time: datetime.datetime,
 ):
     
     
-    error_file = os.path.join(f"data/error_reports/{datetime.datetime.now().strftime("%Y-%m-%d")}.json")
+    errorFile = os.path.join(f"data/error_reports/{datetime.datetime.now().strftime("%Y-%m-%d")}.json")
 
     os.makedirs("data/error_reports", exist_ok=True)
     
     try:
-        with open(error_file, 'r', encoding='utf-8') as f:
+        with open(errorFile, 'r', encoding='utf-8') as f:
 
         
             data = json.load(f)
@@ -36,13 +36,13 @@ def generate_error_report(
 
 
     
-    error_report = {
+    errorReport = {
         "id": len(data) + 1,
         "error_info": {
-            "type": error_type,
-            "title": error_title,
-            "description": error_description,
-            "detail": error_detail,
+            "type": errorType,
+            "title": errorTitle,
+            "description": errorDescription,
+            "detail": errorDetail,
             "time": time.isoformat(),
         },
         "sys_info": {
@@ -51,9 +51,9 @@ def generate_error_report(
         }
     }
 
-    data.append(error_report)
+    data.append(errorReport)
 
-    with open(error_file, 'w', encoding='utf-8') as f:
+    with open(errorFile, 'w', encoding='utf-8') as f:
         f.write(json.dumps(data, ensure_ascii=False, indent=4))
 
 

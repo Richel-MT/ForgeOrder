@@ -6,7 +6,7 @@ import json
 from .schema import *
 
 from .log_db import LogDatabase
-from .worker import create_worker
+from .worker import createWorker
 
 
 class Logger(logging.Logger):
@@ -162,7 +162,7 @@ def setup_logger(name: str, db_name: str, level: str = "info"):
     # 数据库日志记录器
     
     if db_name:
-        queue, thread = create_worker(db_name)
+        queue, thread = createWorker(db_name)
 
         db_handler = DatabaseHandler(queue)
 

@@ -2,13 +2,13 @@ from typing import cast
 
 from flask import  request, g
 
-from app.routes.res_generator import ResponseInfo
+from app.routes.responseGenerator import ResponseInfo
 from app.service.users import UserService
 import extensions
-from app.routes.app_bp import AppBlueprint
+from app.routes.blueprint import AppBlueprint
 from .exceptions import *
 from app.routes.field import RequestField, NotEmpty
-from core.utils import get_client_ip
+from core.utils import getClientIp
 
 accounts_bp = AppBlueprint("accounts", __name__)
 
@@ -18,8 +18,8 @@ accounts_bp = AppBlueprint("accounts", __name__)
         RequestField("password", str, True, None, NotEmpty()),
         RequestField("cover", bool, False, False)
     ],
-    auth=False,
-    is_admin=False,
+    requiresAuth=False,
+    isAdmin=False,
     responses=[
         ResponseInfo(0, "OK", dict),
         ResponseInfo(3001, "UsernameOrPasswordError", None),
@@ -29,15 +29,15 @@ accounts_bp = AppBlueprint("accounts", __name__)
     ]
 )
 def login():
-    logger = g.logger.get_log_context("ACCOUNTS")
+    logger = g.logger.getLogContext("ACCOUNTS")
 
-    g.logger.set_category("LOGIN_REQUEST")
+    g.logger.setCategory("LOGIN_REQUEST")
 
     username = g.args["username"]
     password = g.args["password"]
     cover = g.args["cover"]
 
-    ip : str = cast(str, get_client_ip())
+    ip : str = cast(str, getClientIp())
 
     service = UserService(g.repos, extensions.config)
 
@@ -60,13 +60,13 @@ def login():
 
 
         
-@accounts_bp.post("/api/auth/logout", auth=True,
+@accounts_bp.post("/api/auth/logout", requiresAuth=True,
                   responses=[
                       ResponseInfo(0, "OK", None),
                       ResponseInfo(3001, "TokenInvalid", None),
                   ])
 def logout():
-    logger = g.logger.get_log_context("ACCOUNTS")
+    logger = g.logger.getLogContext("ACCOUNTS")
 
     token = request.headers.get("Authorization")
 
@@ -74,6 +74,7 @@ def logout():
     token = token.split(" ")[1] #type: ignore
     
     service = UserService(g.repos, extensions.config)
+
     result = service.logout(token)
 
     if result.code == service.LOGOUT.TOKEN_INVALID:
@@ -81,8 +82,8 @@ def logout():
 
     logger.info(
         {
-            "ip": get_client_ip(),
-            "user_id": result.data["user_id"],
+            "ip": getClientIp(),
+            "user_id": result.data["userId"],
         }, "UserLogout", g.request_id)
     
 

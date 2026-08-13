@@ -21,15 +21,15 @@ class RepositoryManager(RepositoryManagerBase):
         self.settings = SettingsRepository(db)
         self.print_task = PrintTaskRepository(db)
 
-        self.dishes_category = DishesCategoryRepository(db)
+        self.dishesCategory = DishesCategoryRepository(db)
         self.dishes = DishesRepository(db)
-        self.dish_stats = DishStatsRepository(db)
-        self.dish_choices = DishChoicesRepository(db)
+        self.dishStats = DishStatsRepository(db)
+        self.dishChoices = DishChoicesRepository(db)
 
         self.orders = OrdersRepository(db)
-        self.sub_orders = SubOrdersRepository(db)
-        self.order_status = OrderStatusRepository(db)
-        self.order_items = OrderItemsRepository(db)
+        self.subOrders = SubOrdersRepository(db)
+        self.orderStatus = OrderStatusRepository(db)
+        self.orderItems = OrderItemsRepository(db)
 
     def init(self):
         self.users._init()
@@ -37,14 +37,14 @@ class RepositoryManager(RepositoryManagerBase):
         self.tables._init()
         self.settings._init()
         self.print_task._init()
-        self.dishes_category._init()
+        self.dishesCategory._init()
         self.dishes._init()
-        self.dish_stats._init()
-        self.dish_choices._init()
+        self.dishStats._init()
+        self.dishChoices._init()
         self.orders._init()
-        self.sub_orders._init()
-        self.order_status._init()
-        self.order_items._init()
+        self.subOrders._init()
+        self.orderStatus._init()
+        self.orderItems._init()
 
         
 

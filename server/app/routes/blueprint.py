@@ -9,35 +9,35 @@ class AppBlueprint(Blueprint):
 
         self.routes_ = []
 
-    def register_for_app(self, app: Flask, route_manager: RouteManager):
+    def registerForApp(self, app: Flask, routeManager: RouteManager):
         app.register_blueprint(self)
 
         for route in self.routes_:
             # print(route)
-            route_manager.register(route["path"],
-                                    route["auth"],
-                                    route["is_admin"],
+            routeManager.register(route["path"],
+                                    route["requiresAuth"],
+                                    route["isAdmin"],
                                     route["arguments"],
                                     route["responses"])
         
 
     def route(self, rule: str,
             arguments: list[RequestField] | None = None,
-            auth: bool = False,
-            is_admin: bool = False,
+            requiresAuth: bool = False,
+            isAdmin: bool = False,
             responses: list[ResponseInfo] | None = None,
-            no_register: bool = False,
+            noRegister: bool = False,
             **options
             ):
         
         flask_route = super().route(rule, **options)
         
         def wrapper(f):
-            if not no_register:
+            if not noRegister:
                 self.routes_.append({
                     "path": rule,
-                    "auth": auth,
-                    "is_admin": is_admin,
+                    "requiresAuth": requiresAuth,
+                    "isAdmin": isAdmin,
                     "arguments": arguments,
                     "responses": responses,
                 })
@@ -46,23 +46,23 @@ class AppBlueprint(Blueprint):
         return wrapper
     
     def get(self, rule: str,
-            auth: bool = False,
-            is_admin: bool = False,
+            requiresAuth: bool = False,
+            isAdmin: bool = False,
             **options
             ):
         
         options.setdefault("methods", ["GET"])
-        return self.route(rule, None, auth, is_admin, **options)
+        return self.route(rule, None, requiresAuth, isAdmin, **options)
     
     def post(self, rule: str,
             arguments: list[RequestField] | None = None,
-            auth: bool = False,
-            is_admin: bool = False,
+            requiresAuth: bool = False,
+            isAdmin: bool = False,
             **options
             ):
         
         options.setdefault("methods", ["POST"])
-        return self.route(rule, arguments, auth, is_admin, **options)
+        return self.route(rule, arguments, requiresAuth, isAdmin, **options)
     
     
         

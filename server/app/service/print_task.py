@@ -31,7 +31,7 @@ class PrintTaskService(Service):
 
         create_time = datetime.datetime.now()
 
-        self.repo_manager.print_task.insert(
+        self.repositoryManager.print_task.insert(
             id=task_id,
 
             content=content_str,
@@ -39,11 +39,11 @@ class PrintTaskService(Service):
             created_at=create_time
         )
 
-        self.repo_manager.print_task.commit()
+        self.repositoryManager.print_task.commit()
 
         return Result(self.CREATE.SUCCESS, task_id)
 
-    def updated(self, task_id: str, status: int, err_message: str | None= None):
+    def update(self, task_id: str, status: int, err_message: str | None= None):
         '''
         更新打印任务状态。
         '''
@@ -56,7 +56,7 @@ class PrintTaskService(Service):
             finish_time = None
 
         try:
-            self.repo_manager.print_task.update(
+            self.repositoryManager.print_task.update(
                 where={"id": task_id},
                 data={
                     "status": status,
@@ -68,6 +68,6 @@ class PrintTaskService(Service):
         except RecordNotFoundError:
             return Result(self.UPDATE.TASK_NOT_FOUND)
         
-        self.repo_manager.print_task.commit()
+        self.repositoryManager.print_task.commit()
         
         return Result(self.UPDATE.SUCCESS)

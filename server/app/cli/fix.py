@@ -5,15 +5,15 @@ import time
 from core.log import getConsoleLogger
 
 
-def _fix_config():
+def _fixConfig():
     import extensions
     from app.config.schema import CONFIG_ITEMS
     # from core.config.validation import 
-    from app.config.verify import verify_config
+    from app.config.verify import validateConfig
 
     logger = getConsoleLogger("fix")
 
-    errors = verify_config(True)
+    errors = validateConfig(True)
 
     if not errors:
         logger.info("未找到配置项问题")
@@ -42,7 +42,7 @@ def fix(exit: bool = True):
     start_time = time.time()
 
     
-    _fix_config()
+    _fixConfig()
 
     end_time = time.time()
 

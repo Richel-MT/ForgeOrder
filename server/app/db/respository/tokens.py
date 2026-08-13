@@ -1,15 +1,26 @@
+from typing import TypedDict
+import datetime
+
 from core.database.repository import Repository, Column
 from core.database.repository.schema import Integer, String, JSON, DateTime, Boolean
 
-class TokenRepository(Repository):
+class _Row(TypedDict):
+    id: int
+    userId: int
+    token: str
+    status: int
+    expireTime: datetime.datetime
+    ip: str
 
-    table_name = 'tokens'
+class TokenRepository(Repository[_Row]):
+
+    tableName = 'tokens'
 
     columns = [
-        Column('id', Integer(), primary_key=True, auto_increment=True),
-        Column('user_id', Integer(), not_null=True, foreign=('users', 'id')),
-        Column('token', String(), not_null=True),
-        Column('status', Integer(), not_null=True, default=0), # 0:可用 1:已过期 2:已退出登录 3:旧设备
-        Column('expire_time', DateTime(), not_null=True),
-        Column('ip', String(), not_null=True),
+        Column('id', Integer(), primary_key=True, autoIncrement=True),
+        Column('userId', Integer(), notNull=True, foreign=('users', 'id')),
+        Column('token', String(), notNull=True),
+        Column('status', Integer(), notNull=True, default=0), # 0:可用 1:已过期 2:已退出登录 3:旧设备
+        Column('expireTime', DateTime(), notNull=True),
+        Column('ip', String(), notNull=True),
     ]

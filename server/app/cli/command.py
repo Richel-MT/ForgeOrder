@@ -1,7 +1,7 @@
 
 
 
-def execute_command(args):
+def executeCommand(args):
 
 
     if args.fix:

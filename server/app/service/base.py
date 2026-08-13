@@ -6,7 +6,7 @@ from ..db.respository import RepositoryManager
 
 class Service(ServiceBase):
     def __init__(self, repo_manager: RepositoryManager):
-            self.repo_manager = repo_manager
+            self.repositoryManager = repo_manager
 
 @dataclass
 class Result:

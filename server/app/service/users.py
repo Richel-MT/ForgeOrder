@@ -54,19 +54,25 @@ class UserService(Service):
         '''
         将一条token插入到表中。
         '''
-        self.repo_manager.tokens.insert(
-            user_id=user_id,
+        self.repositoryManager.tokens.insert(
+            userId=user_id,
             token=token,
             status=0,
-            expire_time=expire_time,
+            expireTime=expire_time,
             ip=ip,
         )
 
     
-    def __init__(self, repo_manager: RepositoryManager, config: JSONConfig):
+    def __init__(self, repo_manager: RepositoryManager, config: JSONConfig | None = None):
         super().__init__(repo_manager)
 
+
+        if config is None:
+            from extensions import config
+        
         self.available_time = config.get("auth.available_time")
+
+        
 
 
     def login(self, username: str, password: str, ip: str, cover: bool):
@@ -76,7 +82,7 @@ class UserService(Service):
 
         repeat_login = False
 
-        users = self.repo_manager.users.get(username=username)
+        users = self.repositoryManager.users.get(username=username)
 
         if users is None:
             # 用户不存在
@@ -88,12 +94,12 @@ class UserService(Service):
             return Result(self.LOGIN.USERNAME_OR_PASSWORD_ERROR)
         
         # 检查用户是否启用
-        if not users["is_available"]:
+        if not users["isAvailable"]:
             # 用户未启用
             return Result(self.LOGIN.USER_DISABLED)
         
         # 检查token是否存在
-        token_info = self.repo_manager.tokens.get(user_id=users["id"])
+        token_info = self.repositoryManager.tokens.get(userId=users["id"])
 
         if token_info is None:
             # token不存在，生成新的token
@@ -108,10 +114,10 @@ class UserService(Service):
             token = token_info["token"]
 
             # 判断是否有效
-            if token_info["status"] != 0 or token_info["expire_time"] < datetime.now():
+            if token_info["status"] != 0 or token_info["expireTime"] < datetime.now():
                 # token无效
                 # 删除旧token
-                self.repo_manager.tokens.update(
+                self.repositoryManager.tokens.update(
                     where={"id": token_info["id"]},
                     data={"status": 3}
                 )
@@ -131,7 +137,7 @@ class UserService(Service):
                     })
                 else:
                     # 删除旧token
-                    self.repo_manager.tokens.update(
+                    self.repositoryManager.tokens.update(
                         where={"id": token_info["id"]},
                         data={"status": 3}
                     )
@@ -140,7 +146,7 @@ class UserService(Service):
                     token = self._generate_token()
                     expire_time = datetime.now() + timedelta(days=self.available_time)
 
-                    self.repo_manager.tokens.insert(
+                    self.repositoryManager.tokens.insert(
                         user_id=users["id"],
                         token=token,
                         status=0,
@@ -156,16 +162,16 @@ class UserService(Service):
                            
             
         # 删除敏感信息
-        user_info = users.copy()
+        user_info = dict(users.copy())
         del user_info["password"]
 
         # 更新users表中的last_login_at
-        self.repo_manager.users.update(
+        self.repositoryManager.users.update(
             where={"id": users["id"]},
-            data={"last_login_at": datetime.now()}
+            data={"lastLoginAt": datetime.now()}
         )
 
-        self.repo_manager.users.commit()
+        self.repositoryManager.users.commit()
         # 返回结果
 
 
@@ -181,19 +187,19 @@ class UserService(Service):
 
 
         # 检查token是否存在
-        token_info = self.repo_manager.tokens.get(token=token)
+        token_info = self.repositoryManager.tokens.get(token=token)
         if token_info is None:
             # token不存在
             return Result(self.LOGOUT.TOKEN_INVALID)
 
         # 更新token表中的status为2
-        self.repo_manager.tokens.update(
+        self.repositoryManager.tokens.update(
             where={"token": token},
             data={"status": 2}
         )
 
         # 整体提交事务
-        self.repo_manager.tokens.commit()
+        self.repositoryManager.tokens.commit()
 
         # 返回结果
         return Result(self.LOGOUT.SUCCESS, token_info)
@@ -203,7 +209,7 @@ class UserService(Service):
         检查token是否有效。
         '''
 
-        token_info = self.repo_manager.tokens.get(token=token)
+        token_info = self.repositoryManager.tokens.get(token=token)
 
         if token_info is None:
             # token不存在
@@ -211,7 +217,7 @@ class UserService(Service):
 
         if token_info["status"] != 0:
             # token无效，删除
-            self.repo_manager.tokens.delete(
+            self.repositoryManager.tokens.delete(
                 where={"id": token_info["id"]}
             )
         
@@ -227,29 +233,30 @@ class UserService(Service):
 
         # 检查过期时间
         now = datetime.now()
-        if now > token_info["expire_time"]:
+        if now > token_info["expireTime"]:
             # token已过期，更新数据库信息
-            self.repo_manager.tokens.update(
+            self.repositoryManager.tokens.update(
                 where={"token": token},
                 data={"status": 1}
             )
 
-            self.repo_manager.tokens.commit()
+            self.repositoryManager.tokens.commit()
             return Result(self.AUTH.TOKEN_EXPIRED)
             
         else:
             # token未过期，更新过期时间
-            self.repo_manager.tokens.update(
+            self.repositoryManager.tokens.update(
                 where={"token": token},
-                data={"expire_time": now + timedelta(minutes=self.available_time)}
+                data={"expireTime": now + timedelta(minutes=self.available_time)}
             )
 
 
-        self.repo_manager.tokens.commit()
+        self.repositoryManager.tokens.commit()
 
         # 获取用户信息
-        user_info = self.repo_manager.users.get(id=token_info["user_id"])
+        user_info = self.repositoryManager.users.get(id=token_info["userId"])
 
+        token_info = dict(token_info)
         token_info["user"] = user_info
         return Result(self.AUTH.SUCCESS, token_info)
 
@@ -259,15 +266,14 @@ class UserService(Service):
         通过id或用户名获取用户信息。
         '''
 
-        if not user_id and not username:
+        if user_id:
+            result = self.repositoryManager.users.get(id=user_id)
+        elif username:
+            result = self.repositoryManager.users.get(username=username)
+        else:
             return Result(self.USER.MISSING_QUERY)
 
-        elif user_id:
-            result = self.repo_manager.users.get(id=user_id)
-        elif username:
-            result = self.repo_manager.users.get(username=username)
-
-        else:
+        if result is None:
             return Result(self.USER.USER_NOT_FOUND)
 
         return Result(self.USER.SUCCESS, result)
@@ -284,7 +290,7 @@ class UserService(Service):
         password_hash = generate_password_hash(new_password)
 
         try:
-            self.repo_manager.users.update(
+            self.repositoryManager.users.update(
                 where={"id": user_id},
                 data={"password": password_hash}
             )
@@ -330,13 +336,15 @@ class UserService(Service):
 
         password_hash = generate_password_hash(password)
 
-        user_id = self.repo_manager.users.insert(
+        user_id = self.repositoryManager.users.insert(
             username=username,
             password=password_hash,
-            is_admin=is_admin,
-            is_available=is_available,
-            created_at=create_time,
+            isAdmin=is_admin,
+            isAvailable=is_available,
+            createdAt=create_time,
         )
+
+        self.repositoryManager.users.commit()
 
         return Result(self.USER.SUCCESS, user_id)
 

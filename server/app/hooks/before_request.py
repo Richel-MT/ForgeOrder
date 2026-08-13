@@ -3,29 +3,29 @@ import time
 
 from flask import request, g
 
-from app.db.connections import get_database
+from app.db.connections import getDatabase
 from app.service.users import UserService
 import extensions
-from core.utils.server import make_response, get_client_ip
+from core.utils.server import makeResponse, getClientIp
 from app.log import RequestLogContext
-from app.routes.res_generator import ResponseGenerator
+from app.routes.responseGenerator import ResponseGenerator
 
 def _handle_auth():
     # 获取日志上下文
-    logger = g.logger.get_log_context("BEFORE_REQUEST")
+    logger = g.logger.getLogContext("BEFORE_REQUEST")
 
     if  request.path.startswith("/api/"):
-        check_result, route_data = extensions.routeManager.verify_auth(request.path)
+        check_result, route_data = extensions.routeManager.getAuthConfig(request.path)
         
         if not check_result:
             # 路由不存在
-            return make_response(
+            return makeResponse(
                 1003,
                 None
             ), 404
         
 
-        if not route_data["auth"]: #type: ignore
+        if not route_data["requiresAuth"]: #type: ignore
             # 无需认证的api继续请求
             return None
         else:
@@ -41,7 +41,7 @@ def _handle_auth():
     # 检查Token是否存在
     if token is None:
         # Token不存在
-        return make_response(
+        return makeResponse(
             2001,
             None
         ), 401
@@ -51,7 +51,7 @@ def _handle_auth():
         token = token.split(" ")[1] # 提取token部分
     else:
         # Token格式错误
-        return make_response(
+        return makeResponse(
             2003,
             None
         ), 401
@@ -67,45 +67,45 @@ def _handle_auth():
             case service.AUTH.TOKEN_INVALID:
                 # Token无效
                 logger.info({
-                    "ip": get_client_ip(),
+                    "ip": getClientIp(),
                     "error": "InvalidToken"
                 }, "AuthError")
 
-                return make_response(
+                return makeResponse(
                     2003,
                     None
                 ) , 401
             case service.AUTH.TOKEN_EXPIRED:
                 # Token过期
                 logger.info({
-                    "ip": get_client_ip(),
+                    "ip": getClientIp(),
                     "error": "TokenExpire"
                 }, "AuthError")
                 
 
-                return make_response(
+                return makeResponse(
                     2004,
                     None
                 ) , 401
             case service.AUTH.TOKEN_LOGOUT:
                 # 用户已退出登录
                 logger.info({
-                    "ip": get_client_ip(),
+                    "ip": getClientIp(),
                     "error": "TokenLogout"
                 }, "AuthError")
                 # 用户退出登录
-                return make_response(
+                return makeResponse(
                     2003,
                     None
                 ) , 401
             case service.AUTH.TOKEN_OLD_DEVICE:
                 # 旧设备登录
                 logger.info({
-                    "ip": get_client_ip(),
+                    "ip": getClientIp(),
                     "error": "OldDevice"
                 }, "AuthError")
 
-                return make_response(
+                return makeResponse(
                     2005,
                     None
                 ) , 401
@@ -114,15 +114,15 @@ def _handle_auth():
 
         # 判断Token记录的ip与请求的ip是否一致
         token_info: dict = result.data #type: ignore
-        if token_info["ip"] != get_client_ip(): # type: ignore
+        if token_info["ip"] != getClientIp(): # type: ignore
             # ip不一致
             logger.info({
-                "ip": get_client_ip(),
+                "ip": getClientIp(),
                 "token_ip": token_info["ip"],
                 "error": "IPNotMatch"
             }, "AuthError") # type: ignore
             
-            return make_response(
+            return makeResponse(
                 2003,
                 None
             ) , 401
@@ -130,19 +130,19 @@ def _handle_auth():
 
 
         # 判断是否为管理员页面
-        if route_data["is_admin"]: # type: ignore
+        if route_data["isAdmin"]: # type: ignore
             
             # 管理员页面，判断用户是否有权限
-            if not token_info["user"]["is_admin"] == True: # type: ignore
+            if not token_info["user"]["isAdmin"] == True: # type: ignore
                 # 非管理员用户，记录日志
                 logger.warning(
                     {
                         "path": request.path,
-                        "user_id": token_info["user"]["id"], # type: ignore
-                        "ip": get_client_ip(),
+                        "userId": token_info["user"]["id"], # type: ignore
+                        "ip": getClientIp(),
                     },  "NonAdminUserAccess"
                 )
-                return make_response( # type: ignore
+                return makeResponse( # type: ignore
                 2002,
                 None
             ), 401
@@ -152,16 +152,16 @@ def _handle_auth():
         g.user_info = result.data
 
 def _handle_args():
-    logger = extensions.get_log_context(extensions.logger, "BEFORE_REQUEST")
+    logger = extensions.getLogContext(extensions.logger, "BEFORE_REQUEST")
 
-    if not extensions.routeManager.has_args(request.path):
+    if not extensions.routeManager.hasArguments(request.path):
         logger.debug("请求路径 %s，无需验证参数" % request.path, "DebugMsg")
         return None
     
     
     body = request.get_json()
 
-    result, data = extensions.routeManager.validate_args(request.path, body)
+    result, data = extensions.routeManager.validateArguments(request.path, body)
 
     if result:
         g.args = data
@@ -179,17 +179,17 @@ def _handle_args():
 
         # 失败
         
-        return make_response(
+        return makeResponse(
             1001,
             error_info
         ), 400
 
 def _handle_request_info():
-    g.request_id = str(uuid.uuid4())
+    g.requestId = str(uuid.uuid4())
 
     g.logger = RequestLogContext(extensions.logger, "REQUEST")
 
-    g.start_time = time.time()
+    g.startTime = time.time()
 
 
     try:
@@ -199,7 +199,7 @@ def _handle_request_info():
 
     g.res = ResponseGenerator(responses)
 
-    get_database()
+    getDatabase()
 
     return None
 

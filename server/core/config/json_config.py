@@ -3,8 +3,8 @@ import os
 
 
 class JSONConfig:
-    def __init__(self, config_file: str, default):
-        self.config_file = config_file
+    def __init__(self, configFile: str, default):
+        self.configFile = configFile
         self.config = None
         self.default = default
         
@@ -12,18 +12,18 @@ class JSONConfig:
 
 
     def load(self):
-        if not os.path.exists(self.config_file):
-            with open(self.config_file, 'w', encoding="utf-8") as f:
+        if not os.path.exists(self.configFile):
+            with open(self.configFile, 'w', encoding="utf-8") as f:
                 json.dump({}, f, indent=4, ensure_ascii=False)
             
             self.config = {}
             return
 
-        with open(self.config_file, "r", encoding="utf-8") as f:
+        with open(self.configFile, "r", encoding="utf-8") as f:
             self.config = json.load(f)
 
     def save(self):
-        with open(self.config_file, "w", encoding="utf-8") as f:
+        with open(self.configFile, "w", encoding="utf-8") as f:
             json.dump(self.config, f, indent=4, ensure_ascii=False)
 
     def get(self, key: str):

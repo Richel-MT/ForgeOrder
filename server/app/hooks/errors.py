@@ -5,40 +5,40 @@ from werkzeug.exceptions import UnsupportedMediaType
 
 from core.log.console import getConsoleLogger
 
-from ..db.connections import close_database
+from ..db.connections import closeDatabase
 import extensions
 import traceback
 from core.database.database.exceptions import DatabaseLockedError
 from app.routes.schema import GLOBAL
 
 # 415
-def unsupported_media_type(e: UnsupportedMediaType):
+def upsupportedMediaType(e: UnsupportedMediaType):
 
-        return GLOBAL.PAYLOAD_ERROR(e.description), 415
+	return GLOBAL.PAYLOAD_ERROR(e.description), 415
 # 405
-def method_not_allowed(e):
-        return GLOBAL.METHOD_ERROR(), 405
+def methodNotAllowed(e):
+	return GLOBAL.METHOD_ERROR(), 405
     
 # 404
-def not_found(e):
-        return GLOBAL.NOT_FOUND(), 404
+def notFound(e):
+	return GLOBAL.NOT_FOUND(), 404
 
 # 500
-def internal_server_error(e):
-        return GLOBAL.SERVER_ERROR(), 500
+def internalServerError(e):
+	return GLOBAL.SERVER_ERROR(), 500
     
 
 # 数据库错误处理
-def database_locked_error(e: DatabaseLockedError):
-        g.logger.warning({
-                "traceback": traceback.format_exception(type(e), e, e.__traceback__)
-		}, "DatabaseBusy")
-        return GLOBAL.DATABASE_BUSY(), 503
+def handleDatabaseLockedError(e: DatabaseLockedError):
+	g.logger.warning({
+			"traceback": traceback.format_exception(type(e), e, e.__traceback__)
+	}, "DatabaseBusy")
+	return GLOBAL.DATABASE_BUSY(), 503
 
 def database_error(e):
-        return GLOBAL.DATABASE_ERROR(), 500
+	return GLOBAL.DATABASE_ERROR(), 500
 
-def teardown_appcontext(error):
+def teardownAppContext(error):
 	if error is not None:
 		# 有错误，回滚事务
 		if g.database is not None:
@@ -69,7 +69,7 @@ def teardown_appcontext(error):
 			g.database.commit()
 
 	# 关闭数据库连接
-	close_database()
+	closeDatabase()
                         
 
 	
@@ -78,13 +78,13 @@ def teardown_appcontext(error):
 
 
 
-def setup_error_handlers(app):
-    app.errorhandler(405)(method_not_allowed)
+def setupErrorHandlers(app):
+    app.errorhandler(405)(methodNotAllowed)
 
-    app.errorhandler(404)(not_found)
-    app.errorhandler(500)(internal_server_error)
-    app.errorhandler(415)(unsupported_media_type)
+    app.errorhandler(404)(notFound)
+    app.errorhandler(500)(internalServerError)
+    app.errorhandler(415)(upsupportedMediaType)
 
-    app.errorhandler(DatabaseLockedError)(database_locked_error)
+    app.errorhandler(DatabaseLockedError)(handleDatabaseLockedError)
 
-    app.teardown_appcontext(teardown_appcontext)
+    app.teardown_appcontext(teardownAppContext)

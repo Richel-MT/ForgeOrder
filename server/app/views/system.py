@@ -3,20 +3,19 @@ import os
 from flask import Blueprint
 
 import extensions
-from core.utils import make_response
-from app.routes.app_bp import AppBlueprint
+from core.utils import makeResponse
+from app.routes.blueprint import AppBlueprint
 
 
 
 system_bp = AppBlueprint("system", __name__)
 
-@system_bp.route("/api/system/getSystemInfo", auth=True)
+@system_bp.route("/api/system/getSystemInfo", requiresAuth=True)
 def get_system_info():
-    return make_response(
+    return makeResponse(
         0,
         {
             "version": extensions.version,
-            "ip_address": extensions.local_ip,
             "env": os.environ["ENV"]
         }
     )

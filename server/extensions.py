@@ -4,7 +4,6 @@ from threading import Thread
 import os
 
 from app.printer.service import PrintManager
-from core.auth import AuthManager
 from core.config.json_config import JSONConfig
 from core.log.logger import Logger
 from app.routes.manager import RouteManager

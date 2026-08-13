@@ -1,9 +1,9 @@
 from core.config.json_config import JSONConfig
 from .schema import CONFIG_ITEMS
-from .verify import verify_config
+from .verify import validateConfig
 
 
-def setup_config():
+def setupConfig():
 
     default = {}
 
