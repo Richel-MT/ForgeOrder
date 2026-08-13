@@ -15,10 +15,11 @@ import socket
     
 #     return args_invalid
       
-def makeResponse(status: int, data: dict | list | int | str | bool | None):
+def makeResponse(status: int, data: dict | list | int | str | bool | None, message: str = ""):
     return jsonify({
         "status": status,
-        "data": data
+        "data": data,
+        "message": message
     })
 
 def getClientIp():

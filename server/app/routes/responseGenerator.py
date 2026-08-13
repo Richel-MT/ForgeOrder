@@ -9,7 +9,7 @@ class ResponseInfo:
     data_type: type | None
 
     def __call__(self, data: Any = None):
-        return makeResponse(self.status_code, data)
+        return makeResponse(self.status_code, data, self.name)
 
 class ResponseGenerator:
     def __init__(self, responses: list[ResponseInfo]):
