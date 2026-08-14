@@ -155,7 +155,6 @@ def _handle_args():
     logger = extensions.getLogContext(extensions.logger, "BEFORE_REQUEST")
 
     if not extensions.routeManager.hasArguments(request.path):
-        logger.debug("请求路径 %s，无需验证参数" % request.path, "DebugMsg")
         return None
     
     

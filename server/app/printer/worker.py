@@ -88,10 +88,10 @@ def print_worker(q: Queue, logger: Logger):
             entry = q.get(timeout=5)
         except Empty:
             # 五秒内没有其他任务
-            log_ctx.debug("5秒内没有任务", "DebugMsg")
 
             if printer is not None:
-                log_ctx.debug("关闭打印机连接", "DebugMsg")
+                log_ctx.debug({"message":
+                               "Printer connection closed because no print task was received within 5s."}, "ClosePrinterConnection")
                 printer.close()
                 printer = None
 
@@ -101,19 +101,24 @@ def print_worker(q: Queue, logger: Logger):
             break
 
         started_time = datetime.datetime.now()
-        db.print_task.update(entry, 1, None, started_time)
 
         
 
-        log_ctx.debug(f"获取任务 %s" % entry, "DebugMsg")
 
         # 连接打印机
         if printer is None:
             try:
                 printer = connect_printer(connect_info)
+
+                log_ctx.debug({
+                    "message": "Connected printer"
+                }, "ConnectPrinter")
             except Exception as e:
+
+                # 重试次数加1
                 retry_connect_count += 1
 
+                # 记录本次的连接错误信息
                 log_ctx.warning({
                     "id": entry,
                     "error": {
@@ -126,15 +131,17 @@ def print_worker(q: Queue, logger: Logger):
                 now = datetime.datetime.now()
                 db.print_task.update(entry, 3, "PrinterConnectError", started_time, now)
 
+                # 重试次数超过5词，跳出本次循环
                 if retry_connect_count >= 5:
                     log_ctx.error("", "RetryConnectExhausted")
                     break
 
+    
+                # 重试连接打印机
                 continue
 
             retry_connect_count = 0
 
-        log_ctx.debug("连接打印机成功", "DebugMsg")
         # 读取设置
         try:
             print_info = db.print_task.get(entry)
@@ -186,8 +193,6 @@ def print_worker(q: Queue, logger: Logger):
 
         now = datetime.datetime.now()
         db.print_task.update(entry, 2, None, started_time, now)
-
-        log_ctx.debug("打印任务成功", "DebugMsg")
 
 
         log_ctx.info({
