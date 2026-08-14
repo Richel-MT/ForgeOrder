@@ -38,7 +38,7 @@ def print_task(commands: list, printer: Escpos, qr_info: dict, dots: int):
 def print_worker(q: Queue, logger: Logger):
     c_logger = getConsoleLogger("printWorker")
 
-    log_ctx = getLogContext(logger, "PRINT_WORKER")
+    log_ctx = getLogContext(logger, "PrinterWorker")
 
     db = getDatabase_()
     db.connect()
