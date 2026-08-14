@@ -246,7 +246,7 @@ onMounted(async () => {
   if (userInfo) {
     currentUser.value = userInfo.username;
 
-    isAdmin.value = userInfo.is_admin;
+    isAdmin.value = userInfo.isAdmin;
     // console.log(isAdmin.value)
 
     const response = await request.get('/shop/getBusinessState');

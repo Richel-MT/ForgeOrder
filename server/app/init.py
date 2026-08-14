@@ -4,7 +4,7 @@ import sys
 from typing import cast
 
 from app.db.respository import RepositoryManager
-from app.service import init_service
+from app.service import initService
 from app.service.settings import SettingsService
 from core.database.database import Database
 
@@ -20,17 +20,17 @@ from app.cli import createParser, executeCommand
 from app.config.verify import validateConfig
 from app.exceptions import UserError
 
-console_logger= getConsoleLogger("startup")
+consoleLogger= getConsoleLogger("startup")
 
 def init_root_user(reset = False):
 
     import random
-    from app.service import init_service, UserService
+    from app.service import initService, UserService
 
 
     password = "".join(random.choices("abcdefghijklmnopqrstuvwxyz1234567890", k=8))
 
-    db, _, service = cast(tuple[Database, None, UserService], init_service(extensions.config.get("database.path"), UserService))
+    db, _, service = cast(tuple[Database, None, UserService], initService(extensions.config.get("database.path"), UserService))
     
     try:
         if reset:
@@ -45,16 +45,16 @@ def init_root_user(reset = False):
 
                 service.change_password_force(root_user_id, password)
 
-                console_logger.info("重置root用户密码：%s" % password)
+                consoleLogger.info("重置root用户密码：%s" % password)
                 return
 
             else:
-                console_logger.warning("root用户不存在，无法重置密码")
+                consoleLogger.warning("root用户不存在，无法重置密码")
 
         service.create("root", password, True, True)
 
 
-        console_logger.info("创建root用户，密码：%s" % password)
+        consoleLogger.info("创建root用户，密码：%s" % password)
 
         
         extensions.config.set("server.first_start", False)
@@ -68,7 +68,7 @@ def init_log():
 
     extensions.logger = logger
     extensions.dbLoggerThread = thread
-    extensions.db_logger_queue = queue
+    extensions.dbLoggerQueue = queue
 
 
     # 处理log.ignore_client_error
@@ -91,7 +91,7 @@ def init_args():
     args = parser.parse_args()
 
     if len(sys.argv) > 1:
-        console_logger.info(f"命令行参数：{' '.join(sys.argv[1:])}")
+        consoleLogger.info(f"命令行参数：{' '.join(sys.argv[1:])}")
 
     return executeCommand(args)
 
@@ -101,7 +101,7 @@ def verify_config_and_settings():
     try:
         validateConfig()
 
-        db, _, service = init_service(extensions.config.get("database.path"), SettingsService)
+        db, _, service = initService(extensions.config.get("database.path"), SettingsService)
 
         try:
             service  = cast(SettingsService, service)
@@ -111,12 +111,12 @@ def verify_config_and_settings():
             db.close()
 
     except UserError as e:
-            console_logger.error(f"启动失败：{e} \n {e.hint}")
+            consoleLogger.error(f"启动失败：{e} \n {e.hint}")
             sys.exit(1)
 
 def init():
 
-    console_logger.info("正在初始化...")
+    consoleLogger.info("正在初始化...")
 
     # 初始化设置
     init_config()
@@ -142,13 +142,14 @@ def init():
         sys.exit(0)
 
 
-    # 初始化数据库
-
+    # 初始化数据库的表结构
     db = Database(extensions.config.get("database.path"))
     db.connect()
     
     repos = RepositoryManager(db)
     repos.init()
+
+    # 关闭数据库连接
     db.close()
 
     verify_config_and_settings()
@@ -162,8 +163,8 @@ def shutdown():
     if extensions.dbLoggerThread is None:
         return
     
-    extensions.db_logger_queue.join()
-    extensions.db_logger_queue.put(None)
+    extensions.dbLoggerQueue.join()
+    extensions.dbLoggerQueue.put(None)
 
     extensions.dbLoggerThread.join()
 

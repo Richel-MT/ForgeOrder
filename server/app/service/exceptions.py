@@ -17,17 +17,17 @@ class SettingNotFoundError(SettingsException):
 
         super().__init__(f"Setting '{key}' not found.")
 
-class SettingTypingError(SettingsException):
-    def __init__(self, key: str, expected_type: type, value_type: type):
+class SettingTypeError(SettingsException):
+    def __init__(self, key: str, expectedType: type, valueType: type):
         self.key = key
-        self.expected_type = expected_type
-        self.value_type = value_type
+        self.expectedType = expectedType
+        self.valueType = valueType
         
-        super().__init__(f"Setting '{key}' expect type {expected_type}, but it is {value_type}.")
+        super().__init__(f"Setting '{key}' expect type {expectedType}, but it is {valueType}.")
         
-class SettingVerifyError(SettingsException):
+class SettingValidateError(SettingsException):
     def __init__(self, key: str, msg: str):
         self.key = key  
         self.msg = msg
         
-        super().__init__(f"Setting '{key}' verify failed: {msg}")
+        super().__init__(f"Setting '{key}' validate failed: {msg}")

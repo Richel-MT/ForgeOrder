@@ -45,7 +45,7 @@ def set_business_state():
     g.logger.setCategory("Shop")
 
     g.logger.info({
-        "is_business": is_business,
+        "isBusiness": is_business,
         "operator": g.user_info["user"]["id"]
     },  "UpdateBusinessState")
 

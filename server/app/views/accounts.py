@@ -84,7 +84,7 @@ def logout():
         {
             "ip": getClientIp(),
             "user_id": result.data["userId"],
-        }, "UserLogout", g.request_id)
+        }, "UserLogout", g.requestId)
     
 
     return g.res.OK()

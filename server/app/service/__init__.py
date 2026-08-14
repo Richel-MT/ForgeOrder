@@ -8,7 +8,7 @@ from ..db.respository import RepositoryManager
 
 
 
-def init_service(db_name: str, service: type[Service]):
+def initService(databaseName: str, service: type[Service]):
     '''
     初始化一个Service对象。
 
@@ -18,7 +18,7 @@ def init_service(db_name: str, service: type[Service]):
     '''
 
     # 初始化数据库
-    db = Database(db_name)
+    db = Database(databaseName)
     db.connect()
 
     # 初始化RepositoryManager
