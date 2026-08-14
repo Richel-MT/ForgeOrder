@@ -42,7 +42,7 @@ def set_business_state():
 
     service.set("shop.isBusiness", is_business)
 
-    g.logger.setCategory("SHOP")
+    g.logger.setCategory("Shop")
 
     g.logger.info({
         "is_business": is_business,
@@ -62,7 +62,7 @@ def get_all_dishes():
 
     service = ShopService(g.repos)
 
-    _, data = service.dishes.get_all_v1()
+    _, data = service.dishes.getAll()
 
     categories, dishes = cast(tuple, data)
 
@@ -126,7 +126,7 @@ def update_dish():
         
         return g.res.NoChange()
 
-    g.logger.setCategory("SHOP")
+    g.logger.setCategory("Shop")
     
 
 
@@ -181,7 +181,7 @@ def delete_dish():
 
     service = ShopService(g.repos)
 
-    g.logger.setCategory("SHOP")
+    g.logger.setCategory("Shop")
     
     
     status, data = service.dishes.delete(dish_id)
@@ -216,7 +216,7 @@ def new_dish():
 
     service = ShopService(g.repos)
 
-    g.logger.setCategory("SHOP")
+    g.logger.setCategory("Shop")
 
     status, data = service.dishes.create(name, price, category, description, is_available, choices)
 
@@ -240,13 +240,13 @@ def delete_category():
     category_id: int = g.args["category_id"]
 
 
-    g.logger.setCategory("SHOP")
+    g.logger.setCategory("Shop")
 
     service = ShopService(g.repos)
 
     service.dishes.delete_by_category(category_id)
 
-    result, data = service.dishes_category.delete(category_id)
+    result, data = service.dishesCategory.delete(category_id)
 
     if result == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
@@ -262,7 +262,7 @@ def get_all_categories():
     service = ShopService(g.repos)
 
     return g.res.OK(
-        service.dishes_category.get_all().data
+        service.dishesCategory.getAll().data
     )
 
 
@@ -281,9 +281,9 @@ def edit_category():
 
     service = ShopService(g.repos)
 
-    g.logger.setCategory("SHOP")
+    g.logger.setCategory("Shop")
 
-    status = service.dishes_category.update(category_id, category_name)
+    status = service.dishesCategory.update(category_id, category_name)
 
     if status == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
@@ -303,11 +303,11 @@ def new_category():
     name: str = g.args["name"]
 
 
-    g.logger.setCategory("SHOP")
+    g.logger.setCategory("Shop")
 
 
     service = ShopService(g.repos)
-    status, data = service.dishes_category.create(name)
+    status, data = service.dishesCategory.create(name)
 
     if status == service.RESULT.CATEGORY_ALREADY_EXIST:
         return g.res.CategoryNameExist()
@@ -319,12 +319,15 @@ def new_category():
                   ResponseInfo(0, "OK", None)
               ])
 def get_all_tables():
-    db = get_database()
 
-    tables = db.tables.get_all()
+    service = ShopService(g.repos)
+
+
+
+    status, data = service.tables.getAll()
 
     return g.res.OK(
-        tables
+        data
     )
 
 @shop_bp.post("/api/shop/tables/new", requiresAuth=True, isAdmin=True,
@@ -338,22 +341,22 @@ def get_all_tables():
 def new_table():
     name: str = g.args["name"]
 
-    db = get_database()
+    service = ShopService(g.repos)
 
-    g.logger.setCategory("SHOP")
+    g.logger.setCategory("Shop")
 
-    try:
-        table_id = db.tables.new(name, True)
-    except ValueError:
 
+    status, data = service.tables.create(name)
+
+    if status == service.RESULT.TABLE_ALREADY_EXIST:
         return g.res.TableNameExist()
-    else:
-        g.logger.info({
-                "id": table_id,
-                "name": name
-            }, "NewTable")
+
+    g.logger.info({
+            "id": data,
+            "name": name
+        }, "NewTable")
         
-        return g.res.OK()
+    return g.res.OK()
 
 @shop_bp.post("/api/shop/tables/update", requiresAuth=True, isAdmin=True,
              arguments=[
@@ -366,25 +369,24 @@ def new_table():
                   ResponseInfo(3002, "TableNameExist", None)
              ])
 def update_table():
-    table_id: int = g.args["id"]
-    new_name: str = g.args["name"]
+    tableId: int = g.args["id"]
+    newName: str = g.args["name"]
 
-    db = get_database()
+    service = ShopService(g.repos)
 
-    g.logger.setCategory("SHOP")
+    g.logger.setCategory("Shop")
 
-    try:
-        db.tables.update(table_id, new_name, True)
-    except NotFoundError:
+
+    status, data = service.tables.update(tableId, newName)
+
+    if status == service.RESULT.TABLE_NOT_FOUND:
         return g.res.TableNotFound()
-
-    except ValueError:
+    elif status == service.RESULT.TABLE_ALREADY_EXIST:
         return g.res.TableNameExist()
-    
     else:
         g.logger.info({
-                "id": table_id,
-                "name": new_name
+                "id": tableId,
+                "name": newName
             }, "UpdateTable")
         
         return g.res.OK()
@@ -398,23 +400,17 @@ def update_table():
                   ResponseInfo(3001, "TableNotFound", None)
              ])
 def delete_table():
-    table_id: int = g.args["id"]
+    tableId = g.args["id"]
 
+    service = ShopService(g.repos)
 
-    db = get_database()
-    g.logger.setCategory("SHOP")
+    result, data = service.tables.delete(tableId)
 
-    try:
-        db.tables.soft_delete(table_id)
-
-    except NotFoundError:
+    if result == service.RESULT.TABLE_NOT_FOUND:
         return g.res.TableNotFound()
-    else:
-        g.logger.info({
-                "id": table_id
-            }, "DeleteTable")
-        
-        return g.res.OK()
+
+    return g.res.OK()
+
 
 
 

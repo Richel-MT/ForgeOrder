@@ -12,7 +12,7 @@ from app.routes.responseGenerator import ResponseGenerator
 
 def _handle_auth():
     # 获取日志上下文
-    logger = g.logger.getLogContext("BEFORE_REQUEST")
+    logger = g.logger.getLogContext("BeforeRequest")
 
     if  request.path.startswith("/api/"):
         check_result, route_data = extensions.routeManager.getAuthConfig(request.path)
@@ -152,7 +152,7 @@ def _handle_auth():
         g.user_info = result.data
 
 def _handle_args():
-    logger = extensions.getLogContext(extensions.logger, "BEFORE_REQUEST")
+    logger = extensions.getLogContext(extensions.logger, "BeforeRequest")
 
     if not extensions.routeManager.hasArguments(request.path):
         return None
@@ -186,7 +186,7 @@ def _handle_args():
 def _handle_request_info():
     g.requestId = str(uuid.uuid4())
 
-    g.logger = RequestLogContext(extensions.logger, "REQUEST")
+    g.logger = RequestLogContext(extensions.logger, "Request")
 
     g.startTime = time.time()
 

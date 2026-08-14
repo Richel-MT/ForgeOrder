@@ -125,7 +125,7 @@ WHERE {' AND '.join([f'{key} = ?' for key in kwargs.keys()])}
         
         return cast(RowType, self._convertFrom(**result))
 
-    def get_all(self, **kwargs) -> 'list[RowType]':
+    def getAll(self, **kwargs) -> 'list[RowType]':
         '''根据条件查询所有记录，若无条件则返回所有记录'''
 
         if len(kwargs) == 0:
@@ -230,10 +230,6 @@ if __name__ == '__main__':
     }, data={
         "age": 20,
     })
-
-    print(repo.get(id=1))
-
-    print(repo.get_all())
 
 
     repo.commit()

@@ -12,7 +12,6 @@ class JSONProvider(DefaultJSONProvider):
 
     def default(self, obj): # type: ignore
         if isinstance(obj, datetime.datetime):
-            print(obj)
             return obj.isoformat()
         else:
             return super().default(obj)

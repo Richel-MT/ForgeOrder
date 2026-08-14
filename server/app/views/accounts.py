@@ -31,7 +31,7 @@ accounts_bp = AppBlueprint("accounts", __name__)
 def login():
     logger = g.logger.getLogContext("ACCOUNTS")
 
-    g.logger.setCategory("LOGIN_REQUEST")
+    g.logger.setCategory("Login")
 
     username = g.args["username"]
     password = g.args["password"]
