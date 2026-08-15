@@ -7,7 +7,7 @@ import os
 from core.log.logger import Logger
 
 
-def generate_error_report(
+def generateErrorReport(
     errorType: Literal["error", "critical"],
     errorTitle: str,
     errorDescription: str,
@@ -38,14 +38,14 @@ def generate_error_report(
     
     errorReport = {
         "id": len(data) + 1,
-        "error_info": {
+        "errorInfo": {
             "type": errorType,
             "title": errorTitle,
             "description": errorDescription,
             "detail": errorDetail,
             "time": time.isoformat(),
         },
-        "sys_info": {
+        "sysInfo": {
             "os": sys.platform,
             "python": sys.version,  
         }

@@ -5,7 +5,7 @@ import threading
 import traceback
 
 from core.log.logger import Logger
-from .error_report import generate_error_report
+from .error_report import generateErrorReport
 from app.exceptions import UserError
 from core.log import getConsoleLogger
 
@@ -58,7 +58,7 @@ def excepthook(type, value, tb, thread: threading.Thread | None = None):
     
     logger.error(''.join(traceback.format_exception(type, value, tb)))
 
-    generate_error_report(
+    generateErrorReport(
         errorType="critical",
         errorTitle=f"{'Threaded ' if thread else ''}{'Uncaught Exception' if thread else 'Uncaught Exception'}",
         errorDescription=str(value),
@@ -66,10 +66,10 @@ def excepthook(type, value, tb, thread: threading.Thread | None = None):
         time=datetime.datetime.now(),
     )
 
-def thread_excepthook(args):
+def threadExcepthook(args):
     excepthook(args.exc_type, args.exc_value, args.exc_traceback, args.thread)
 
 def install():
     sys.excepthook = excepthook
 
-    threading.excepthook = thread_excepthook
+    threading.excepthook = threadExcepthook

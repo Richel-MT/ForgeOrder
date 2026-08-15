@@ -41,7 +41,7 @@ class RequestLogContext(LogContext):
 
     def _onBeforeLog(self):
         if not self.requestInfoLogged:
-            self.logger.info(self.requestInfo, "REQUEST","RequestInfo", g.requestId)
+            self.logger.info(self.requestInfo, "Request","RequestInfo", g.requestId)
             self.requestInfoLogged = True
 
     def log(self, msg: str | dict | list , level: int, action: str, requestId: str = None):

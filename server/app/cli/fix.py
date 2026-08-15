@@ -9,7 +9,7 @@ def _fixConfig():
     import extensions
     from app.config.schema import CONFIG_ITEMS
     # from core.config.validation import 
-    from app.config.verify import validateConfig
+    from app.config.validate import validateConfig
 
     logger = getConsoleLogger("fix")
 

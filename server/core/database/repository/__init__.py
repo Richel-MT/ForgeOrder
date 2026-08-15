@@ -14,7 +14,7 @@ class Column:
     name: str
     columnType:  ColumnType
 
-    primary_key: bool = False
+    primaryKey: bool = False
     notNull: bool = False
     unique: bool = False
 
@@ -26,7 +26,7 @@ class Column:
 
     def __str__(self):
         tags = []
-        if self.primary_key:
+        if self.primaryKey:
             tags.append('PRIMARY KEY')
 
         if self.notNull:
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     class TestRepo(Repository):
         table_name: str = 'fuck'
         columns = [
-        Column('id', Integer(), primary_key=True),
+        Column('id', Integer(), primaryKey=True),
         Column('name', String(255), notNull=True),
         Column('age', Integer()),
         Column('email', String(255)),

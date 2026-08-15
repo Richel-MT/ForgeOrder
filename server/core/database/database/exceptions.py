@@ -118,12 +118,12 @@ def convertError(error: sqlite3.Error):
             return DatabaseTypeError(error)
         
         case _:
-            basic_code = getBasicCode(sqliteErrorcode)
+            basicCode = getBasicCode(sqliteErrorcode)
 
-            match basic_code:
+            match basicCode:
                 case 14:
                     return DatabaseCannotOpenError(f"({sqliteErrorcode} {sqliteErrorname}) Cannot open database file. ", error)
                 case _:
-                    return DatabaseError(f"({basic_code} {sqliteErrorcode} {sqliteErrorname}) Unknown database error. " + str(error), error)
+                    return DatabaseError(f"({basicCode} {sqliteErrorcode} {sqliteErrorname}) Unknown database error. " + str(error), error)
 
         

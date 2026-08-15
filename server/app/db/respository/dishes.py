@@ -13,7 +13,7 @@ class DishesCategoryRepository(Repository[_DishesCategoryRow]):
     tableName = "dishesCategory"
 
     columns = [
-        Column("id", Integer(), primary_key=True, autoIncrement=True),  # 主键
+        Column("id", Integer(), primaryKey=True, autoIncrement=True),  # 主键
         Column("name", String(), notNull=True),  # 名称
         Column("isDeleted", Boolean(), notNull=True, default=False),  # 是否删除
     ]
@@ -33,7 +33,7 @@ class DishesRepository(Repository[_DishesRow]):
     tableName = "dishes"
 
     columns = [
-        Column("id", Integer(), primary_key=True, autoIncrement=True),  # 主键
+        Column("id", Integer(), primaryKey=True, autoIncrement=True),  # 主键
         Column("name", String(), notNull=True),  # 名称
         Column("price", Integer(), notNull=True),  # 价格，单位：分
         Column("description", String()),  # 描述
@@ -54,7 +54,7 @@ class DishStatsRepository(Repository[_DishStatsRow]):
     tableName = "dishStats"
 
     columns = [
-        Column("id", Integer(), primary_key=True, foreign=("dishes", "id")),  # 主键
+        Column("id", Integer(), primaryKey=True, foreign=("dishes", "id")),  # 主键
         
         Column("totalSales", Integer(), notNull=True, default=0),  # 总销售量
         Column("monthlySales", Integer(), notNull=True, default=0),  # 月销售量
@@ -72,7 +72,7 @@ class DishChoicesRepository(Repository[_DishChoicesRow]):
     tableName = "dishChoices"
 
     columns = [
-        Column("id", Integer(), primary_key=True, autoIncrement=True),  # 主键
+        Column("id", Integer(), primaryKey=True, autoIncrement=True),  # 主键
         Column("dishId", Integer(), notNull=True, foreign=("dishes", "id")),  # 菜品ID
 
         Column("name", String(), notNull=True),  # 名称

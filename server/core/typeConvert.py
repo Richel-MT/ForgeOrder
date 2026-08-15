@@ -4,8 +4,8 @@ from datetime import datetime
 
 class TypeConvertError(Exception):
     def __init__(self, sourceType : type, targetType: type):
-        self.source_type = sourceType
-        self.target_type = targetType
+        self.sourceType = sourceType
+        self.targetType = targetType
 
         super().__init__(f"cannot convert type '{sourceType}' to '{targetType}'")
 

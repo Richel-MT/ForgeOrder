@@ -12,7 +12,7 @@ class SettingsRepository(Repository[_Row]):
     tableName = "settings"
 
     columns = [
-        Column("id", Integer(), primary_key=True, autoIncrement=True),  # 主键
+        Column("id", Integer(), primaryKey=True, autoIncrement=True),  # 主键
         Column("key", String(), notNull=True, unique=True),  # 键
         Column("value", String(), notNull=True),  # 值
     ]

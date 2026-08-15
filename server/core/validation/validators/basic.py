@@ -99,16 +99,16 @@ class Interval(Validator):
     
     def __str__(self):
         if self.minValue.value is None:
-            min_value = "-∞"
+            minValue = "-∞"
         else:
-            min_value = self.minValue.value
+            minValue = self.minValue.value
 
         if self.maxValue.value is None:
-            max_value = "+∞"
+            maxValue = "+∞"
         else:
-            max_value = self.maxValue.value
+            maxValue = self.maxValue.value
             
-        return f"{self.minValue.symbolLeft()}{min_value},{max_value}{self.maxValue.symbolRight()}"
+        return f"{self.minValue.symbolLeft()}{minValue},{maxValue}{self.maxValue.symbolRight()}"
 
 
 

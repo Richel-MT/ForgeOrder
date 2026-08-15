@@ -25,13 +25,13 @@ class PrintTaskService(Service):
         '''
         task_id = str(uuid.uuid7())
 
-        content_str = content.render_json()
+        content_str = content.renderJSON()
 
         context_str = json.dumps(context)
 
         create_time = datetime.datetime.now()
 
-        self.repositoryManager.print_task.insert(
+        self.repositoryManager.printTask.insert(
             id=task_id,
 
             content=content_str,
@@ -39,7 +39,7 @@ class PrintTaskService(Service):
             created_at=create_time
         )
 
-        self.repositoryManager.print_task.commit()
+        self.repositoryManager.printTask.commit()
 
         return Result(self.CREATE.SUCCESS, task_id)
 
@@ -56,7 +56,7 @@ class PrintTaskService(Service):
             finish_time = None
 
         try:
-            self.repositoryManager.print_task.update(
+            self.repositoryManager.printTask.update(
                 where={"id": task_id},
                 data={
                     "status": status,
@@ -68,6 +68,6 @@ class PrintTaskService(Service):
         except RecordNotFoundError:
             return Result(self.UPDATE.TASK_NOT_FOUND)
         
-        self.repositoryManager.print_task.commit()
+        self.repositoryManager.printTask.commit()
         
         return Result(self.UPDATE.SUCCESS)

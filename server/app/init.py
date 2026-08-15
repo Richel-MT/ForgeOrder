@@ -11,18 +11,18 @@ from core.database.database import Database
 from app.printer.service import PrintManager
 import extensions
 from app.config import setupConfig
-from core.log.logger import setup_logger
+from core.log.logger import setupLogger
 from app.routes.manager import RouteManager
 from app.hooks.schema import CLIENT_ERROR
 from core.log import getConsoleLogger
 
 from app.cli import createParser, executeCommand
-from app.config.verify import validateConfig
+from app.config.validate import validateConfig
 from app.exceptions import UserError
 
 consoleLogger= getConsoleLogger("startup")
 
-def init_root_user(reset = False):
+def initRootUser(reset = False):
 
     import random
     from app.service import initService, UserService
@@ -34,16 +34,16 @@ def init_root_user(reset = False):
     
     try:
         if reset:
-            status, root_user = service.get(username="root")
+            status, rootUser = service.get(username="root")
 
             
 
             if status is service.USER.SUCCESS:
-                root_user = cast(dict, root_user)
+                rootUser = cast(dict, rootUser)
                 
-                root_user_id = root_user['id']
+                rootUserId = rootUser['id']
 
-                service.change_password_force(root_user_id, password)
+                service.forceChangePassword(rootUserId, password)
 
                 consoleLogger.info("重置root用户密码：%s" % password)
                 return
@@ -61,8 +61,8 @@ def init_root_user(reset = False):
     finally:
         db.close()
 
-def init_log():
-    logger, thread, queue = setup_logger(__name__,
+def initLog():
+    logger, thread, queue = setupLogger(__name__,
                 extensions.config.get("log.database"), # type: ignore
                 extensions.config.get("log.level")) #type: ignore
 
@@ -76,7 +76,7 @@ def init_log():
         for error in CLIENT_ERROR:
             extensions.logger.setIgnoreAction(error)
 
-def init_config():
+def initConfig():
     if not os.path.exists("data"):
             os.makedirs("data")
 
@@ -85,7 +85,7 @@ def init_config():
     
 
 
-def init_args():
+def initArguments():
     parser = createParser()
 
     args = parser.parse_args()
@@ -96,7 +96,7 @@ def init_args():
     return executeCommand(args)
 
 
-def verify_config_and_settings():
+def validateConfigAndSettings():
     # 验证配置项
     try:
         validateConfig()
@@ -119,11 +119,11 @@ def init():
     consoleLogger.info("正在初始化...")
 
     # 初始化设置
-    init_config()
+    initConfig()
 
     
     # 初始化日志记录器
-    init_log()
+    initLog()
 
 
 
@@ -132,12 +132,12 @@ def init():
 
 
     if extensions.config.get("server.first_start"):
-        init_root_user()
+        initRootUser()
 
 
-    stop_running = init_args()
+    stopRunning = initArguments()
 
-    if stop_running:
+    if stopRunning:
         shutdown()
         sys.exit(0)
 
@@ -152,7 +152,7 @@ def init():
     # 关闭数据库连接
     db.close()
 
-    verify_config_and_settings()
+    validateConfigAndSettings()
 
 
     

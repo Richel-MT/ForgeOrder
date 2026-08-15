@@ -247,7 +247,7 @@ onMounted(async () => {
     currentUser.value = userInfo.username;
 
     isAdmin.value = userInfo.isAdmin;
-    // console.log(isAdmin.value)
+
 
     const response = await request.get('/shop/getBusinessState');
     
@@ -300,7 +300,7 @@ const changeBusinessStateConfirmClick = async () => {
   
 
   const response = await request.post('/shop/setBusinessState', {
-    is_business: !isBusiness.value,
+    isBusiness: !isBusiness.value,
   })
 
   if (response.data.status == 0) {

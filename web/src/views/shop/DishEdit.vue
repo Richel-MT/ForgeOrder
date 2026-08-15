@@ -222,12 +222,12 @@
     const saveChanged = async(changed, choicesChanging) => {
         try {
             const dishId = route.params.id
-            // console.log(dishId)
+
 
             const res = await request.post(`/shop/dishes/update`, {
-                dish_id: Number(dishId),
-                changed_items: changed,
-                changed_choices: choicesChanging,
+                dishId: Number(dishId),
+                changedItems: changed,
+                changedChoices: choicesChanging,
             })
 
     
@@ -308,7 +308,7 @@
         let dishData_ = {...dishData.value,}
 
         dishData_.price *= 100 // 转换为分
-        dishData_.is_available = isAvailableSwitch.value.checked
+        dishData_.isAvailable = isAvailableSwitch.value.checked
 
         if (typeof categoryInput.value.value == 'string') {
             let category = -1 
@@ -368,11 +368,11 @@
         }
 
         // 是否启用
-        if (!dishData_.is_available) {
-            dishData_.is_available = false
+        if (!dishData_.isAvailable) {
+            dishData_.isAvailable = false
         }
 
-        if (dishData_.is_available !== originDishData.is_available) {
+        if (dishData_.isAvailable !== originDishData.is_available) {
             changed.is_available = dishData_.is_available
         }
 
@@ -450,7 +450,7 @@
                     'image': '',
                     'category': '',
                     'choices': {},
-                    'is_available': 0
+                    'isAvailable': 0
                 }
             }
             

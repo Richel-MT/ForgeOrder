@@ -130,11 +130,10 @@
             return
         }
 
-        if (props.dish.choices) {
+        if (props.dish.choices && Object.keys(props.dish.choices).length > 0) {
             const firstKey = Object.keys(props.dish.choices)[0]
             currentChoices.value = {
                 [firstKey]: props.dish.choices[firstKey][0] || {}
-                
             }
         }
     }

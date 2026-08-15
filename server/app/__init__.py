@@ -1,11 +1,11 @@
-from .views.accounts import accounts_bp
-from .views.basic import basic_bp
-from .views.shop import shop_bp
-from .views.system import system_bp
+from .views.accounts import accountsBlueprint
+from .views.basic import basicBlueprint
+from .views.shop import shopBlueprint
+from .views.system import systemBlueprint
 
 blueprints = [
-    basic_bp,
-    accounts_bp,
-    shop_bp,
-    system_bp
+    basicBlueprint,
+    accountsBlueprint,
+    shopBlueprint,
+    systemBlueprint
 ]

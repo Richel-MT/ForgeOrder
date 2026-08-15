@@ -225,23 +225,23 @@ class Dishes:
         if not dish:
             return Result(self.parent.RESULT.DISH_NOT_FOUND)
         
-        dish_stats = self.repos.dishStats.get(id=dish_id)
-        dish_choices = self.repos.dishChoices.getAll(dishId=dish_id)
+        dishStats = self.repos.dishStats.get(id=dish_id)
+        dishChoices = self.repos.dishChoices.getAll(dishId=dish_id)
 
         dish = dict(dish)
 
-        dish["stats"] = dish_stats
-        dish["choices"] = dish_choices
+        dish["stats"] = dishStats
+        dish["choices"] = dishChoices
 
 
         return Result(self.parent.RESULT.SUCCESS, dish)
 
-    def delete(self, dish_id: int):
+    def delete(self, dishId: int):
         '''
         （软）删除菜品。
         '''
         
-        code, data = self.get(dish_id)
+        code, data = self.get(dishId)
 
         if code != self.parent.RESULT.SUCCESS:
             return Result(code)
@@ -253,17 +253,17 @@ class Dishes:
 
         try:
             self.repos.dishes.update(
-                where={"id": dish_id},
+                where={"id": dishId},
                 data={"isDeleted": True, "name": deletedName}
             )
 
             self.repos.dishStats.delete(
-                where={"dishId": dish_id}
+                where={"dishId": dishId}
             )
 
 
             self.repos.dishChoices.delete(
-                where={"dishId": dish_id}
+                where={"dishId": dishId}
             )
 
             self.repos.dishes.commit()
@@ -272,7 +272,7 @@ class Dishes:
 
         return Result(self.parent.RESULT.SUCCESS)
 
-    def delete_by_category(self, categoryId: int):
+    def deleteByCategory(self, categoryId: int):
         '''
         删除一个分类下的所有菜品
         '''
@@ -363,11 +363,11 @@ class Dishes:
             else:
                 remain[key] = item
 
-        unique_choices = list(remain.values())
+        uniqueChoices = list(remain.values())
         
 
         # 执行数据库命令，更新菜品选择
-        for action in unique_choices:
+        for action in uniqueChoices:
             if action["type"] == "new_choice":
                 # 新增选择
                 # self.conn.execute(self.sql_parse.get("dishes.choices.new"),

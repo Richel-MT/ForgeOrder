@@ -1,10 +1,10 @@
 from queue import Queue
 from threading import Thread
 
-from ..service.print_task import PrintTaskService
+from ..service.printTask import PrintTaskService
 
 from .receipt import Receipt
-from .worker import create_print_worker
+from .worker import createPrintWorker
 from  core.log.logger import Logger
 
 
@@ -13,35 +13,35 @@ from  core.log.logger import Logger
 class PrintManager:
     def __init__(self, logger: Logger):
         self.queue: Queue
-        self.worker_thread : Thread
+        self.workerThread : Thread
         self.logger = logger
 
         self._init()
 
     def _init(self):
-        self.queue, self.worker_thread = create_print_worker(self.logger)
+        self.queue, self.workerThread = createPrintWorker(self.logger)
 
     def new(self, content: Receipt, service: PrintTaskService, context: dict = {}, ):
 
             
         result = service.create(content, context)
 
-        task_id = result.data
+        taskId = result.data
 
-        self.queue.put(task_id)
+        self.queue.put(taskId)
 
 
         self.logger.info({
-            "id": task_id,
+            "id": taskId,
         }, "PRINTER", "PrintTaskCreated")
 
-        return task_id
+        return taskId
 
 
     def shutdown(self):
         self.queue.put(None)
 
-        self.worker_thread.join()
+        self.workerThread.join()
 
 
 

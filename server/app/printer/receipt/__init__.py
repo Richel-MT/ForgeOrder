@@ -13,51 +13,51 @@ class Receipt:
         self.commands.append(command)
 
 
-    def render_json(self):
-        receipt_info = {
+    def renderJSON(self):
+        receiptInfo = {
             "version": 1,
             "commands": []
         }
 
-        last_style = None
+        lastStyle = None
 
-        full_style = None
+        fullStyle = None
 
         for command in self.commands:
             match command:
                 case Text():
                     
                     
-                    diff_style = {}
+                    diffStyle = {}
 
-                    current_style = command.get_style()
+                    currentStyle = command.getStyle()
 
-                    if full_style is None:
-                        full_style = current_style.copy()
+                    if fullStyle is None:
+                        fullStyle = currentStyle.copy()
 
-                    if last_style is None:
-                        last_style = current_style.copy()
+                    if lastStyle is None:
+                        lastStyle = currentStyle.copy()
 
-                        diff_style = current_style
+                        diffStyle = currentStyle
 
                     else:
                         
-                        diff_style_keys = [k for k in current_style if current_style[k] != last_style[k]]
+                        diffStyleKeys = [k for k in currentStyle if currentStyle[k] != lastStyle[k]]
 
-                        full_style.update(current_style)
+                        fullStyle.update(currentStyle)
 
-                        for key in diff_style_keys:
-                            last_style[key] = current_style[key]
-                            diff_style[key] = current_style[key]
+                        for key in diffStyleKeys:
+                            lastStyle[key] = currentStyle[key]
+                            diffStyle[key] = currentStyle[key]
 
                     # print(diff_style)   
 
-                    receipt_info["commands"].append({
+                    receiptInfo["commands"].append({
                         "type": "text",
                         "value": {
                             "text": command.text,
-                            "newline": command.new_line,
-                            "style": diff_style
+                            "newline": command.newLine,
+                            "style": diffStyle
                         }
                     })
 
@@ -66,23 +66,23 @@ class Receipt:
                     # print("---- ")
 
                 case QRCode():
-                    receipt_info["commands"].append({
+                    receiptInfo["commands"].append({
                         "type": "qr_code",
-                        "value": command.to_dict()
+                        "value": command.toDict()
                     })
 
                 case Divider():
-                    if full_style is None:
+                    if fullStyle is None:
                         font = "a"
                     else:
-                        font = full_style["font"]
+                        font = fullStyle["font"]
 
-                    if full_style is not None:
-                        width = full_style["scale"][0]
+                    if fullStyle is not None:
+                        width = fullStyle["scale"][0]
                     else:
                         width = 1
                     
-                    receipt_info["commands"].append({
+                    receiptInfo["commands"].append({
                         "type": "divider",
                         "value": {
                             "font": font,
@@ -91,29 +91,29 @@ class Receipt:
                     })
 
                 case Table():
-                    if full_style is None:
+                    if fullStyle is None:
                         font = "a"
                     else:
-                        font = full_style["font"]
+                        font = fullStyle["font"]
 
-                    if full_style is not None:
-                        width = full_style["scale"][0]
+                    if fullStyle is not None:
+                        width = fullStyle["scale"][0]
                     else:
                         width = 1
 
 
-                    receipt_info["commands"].append({
+                    receiptInfo["commands"].append({
                         "type": "table",
                         "value": {
                             "font": font,
                             "width": width,
-                            "value": command.to_dict(),
+                            "value": command.toDict(),
                         }
                         
                     })
 
 
-        return json.dumps(receipt_info, ensure_ascii=False, indent=4)
+        return json.dumps(receiptInfo, ensure_ascii=False, indent=4)
 
 if __name__ == "__main__":
     receipt = Receipt()
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     receipt.build.text("text1", "b", align="left")
     receipt.build.text("text2", align="right")
     receipt.build.text("text2", align="left", underline=1)
-    receipt.build.qr_code("https://www.baidu.com")
+    receipt.build.qrCode("https://www.baidu.com")
 
-    receipt.render_json()
+    receipt.renderJSON()
         

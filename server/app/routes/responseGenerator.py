@@ -6,7 +6,7 @@ from core.utils.server import makeResponse
 class ResponseInfo:
     status_code: int
     name: str
-    data_type: type | None
+    dataType: type | None
 
     def __call__(self, data: Any = None):
         return makeResponse(self.status_code, data, self.name)

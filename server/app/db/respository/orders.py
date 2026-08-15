@@ -14,7 +14,7 @@ class OrdersRepository(Repository[_OrdersRow]):
     tableName = "orders"
 
     columns = [
-        Column("id", Integer(), primary_key=True),
+        Column("id", Integer(), primaryKey=True),
         Column("type", Integer(), notNull=True), #  0: 堂食 --1：打包
         Column("tableId", Integer(), notNull=True, foreign=("tables", "id")),
         Column("partySize", Integer(), notNull=True, default=1), # 人数，默认1人
@@ -31,7 +31,7 @@ class SubOrdersRepository(Repository[_SubOrdersRow]):
     tableName = "subOrders"
 
     columns = [
-        Column("id", Integer(), primary_key=True, foreign=("orders", "id")),
+        Column("id", Integer(), primaryKey=True, foreign=("orders", "id")),
         Column("note", String()), # 子订单备注
         Column("createdAt", DateTime(), notNull=True), # 子订单的创建时间
     ]
@@ -54,7 +54,7 @@ class OrderStatusRepository(Repository[_OrderStatusRow]):
     tableName = "orderStatus"
 
     columns = [
-        Column("id", Integer(), primary_key=True, foreign=("orders", "id")),
+        Column("id", Integer(), primaryKey=True, foreign=("orders", "id")),
         Column("status", Integer(), notNull=True), # 0: 已下单 --1: 制作中 --2: 待结账 --3: 已结账
         Column("createdAt", DateTime(), notNull=True), # 下单时间
 
@@ -85,7 +85,7 @@ class OrderItemsRepository(Repository[_OrderItemsRow]):
     tableName = "orderItems"
 
     columns = [
-        Column("id", Integer(), primary_key=True, autoIncrement=True),
+        Column("id", Integer(), primaryKey=True, autoIncrement=True),
 
         Column("orderId", Integer(), notNull=True, foreign=("dishes", "id")),
         Column("subOrderId", Integer(), notNull=True, foreign=("subOrders", "id")),  # 子订单id

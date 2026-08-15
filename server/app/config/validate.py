@@ -37,7 +37,7 @@ def validateErrorToStr(error: ValidationResult):
 {childrenErrorString}'''
             
         case ValueTypeError():
-            errorString = f'必须是{error.expected_type.__name__}类型'
+            errorString = f'必须是{error.expectedType.__name__}类型'
         
         case _:
             errorString = str(error)
@@ -45,11 +45,11 @@ def validateErrorToStr(error: ValidationResult):
     return errorString
 
 def errorsToString(errors: dict[str, ValidationResult]):
-    errors_list = []
+    errorsList = []
     for key, result in errors.items():
-        errors_list.append(f"{key}: {validateErrorToStr(result.error)}")
+        errorsList.append(f"{key}: {validateErrorToStr(result.error)}")
 
-    return errors_list
+    return errorsList
 
 
 def validateConfig(fix=False):

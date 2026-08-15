@@ -1,6 +1,6 @@
 from core.config.json_config import JSONConfig
 from .schema import CONFIG_ITEMS
-from .verify import validateConfig
+from .validate import validateConfig
 
 
 def setupConfig():

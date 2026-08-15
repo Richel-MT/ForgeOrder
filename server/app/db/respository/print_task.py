@@ -18,7 +18,7 @@ class PrintTaskRepository(Repository[_Row]):
     tableName = "printTask"
 
     columns = [
-        Column("id", String(36), primary_key=True, notNull=True),  # 主键, uuid v7
+        Column("id", String(36), primaryKey=True, notNull=True),  # 主键, uuid v7
         Column("status", Integer(), notNull=True, default=0),  # 状态, 0：等待中 -- 1：打印中 -- 2：成功 --3：错误
         
         Column("content", JSON(), notNull=True),  # 打印内容

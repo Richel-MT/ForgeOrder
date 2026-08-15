@@ -10,9 +10,9 @@ from .exceptions import *
 from app.routes.field import RequestField, NotEmpty
 from core.utils import getClientIp
 
-accounts_bp = AppBlueprint("accounts", __name__)
+accountsBlueprint = AppBlueprint("accounts", __name__)
 
-@accounts_bp.post("/api/auth/login",              
+@accountsBlueprint.post("/api/auth/login",              
     arguments = [   
         RequestField("username", str, True, None, NotEmpty()),
         RequestField("password", str, True, None, NotEmpty()),
@@ -60,7 +60,7 @@ def login():
 
 
         
-@accounts_bp.post("/api/auth/logout", requiresAuth=True,
+@accountsBlueprint.post("/api/auth/logout", requiresAuth=True,
                   responses=[
                       ResponseInfo(0, "OK", None),
                       ResponseInfo(3001, "TokenInvalid", None),
@@ -83,7 +83,7 @@ def logout():
     logger.info(
         {
             "ip": getClientIp(),
-            "user_id": result.data["userId"],
+            "userId": result.data["userId"],
         }, "UserLogout", g.requestId)
     
 

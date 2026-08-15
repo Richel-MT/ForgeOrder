@@ -8,10 +8,10 @@ from app.routes.blueprint import AppBlueprint
 
 
 
-system_bp = AppBlueprint("system", __name__)
+systemBlueprint = AppBlueprint("system", __name__)
 
-@system_bp.route("/api/system/getSystemInfo", requiresAuth=True)
-def get_system_info():
+@systemBlueprint.route("/api/system/getSystemInfo", requiresAuth=True)
+def getSystemInfo():
     return makeResponse(
         0,
         {

@@ -3,10 +3,12 @@ import time
 from flask import g, Response
 
 
-def after_request(response: Response):
+def afterRequest(response: Response):
     g.endTime = time.time()
 
     cost: float = (g.endTime - g.startTime) * 1000 # 转换为毫秒
+
+    g.logger.setCategory("Request")
 
     g.logger.info({
         "httpStatus": response.status_code,

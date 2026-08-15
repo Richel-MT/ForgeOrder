@@ -2,8 +2,8 @@ import os
 import datetime
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
-from .hooks.before_request import before_request
-from .hooks.after_request import after_request
+from .hooks.beforeRequest import beforeRequest
+from .hooks.afterRequest import afterRequest
 from .hooks.errors import *
 import extensions
 
@@ -29,9 +29,9 @@ def setupApp():
         bp.registerForApp(app, extensions.routeManager)
 
     
-    app.before_request(before_request) # type: ignore
+    app.before_request(beforeRequest) # type: ignore
 
-    app.after_request(after_request)
+    app.after_request(afterRequest)
 
     setupErrorHandlers(app)
     

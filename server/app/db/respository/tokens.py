@@ -17,7 +17,7 @@ class TokenRepository(Repository[_Row]):
     tableName = 'tokens'
 
     columns = [
-        Column('id', Integer(), primary_key=True, autoIncrement=True),
+        Column('id', Integer(), primaryKey=True, autoIncrement=True),
         Column('userId', Integer(), notNull=True, foreign=('users', 'id')),
         Column('token', String(), notNull=True),
         Column('status', Integer(), notNull=True, default=0), # 0:可用 1:已过期 2:已退出登录 3:旧设备

@@ -46,31 +46,31 @@ class UserService(Service):
     AUTH = AuthResult
     USER = UserResult
 
-    def _generate_token(self):
+    def _generateToken(self):
         '''使用secrets库生成随机token'''
         return secrets.token_urlsafe(32)
 
-    def _insert_token(self, user_id: int, token: str, expire_time: datetime, ip: str):
+    def _insertToken(self, userId: int, token: str, expireTime: datetime, ip: str):
         '''
         将一条token插入到表中。
         '''
         self.repositoryManager.tokens.insert(
-            userId=user_id,
+            userId=userId,
             token=token,
             status=0,
-            expireTime=expire_time,
+            expireTime=expireTime,
             ip=ip,
         )
 
     
-    def __init__(self, repo_manager: RepositoryManager, config: JSONConfig | None = None):
-        super().__init__(repo_manager)
+    def __init__(self, repositoryManager: RepositoryManager, config: JSONConfig | None = None):
+        super().__init__(repositoryManager)
 
 
         if config is None:
             from extensions import config
         
-        self.available_time = config.get("auth.available_time")
+        self.availableTime = config.get("auth.available_time")
 
         
 
@@ -80,7 +80,7 @@ class UserService(Service):
         用户登录操作。
         '''
 
-        repeat_login = False
+        repeatLogin = False
 
         users = self.repositoryManager.users.get(username=username)
 
@@ -89,6 +89,7 @@ class UserService(Service):
             return Result(self.LOGIN.USERNAME_OR_PASSWORD_ERROR)
 
         # 判断密码是否正确
+
         if not check_password_hash(users["password"], password):
             # 密码错误
             return Result(self.LOGIN.USERNAME_OR_PASSWORD_ERROR)
@@ -103,10 +104,10 @@ class UserService(Service):
 
         if token_info is None:
             # token不存在，生成新的token
-            token = self._generate_token()
-            expire_time = datetime.now() + timedelta(days=self.available_time)
+            token = self._generateToken()
+            expireTime = datetime.now() + timedelta(days=self.availableTime)
 
-            self._insert_token(users["id"], token, expire_time, ip)
+            self._insertToken(users["id"], token, expireTime, ip)
             
 
         else:
@@ -123,17 +124,17 @@ class UserService(Service):
                 )
 
                 # 生成新的token
-                token = self._generate_token()
-                expire_time = datetime.now() + timedelta(days=self.available_time)
+                token = self._generateToken()
+                expireTime = datetime.now() + timedelta(days=self.availableTime)
 
-                self._insert_token(users["id"], token, expire_time, ip)
+                self._insertToken(users["id"], token, expireTime, ip)
         
                 
             if token_info["ip"] != ip:
                 # token有效
                 if not cover:
                     return Result(self.LOGIN.NEW_DEVICE, {
-                        "old_device": token_info["ip"]
+                        "oldDevice": token_info["ip"]
                     })
                 else:
                     # 删除旧token
@@ -143,20 +144,20 @@ class UserService(Service):
                     )
 
                     # 生成新的token
-                    token = self._generate_token()
-                    expire_time = datetime.now() + timedelta(days=self.available_time)
+                    token = self._generateToken()
+                    expireTime = datetime.now() + timedelta(days=self.availableTime)
 
                     self.repositoryManager.tokens.insert(
                         user_id=users["id"],
                         token=token,
                         status=0,
-                        expire_time=expire_time,
+                        expire_time=expireTime,
                         ip=ip,
                     )
 
             else:
                 # ip相同，同一设备的重复登录
-                repeat_login = True
+                repeatLogin = True
 
             
                            
@@ -175,7 +176,7 @@ class UserService(Service):
         # 返回结果
 
 
-        return Result(self.LOGIN.SUCCESS if not repeat_login else self.LOGIN.REPEAT_LOGIN, {
+        return Result(self.LOGIN.SUCCESS if not repeatLogin else self.LOGIN.REPEAT_LOGIN, {
             "token": token,
             "user": user_info,
         })
@@ -187,8 +188,8 @@ class UserService(Service):
 
 
         # 检查token是否存在
-        token_info = self.repositoryManager.tokens.get(token=token)
-        if token_info is None:
+        tokenInfo = self.repositoryManager.tokens.get(token=token)
+        if tokenInfo is None:
             # token不存在
             return Result(self.LOGOUT.TOKEN_INVALID)
 
@@ -202,38 +203,38 @@ class UserService(Service):
         self.repositoryManager.tokens.commit()
 
         # 返回结果
-        return Result(self.LOGOUT.SUCCESS, token_info)
+        return Result(self.LOGOUT.SUCCESS, tokenInfo)
 
-    def check_token(self, token: str):
+    def checkToken(self, token: str):
         '''
         检查token是否有效。
         '''
 
-        token_info = self.repositoryManager.tokens.get(token=token)
+        tokenInfo = self.repositoryManager.tokens.get(token=token)
 
-        if token_info is None:
+        if tokenInfo is None:
             # token不存在
             return Result(self.AUTH.TOKEN_INVALID)
 
-        if token_info["status"] != 0:
+        if tokenInfo["status"] != 0:
             # token无效，删除
             self.repositoryManager.tokens.delete(
-                where={"id": token_info["id"]}
+                where={"id": tokenInfo["id"]}
             )
         
-        if token_info["status"] == 1:
+        if tokenInfo["status"] == 1:
             # token已过期
             return Result(self.AUTH.TOKEN_EXPIRED)
-        elif token_info["status"] == 2:
+        elif tokenInfo["status"] == 2:
             # token已退出登录
             return Result(self.AUTH.TOKEN_LOGOUT)
-        elif token_info["status"] == 3:
+        elif tokenInfo["status"] == 3:
             # token旧设备
             return Result(self.AUTH.TOKEN_OLD_DEVICE)
 
         # 检查过期时间
         now = datetime.now()
-        if now > token_info["expireTime"]:
+        if now > tokenInfo["expireTime"]:
             # token已过期，更新数据库信息
             self.repositoryManager.tokens.update(
                 where={"token": token},
@@ -247,27 +248,27 @@ class UserService(Service):
             # token未过期，更新过期时间
             self.repositoryManager.tokens.update(
                 where={"token": token},
-                data={"expireTime": now + timedelta(minutes=self.available_time)}
+                data={"expireTime": now + timedelta(minutes=self.availableTime)}
             )
 
 
         self.repositoryManager.tokens.commit()
 
         # 获取用户信息
-        user_info = self.repositoryManager.users.get(id=token_info["userId"])
+        user_info = self.repositoryManager.users.get(id=tokenInfo["userId"])
 
-        token_info = dict(token_info)
-        token_info["user"] = user_info
-        return Result(self.AUTH.SUCCESS, token_info)
+        tokenInfo = dict(tokenInfo)
+        tokenInfo["user"] = user_info
+        return Result(self.AUTH.SUCCESS, tokenInfo)
 
 
-    def get(self, user_id: int | None = None, username: str | None = None):
+    def get(self, userId: int | None = None, username: str | None = None):
         '''
         通过id或用户名获取用户信息。
         '''
 
-        if user_id:
-            result = self.repositoryManager.users.get(id=user_id)
+        if userId:
+            result = self.repositoryManager.users.get(id=userId)
         elif username:
             result = self.repositoryManager.users.get(username=username)
         else:
@@ -279,7 +280,7 @@ class UserService(Service):
         return Result(self.USER.SUCCESS, result)
 
 
-    def change_password_force(self, user_id: int, new_password: str):
+    def forceChangePassword(self, userId: int, newPassword: str):
         '''
         强制更改用户的密码。
 
@@ -287,26 +288,26 @@ class UserService(Service):
         '''
 
         
-        password_hash = generate_password_hash(new_password)
+        passwordHash = generate_password_hash(newPassword)
 
         try:
             self.repositoryManager.users.update(
-                where={"id": user_id},
-                data={"password": password_hash}
+                where={"id": userId},
+                data={"password": passwordHash}
             )
         except RecordNotFoundError:
             return Result(self.USER.USER_NOT_FOUND)
 
         return Result(self.USER.SUCCESS)
         
-    def change_password(self, user_id: int, old_password: str, new_password: str):
+    def changePassword(self, userId: int, oldPasswrod: str, newPassword: str):
         '''
         更改用户的密码。
 
         传入用户id、旧密码（明文）、新密码（明文）。
         '''
 
-        status, user = self.get(user_id=user_id)
+        status, user = self.get(userId=userId)
         
         if status != self.USER.SUCCESS:
             return Result(status)
@@ -314,13 +315,13 @@ class UserService(Service):
         user = cast(dict, user)
 
     
-        if not check_password_hash(user["password"], old_password):
+        if not check_password_hash(user["password"], oldPasswrod):
             # 旧密码错误
             return Result(self.USER.OLD_PASSWORD_ERROR)
 
         # 旧密码正确
 
-        self.change_password_force(user_id, new_password)
+        self.forceChangePassword(userId, newPassword)
 
         return Result(self.USER.SUCCESS)
 
@@ -328,25 +329,25 @@ class UserService(Service):
     def create(self,
                 username: str,
                 password: str,
-                is_admin: bool,
-                is_available: bool,
+                isAdmin: bool,
+                isAvailable: bool,
                 ):
 
-        create_time = datetime.now()
+        createTime = datetime.now()
 
-        password_hash = generate_password_hash(password)
+        passwordHash = generate_password_hash(password)
 
-        user_id = self.repositoryManager.users.insert(
+        userId = self.repositoryManager.users.insert(
             username=username,
-            password=password_hash,
-            isAdmin=is_admin,
-            isAvailable=is_available,
-            createdAt=create_time,
+            password=passwordHash,
+            isAdmin=isAdmin,
+            isAvailable=isAvailable,
+            createdAt=createTime,
         )
 
         self.repositoryManager.users.commit()
 
-        return Result(self.USER.SUCCESS, user_id)
+        return Result(self.USER.SUCCESS, userId)
 
     
 

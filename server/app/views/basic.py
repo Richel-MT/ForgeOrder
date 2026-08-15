@@ -5,13 +5,13 @@ from flask import (Blueprint, current_app, send_from_directory, request)
 from app.routes.blueprint import AppBlueprint
 import extensions
 
-basic_bp = AppBlueprint("basic", __name__)
+basicBlueprint = AppBlueprint("basic", __name__)
 
-@basic_bp.route("/routeInfo", noRegister=True)
+@basicBlueprint.route("/routeInfo", noRegister=True)
 def route_info():
-    route_name: str = request.args.get("path") #type: ignore
+    routeName: str = request.args.get("path") #type: ignore
 
-    route = extensions.routeManager.routes.get(route_name)
+    route = extensions.routeManager.routes.get(routeName)
 
     if route is None:
             return {
@@ -35,24 +35,24 @@ def route_info():
         responses.append({
              "status": response.status_code,
              "name": response.name,
-             "data_type": str(response.data_type),
+             "dataType": str(response.dataType),
         })
 
 
     return {
-            "path": route_name,
+            "path": routeName,
             "auth": route["requiresAuth"],
-            "is_admin": route["isAdmin"],
+            "isAdmin": route["isAdmin"],
             "arguments": arguments,
             "responses": responses,
         }
 
-@basic_bp.route("/", defaults={"path": ""}, noRegister=True)
-@basic_bp.route("/<path:path>", noRegister=True)
+@basicBlueprint.route("/", defaults={"path": ""}, noRegister=True)
+@basicBlueprint.route("/<path:path>", noRegister=True)
 def index(path: str = ""):
     if "." in path:
-        file_path = os.path.join(current_app.static_folder, path) #type: ignore
-        if os.path.exists(file_path):
+        filePath = os.path.join(current_app.static_folder, path) #type: ignore
+        if os.path.exists(filePath):
             return send_from_directory(current_app.static_folder, path) #type: ignore
     
     return send_from_directory(current_app.static_folder, "index.html") #type: ignore

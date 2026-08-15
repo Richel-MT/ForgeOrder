@@ -14,7 +14,7 @@ class TablesRepository(Repository[_Row]):
     tableName = "tables"
 
     columns = [
-        Column("id", Integer(), primary_key=True, autoIncrement=True),  # 主键, auto increment
+        Column("id", Integer(), primaryKey=True, autoIncrement=True),  # 主键, auto increment
         Column("name", String(), notNull=True, unique=True),
         Column("isAvailable", Boolean(), notNull=True, default=True),  # 是否可用
         Column("isDeleted", Boolean(), notNull=True, default=False),  # 是否删除

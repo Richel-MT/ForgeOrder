@@ -18,10 +18,10 @@ class ColumnType:
         if value is not None and not isinstance(value, self.pyType):
             # 类型不正确，尝试转换
             try:
-                value_new = converter.convert(value, self.pyType)
+                newValue = converter.convert(value, self.pyType)
 
 
-                return value_new
+                return newValue
             except TypeConvertError:
                 # 无法转换，抛出异常
                 raise TypeMismatchError(self.pyType, type(value)) #type: ignore

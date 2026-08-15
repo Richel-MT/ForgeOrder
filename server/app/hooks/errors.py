@@ -35,7 +35,7 @@ def handleDatabaseLockedError(e: DatabaseLockedError):
 	}, "DatabaseBusy")
 	return GLOBAL.DATABASE_BUSY(), 503
 
-def database_error(e):
+def databaseError(e):
 	return GLOBAL.DATABASE_ERROR(), 500
 
 def teardownAppContext(error):

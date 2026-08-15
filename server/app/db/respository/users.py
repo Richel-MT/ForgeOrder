@@ -19,7 +19,7 @@ class UsersRepository(Repository[_Row]):
 
 
     columns = [
-        Column("id", Integer(), primary_key=True, autoIncrement=True),  # 主键, auto increment
+        Column("id", Integer(), primaryKey=True, autoIncrement=True),  # 主键, auto increment
         Column("username", String(), notNull=True, unique=True),
 
         Column("password", String(), notNull=True),

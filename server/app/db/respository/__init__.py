@@ -19,7 +19,7 @@ class RepositoryManager(RepositoryManagerBase):
 
         self.tables = TablesRepository(db)
         self.settings = SettingsRepository(db)
-        self.print_task = PrintTaskRepository(db)
+        self.printTask = PrintTaskRepository(db)
 
         self.dishesCategory = DishesCategoryRepository(db)
         self.dishes = DishesRepository(db)
@@ -36,7 +36,7 @@ class RepositoryManager(RepositoryManagerBase):
         self.tokens._init()
         self.tables._init()
         self.settings._init()
-        self.print_task._init()
+        self.printTask._init()
         self.dishesCategory._init()
         self.dishes._init()
         self.dishStats._init()
