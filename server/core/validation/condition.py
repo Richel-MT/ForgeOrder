@@ -17,13 +17,17 @@ class Equal(Condition):
 
     def check(self, context: Any = None):
         if hasattr(self.leftValue, "get") and isinstance(self.leftValue.get, Callable):
-            leftValue = self.leftValue.get(context)
+            leftValue : Any= self.leftValue.get(context)
+        else:
+            raise AttributeError(f"{self.leftValue} does not have a 'get' method.")
 
         if hasattr(self.rightValue, "get") and isinstance(self.rightValue.get, Callable):
-            rightValue = self.rightValue.get(context)
+            rightValue : Any = self.rightValue.get(context)
+        else:
+            raise AttributeError(f"{self.rightValue} does not have a 'get' method.")
 
 
-        return leftValue == rightValue #type: ignore
+        return leftValue == rightValue
 
     def __str__(self):
         return f"{self.leftValue} == {self.rightValue}"
