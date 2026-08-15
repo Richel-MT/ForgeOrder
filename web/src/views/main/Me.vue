@@ -116,7 +116,7 @@
 
     const isDevelopment = ref(false)
     const username = computed(() => JSON.parse(localStorage.getItem('userInfo')).username)
-    const isAdmin = computed(() => JSON.parse(localStorage.getItem('userInfo')).is_admin)
+    const isAdmin = computed(() => JSON.parse(localStorage.getItem('userInfo')).isAdmin)
     const ipAddress = ref('192.168.1.5')
     const version = ref('1.0.0')
 

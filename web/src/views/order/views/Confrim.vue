@@ -7,17 +7,17 @@
             <mdui-list>
                 <mdui-list-item rounded>
                     订单类型
-                    <div slot="end-icon" style="font-size: 16px;">{{ props.orderInfo.order_type == '0' ? '堂食' : '外带' }}</div>
+                    <div slot="end-icon" style="font-size: 16px;">{{ props.orderInfo.orderType == '0' ? '堂食' : '外带' }}</div>
                 </mdui-list-item>
 
-                <mdui-list-item rounded v-if="props.orderInfo.order_type == '0'">
+                <mdui-list-item rounded v-if="props.orderInfo.orderType == '0'">
                     桌台
-                    <div slot="end-icon" style="font-size: 16px;">{{ props.orderInfo.table_name }}</div>
+                    <div slot="end-icon" style="font-size: 16px;">{{ props.orderInfo.tableName }}</div>
                 </mdui-list-item>
 
-                <mdui-list-item rounded v-if="props.orderInfo.order_type == '0'">
+                <mdui-list-item rounded v-if="props.orderInfo.orderType == '0'">
                     人数
-                    <div slot="end-icon" style="font-size: 16px;">{{ props.orderInfo.party_size }}</div>
+                    <div slot="end-icon" style="font-size: 16px;">{{ props.orderInfo.partySize }}</div>
                 </mdui-list-item>
 
                 <mdui-list-item rounded>

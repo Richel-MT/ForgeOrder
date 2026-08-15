@@ -2,6 +2,7 @@ import axios from 'axios'
 import router from '@/router'
 import { t } from '@/locales/index.js'
 import { createLogger } from './log.js'
+import { snackbar } from 'mdui'
 
 const request = axios.create({
     baseURL: '/api',
@@ -23,13 +24,13 @@ request.interceptors.request.use(
 )
 
 
-// 相应拦截
+// 响应拦截
 request.interceptors.response.use(
     response => response,
     error => {
         const logger = createLogger("Auth")
         // 处理401错误
-        if (error.response.status === 401) {
+        if (error.response?.status === 401) {
             
             // 识别status
             const status = error.response.data.status
@@ -72,19 +73,14 @@ request.interceptors.response.use(
         } else if (error.response.status === 400) {
             const status = error.response.data?.status || -1
             if (status == 1001) {
-                let detail = JSON.stringify(error.response.data?.data)
-                
-
-                router.push({
-                    name: 'Error',
-                    query: {
-                        title: t('Urequest.error.headline'),
-                        message: t('Urequest.error.description'), 
-                        detail: detail
-                    }
+                snackbar({
+                    message:"请求错误，请联系开发者。"
                 })
-
             }
+        } else if (error.response.status == 503) {
+            snackbar({
+                message:"服务器繁忙，请稍后再试。"
+            })
         }
 
         return Promise.reject(error)

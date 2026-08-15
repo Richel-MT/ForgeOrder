@@ -6,16 +6,16 @@ from core.log.context import LogContext
 from core.log.logger import Logger
 
 class LogContextWithRequestId(LogContext):
-    def __init__(self, logger: Logger, category: str, request_id: str, before_log: Callable):
+    def __init__(self, logger: Logger, category: str, requestId: str, onBeforeLog: Callable):
         super().__init__(logger, category)
 
-        self.request_id = request_id
-        self.before_log = before_log
+        self.requestId = requestId
+        self.onBeforeLog = onBeforeLog
 
-    def log(self, msg: str | dict | list , level: int, action: str, request_id: str = ""):
-        self.before_log()
+    def log(self, msg: str | dict | list , level: int, action: str, requestId: str = ""):
+        self.onBeforeLog()
 
-        super().log(msg, level, action, self.request_id)
+        super().log(msg, level, action, self.requestId)
 
 class RequestLogContext(LogContext):
     def __init__(self, logger: Logger, category: str = ""):
@@ -26,43 +26,31 @@ class RequestLogContext(LogContext):
         else:
             args = {}
             
-        self.request_info = {
-            "request_id": g.request_id,
+        self.requestInfo = {
+            "requestId": g.requestId,
             "ip": request.remote_addr,
             "path": request.path,
             "method": request.method,
             "args": args,
         }
 
-        self.logged_request_info = False
+        self.requestInfoLogged = False
 
-    def set_category(self, category: str):
+    def setCategory(self, category: str):
         self.category = category
 
-    def _before_log(self):
-        if not self.logged_request_info:
-            self.logger.info(self.request_info, "REQUEST","RequestInfo", g.request_id)
-            self.logged_request_info = True
+    def _onBeforeLog(self):
+        if not self.requestInfoLogged:
+            self.logger.info(self.requestInfo, "Request","RequestInfo", g.requestId)
+            self.requestInfoLogged = True
 
-    def log(self, msg: str | dict | list , level: int, action: str, request_id: str = None):
-        self._before_log()
+    def log(self, msg: str | dict | list , level: int, action: str, requestId: str = None):
+        self._onBeforeLog()
 
-
-        # if isinstance(msg, dict):
-        #     msg["request_id"] = g.request_id
-            
-        # else:
-        #     msg = {
-        #         "request_id": g.request_id,
-        #         "msg": msg
-        #     }
-
-
-
-        return super().log(msg, level, action, g.request_id)
+        return super().log(msg, level, action, g.requestId)
         
-    def get_log_context(self, category: str):
-        return LogContextWithRequestId(self.logger, category, g.request_id, self._before_log)
+    def getLogContext(self, category: str):
+        return LogContextWithRequestId(self.logger, category, g.requestId, self._onBeforeLog)
 
 
 

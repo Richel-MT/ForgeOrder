@@ -1,67 +1,75 @@
 from queue import Queue
 from threading import Thread
-import uuid
-import json
-import datetime
 
-from ..db.get_db import get_database
-from ..db.main_db import MainDatabase
+from ..service.printTask import PrintTaskService
+
 from .receipt import Receipt
-from app.printer import receipt
-from .worker import create_print_worker
-from  core.log.logger import Logger
+from .worker import createPrintWorker
+from core.log import getLogger
 
 
 
 
 class PrintManager:
-    def __init__(self, logger: Logger):
+
+    _instance = None
+    
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+
+    def __init__(self):
+
+        if hasattr(self, '_initialized'):
+            return
+        
         self.queue: Queue
-        self.worker_thread : Thread
-        self.logger = logger
+        self.workerThread : Thread
 
         self._init()
 
     def _init(self):
-        self.queue, self.worker_thread = create_print_worker(self.logger)
 
-    def new(self, content: Receipt, context: dict = {}, db: MainDatabase | None = None):
-        if db is None:
-            db = get_database()
+        logger = getLogger()
+
+        self.queue, self.workerThread = createPrintWorker(logger)
+
+    def new(self, content: Receipt, service: PrintTaskService, context: dict = {}, ):
+
             
-        id = str(uuid.uuid7())
+        result = service.create(content, context)
 
-        content_str = content.render_json()
+        taskId = result.data
 
-        context_str = json.dumps(context)
-
-        now = datetime.datetime.now()
-
-        db.print_task.new(id, content_str, now, context_str)
-
-        self.queue.put(id)
+        if taskId is not None:
+            self.queue.put(taskId)
 
 
-        self.logger.info({
-            "id": id,
+        getLogger().info({
+            "id": taskId,
         }, "PRINTER", "PrintTaskCreated")
 
-        return id
+        return taskId
 
 
     def shutdown(self):
-        # self.queue.join()
         self.queue.put(None)
 
-        self.worker_thread.join()
+        self.workerThread.join()
+
+    @classmethod
+    def getInstance(cls):
+        if cls._instance is None:
+            raise ValueError("PrintManager not initialized")
+        
+        return cls._instance 
 
 
 
-if __name__ == "__main__":
-    pm = PrintManager(Logger("fuck"))
+
 
     
-
-    pm.new(receipt, {"fuck": "fuck"})
 
 

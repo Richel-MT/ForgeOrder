@@ -2,18 +2,18 @@
 import sys
 import time
 
-from core.log import get_console_logger
+from core.log import getConsoleLogger
+from app.config import config, CONFIG
 
 
-def _fix_config():
-    import extensions
+def _fixConfig():
     from app.config.schema import CONFIG_ITEMS
     # from core.config.validation import 
-    from app.config.verify import verify_config
+    from app.config.validate import validateConfig
 
-    logger = get_console_logger("fix")
+    logger = getConsoleLogger("fix")
 
-    errors = verify_config(True)
+    errors = validateConfig(config.getConfigInstance(), True)
 
     if not errors:
         logger.info("未找到配置项问题")
@@ -29,24 +29,24 @@ def _fix_config():
             
             property = [item for item in CONFIG_ITEMS if item.key == key][0]
 
-            fixed_value = result.error.fix(property)
-            logger.info(f"已修复{key}(默认值：{fixed_value})")
+            fixedValue = result.error.fix(property)
+            logger.info(f"已修复{key}(默认值：{fixedValue})")
 
 
-            extensions.config.set(key, fixed_value)
+            config.set(key, fixedValue)
         
 
 
 def fix(exit: bool = True):
-    logger = get_console_logger("fix")
-    start_time = time.time()
+    logger = getConsoleLogger("fix")
+    startTime = time.time()
 
     
-    _fix_config()
+    _fixConfig()
 
-    end_time = time.time()
+    endTime = time.time()
 
-    logger.info(f"修复完成({int(1000 * (end_time - start_time))}ms)")
+    logger.info(f"修复完成({int(1000 * (endTime - startTime))}ms)")
     
 
         

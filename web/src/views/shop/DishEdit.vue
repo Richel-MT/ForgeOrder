@@ -18,7 +18,7 @@
 
     <div class="container mdui-prose" v-if="!isError">
 
-        <h2 v-if="!isNew">{{ $t('shop.dish_edit.title', {name: dishData.name}) }}</h2> 
+        <h2 v-if="!isNew">{{ $t('shop.dish_ed/it.title', {name: dishData.name}) }}</h2> 
         <h2 v-else>{{ $t('shop.new_dish.title') }}</h2> 
 
         <div style="margin-bottom: 24px; font-size: 18px">
@@ -70,7 +70,7 @@
 
             <div class="setting-item">
                 <div class="setting-item-key">{{ $t('shop.dish_edit.dish_available') }}</div>
-                <mdui-switch :checked="dishData.is_available" ref="isAvailableSwitch" :disabled="isLoading"></mdui-switch>
+                <mdui-switch :checked="dishData.isAvailable" ref="isAvailableSwitch" :disabled="isLoading"></mdui-switch>
             </div>
 
             <div class="setting-item">
@@ -222,12 +222,12 @@
     const saveChanged = async(changed, choicesChanging) => {
         try {
             const dishId = route.params.id
-            // console.log(dishId)
+
 
             const res = await request.post(`/shop/dishes/update`, {
-                dish_id: Number(dishId),
-                changed_items: changed,
-                changed_choices: choicesChanging,
+                dishId: Number(dishId),
+                changedItems: changed,
+                changedChoices: choicesChanging,
             })
 
     
@@ -308,7 +308,7 @@
         let dishData_ = {...dishData.value,}
 
         dishData_.price *= 100 // 转换为分
-        dishData_.is_available = isAvailableSwitch.value.checked
+        dishData_.isAvailable = isAvailableSwitch.value.checked
 
         if (typeof categoryInput.value.value == 'string') {
             let category = -1 
@@ -368,12 +368,12 @@
         }
 
         // 是否启用
-        if (!dishData_.is_available) {
-            dishData_.is_available = false
+        if (!dishData_.isAvailable) {
+            dishData_.isAvailable = false
         }
 
-        if (dishData_.is_available !== originDishData.is_available) {
-            changed.is_available = dishData_.is_available
+        if (dishData_.isAvailable !== originDishData.isAvailable) {
+            changed.isAvailable = dishData_.isAvailable
         }
 
         // 分类
@@ -450,7 +450,7 @@
                     'image': '',
                     'category': '',
                     'choices': {},
-                    'is_available': 0
+                    'isAvailable': 0
                 }
             }
             

@@ -3,10 +3,10 @@ from typing import Any
 from ..exceptions import UnsupportedTypeError
 
 class Validator:
-    allow_types : type | None = None # None 表示接收任意类型
+    allowTypes : type | None = None # None 表示接收任意类型
 
     def validate(self, value: Any = None, context: Any = None) -> ValidationResult:
-        if self.allow_types is None or isinstance(value, self.allow_types):
+        if self.allowTypes is None or isinstance(value, self.allowTypes):
 
             result =  self._validate(value, context)
             
@@ -14,7 +14,7 @@ class Validator:
         else:
             # return VerifyResult(False, ValueTypeError(self.allow_types))
         
-            raise UnsupportedTypeError(self, self.allow_types, type(value))
+            raise UnsupportedTypeError(self, self.allowTypes, type(value))
         
     def _validate(self, value: Any, context: Any = None) -> ValidationResult: #type: ignore
         pass

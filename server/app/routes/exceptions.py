@@ -25,11 +25,11 @@ class MissingRequiredArgumentError(ArgumentException):
         super().__init__(self.msg)
 
 class InvalidArgumentTypeError(ArgumentException):
-    def __init__(self, key: str, expected_type: type, value_type: type):
+    def __init__(self, key: str, expectedType: type, valueType: type):
         self.key = key
-        self.expected_type = expected_type
-        self.value_type = value_type
-        self.msg = f"Argument '{key}' expected {expected_type.__name__} type, got {value_type.__name__} type."
+        self.expectedType = expectedType
+        self.valueType = valueType
+        self.msg = f"Argument '{key}' expected {expectedType.__name__} type, got {valueType.__name__} type."
         super().__init__(self.msg)
 
 class ArgumentValidationError(ArgumentException):

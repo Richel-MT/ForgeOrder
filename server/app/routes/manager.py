@@ -1,5 +1,5 @@
 from .schema import RoutesInfo
-from .res_generator import ResponseGenerator, ResponseInfo
+from .responseGenerator import ResponseGenerator, ResponseInfo
 from .exceptions import *
 from .field import RequestField
 
@@ -10,8 +10,8 @@ class RouteManager:
         self.routes: dict[str, RoutesInfo] = {}
 
     def register(self, path: str,
-                 auth: bool= False,
-                 is_admin: bool = False,
+                 requiresAuth: bool= False,
+                 isAdmin: bool = False,
                  args: list[RequestField] | None = None,
                  responses: list[ResponseInfo] | None = None):
 
@@ -26,47 +26,47 @@ class RouteManager:
         for arg in args:
             args_[arg.key] = arg
 
-        self.routes[path] = {
-            "is_admin": is_admin,
-            "auth": auth,
+        self.routes[path] = { # type: ignore
+            "isAdmin": isAdmin,
+            "requiresAuth": requiresAuth,
             "args": args_,
             "responses": responses,
         }
 
         
 
-    def has_args(self, path: str):
+    def hasArguments(self, path: str):
         if path in self.routes and len(self.routes[path]["args"]) > 0:  
             return True
         else:
             return False
 
-    def validate_args(self, path: str, args: dict):
+    def validateArguments(self, path: str, args: dict):
         if path not in self.routes:
             return {}
         
-        routes_info = self.routes[path] # 所有args的字段定义
+        routesInfo = self.routes[path] # 所有args的字段定义
 
-        args_final = {}
+        finalArguments = {}
 
         errors = {}
 
-        for key, field in routes_info["args"].items():
+        for key, field in routesInfo["args"].items():
             if key in args.keys():
                 # key本身存在，验证类型
-                if not isinstance(args[key], field.value_type):
-                    errors[key] = InvalidArgumentTypeError(key, field.value_type, type(args[key]))
+                if not isinstance(args[key], field.valueType):
+                    errors[key] = InvalidArgumentTypeError(key, field.valueType, type(args[key]))
 
 
                 # 执行Validator
                 if not field.validator:
-                    args_final[key] = args[key]
+                    finalArguments[key] = args[key]
                     continue
 
                 result = field.validator.validate(args[key])
 
                 if result.success:
-                    args_final[key] = args[key]
+                    finalArguments[key] = args[key]
                     continue
                 else:
                     errors[key] = ArgumentValidationError(key, result.error) #type: ignore
@@ -78,24 +78,24 @@ class RouteManager:
                 errors[key] = MissingRequiredArgumentError(field.key)
             else:
                 # key不存在，非必填项。
-                args_final[key] = field.default
+                finalArguments[key] = field.default
 
         if errors:
             return False, errors
         else:
-            return True, args_final
+            return True, finalArguments
 
 
     
 
-    def verify_auth(self, path: str):
+    def getAuthConfig(self, path: str):
         if path not in self.routes:
             return False, None
         
         else:
             return True, {
-                "auth": self.routes[path]["auth"],
-                "is_admin": self.routes[path]["is_admin"]
+                "requiresAuth": self.routes[path]["requiresAuth"],
+                "isAdmin": self.routes[path]["isAdmin"]
             }
         
         

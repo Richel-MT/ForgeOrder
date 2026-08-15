@@ -1,45 +1,45 @@
 import datetime
 import queue
 import threading
-import sqlite3
-import os
 
 from .schema import BUFFER_SIZE
+from .service import initService
+from ..database.database.exceptions import DatabaseError
+from ..database.repository.exceptions import RepositoryError
+from .console import getConsoleLogger
 
-from .log_db import LogDatabase
-
-
-def write_text_log(entry):
+def writeTextLog(entry):
     now = datetime.datetime.now()
 
-    file_path = f"data/{now.strftime('%Y-%m-%d')}.log"
+    filePath = f"data/{now.strftime('%Y-%m-%d')}.log"
     
     try:
-        with open(file_path, "r") as f:
+        with open(filePath, "r") as f:
             content = f.read()
     except FileNotFoundError:
         content = ""
 
     
-    with open(file_path, "a") as f:
+    with open(filePath, "a") as f:
         if content != "":
             f.write('''
 服务器无法将日志写入数据库。
 {entry}
 ''')
         else:
-            f.write(entry)
+            f.write(str(entry))
         
 
-def worker(q: queue.Queue, db_name: str):
-    buffer_count = 0
+def worker(q: queue.Queue, databaseName: str):
+    bufferCount = 0
 
     # 连接数据库
-    log_db = LogDatabase(db_name)
-    
-    try:
-        
-        while True:
+    database, service = initService(databaseName)
+    logger = getConsoleLogger(__name__)
+
+    while True:
+        try:
+            
             entry = q.get()
 
             if entry is None:
@@ -47,31 +47,36 @@ def worker(q: queue.Queue, db_name: str):
                 break
 
 
-            log_db.insert_log(*entry)
+            service.insertLog(*entry)
 
-            buffer_count += 1
+            bufferCount += 1
 
-            if buffer_count >= BUFFER_SIZE:
-                log_db.commit()
-                buffer_count = 0
+            if bufferCount >= BUFFER_SIZE:
+                service.commit()
+                bufferCount = 0
 
             q.task_done()
-    except sqlite3.OperationalError as e:
-        write_text_log(f"数据库操作错误：{e}")
-        try:
-            write_text_log(entry)
-        except:
-            pass
 
+        except (DatabaseError, RepositoryError) as e:
+            logger.warning(f"数据库错误：{e}")
 
-    log_db.commit()
+            try:
+                writeTextLog(entry)
+            except NameError:
+                # entry可能未定义
+                pass
 
-    log_db.close()
+        except (KeyboardInterrupt, EOFError):
+            break
 
-def create_worker(db_name: str):
+    service.commit()
+
+    database.close()
+
+def createWorker(databaseName: str):
     q = queue.Queue()
 
-    thread = threading.Thread(target=worker, args=(q, db_name), name="LogWorker")
+    thread = threading.Thread(target=worker, args=(q, databaseName), name="LogWorker")
     thread.daemon = True
     thread.start()
 

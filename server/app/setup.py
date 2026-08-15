@@ -1,31 +1,53 @@
 import os
+import datetime
 
 from flask import Flask
+from flask.json.provider import DefaultJSONProvider
 
-from .hooks.before_request import before_request
-from .hooks.after_request import after_request
+from .hooks.beforeRequest import beforeRequest
+from .hooks.afterRequest import afterRequest
 from .hooks.errors import *
-import extensions
+from app.routes.manager import RouteManager
 
-def setup_app():
-    app = Flask(__name__, static_folder=os.path.join(extensions.root_dir, "static"), template_folder="res", static_url_path="/")
+class JSONProvider(DefaultJSONProvider):
+    ensure_ascii = False
 
-    app.json.ensure_ascii = False
+    def default(self, obj): # type: ignore
+        if isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        else:
+            return super().default(obj)
+        
+class MyFlaskApp(Flask):
+    routeManager: 'RouteManager'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.routeManager = RouteManager()
+
+
+
+
+
+
+def setupApp():
+    app = MyFlaskApp(__name__)
+
+    app.json_provider_class = JSONProvider
+    app.json = JSONProvider(app)
+
+    
 
     from app import blueprints
     for bp in blueprints:
-        bp.register_for_app(app, extensions.route_manager)
+        bp.registerForApp(app, app.routeManager)
 
-        
+    
+    app.before_request(beforeRequest) # type: ignore
 
+    app.after_request(afterRequest)
 
-    app.errorhandler(405)(method_not_allowed)
-    app.errorhandler(404)(not_found)
-    app.errorhandler(500)(internal_server_error)
-    app.errorhandler(415)(unsupported_media_type)
-    app.teardown_appcontext(teardown_appcontext) # type: ignore
-    app.before_request(before_request) # type: ignore
-
-    app.after_request(after_request)
+    setupErrorHandlers(app)
     
     return app

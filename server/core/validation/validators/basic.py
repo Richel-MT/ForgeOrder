@@ -3,31 +3,31 @@ from typing import Any, Callable
 from .base import Validator
 from ..base import ValidationResult
 from ..errors import *
-from ..exceptions import UnsupportedTypeError, UnsupportedVerifyHandlerError
+from ..exceptions import UnsupportedTypeError, UnsupportedValidatorError
 
 class NotEmpty(Validator):
     '''
     不可为空。
     允许的类型：str | None
     '''
-    allow_types = str | dict | list | None #type: ignore
+    allowTypes = str | dict | list | None #type: ignore
 
     def _validate(self, value: Any, context: Any = None):
-        is_error = False
+        isError = False
 
         if value is not None :
             if isinstance(value, str):
                 if value.strip() == "":
-                    is_error = True
+                    isError = True
             elif isinstance(value, (dict, list)):
                 if len(value) == 0:
-                    is_error = True
+                    isError = True
 
                 
         else:
-            is_error = True
+            isError = True
 
-        if is_error:
+        if isError:
             return ValidationResult(False, EmptyError())
         else:
             return ValidationResult(True)
@@ -38,10 +38,10 @@ class Boundary:
     value: float | int | None
     inclusive: bool
 
-    def symbol_left(self):
+    def symbolLeft(self):
         return "(" if self.inclusive else "["
     
-    def symbol_right(self):
+    def symbolRight(self):
         return ")" if self.inclusive else "]"
        
 def Open(value):
@@ -55,7 +55,7 @@ class Interval(Validator):
     限制值在一个区间内。
     允许的类型：float | int
     '''
-    allow_types = float | int #type: ignore
+    allowTypes = float | int #type: ignore
 
     @staticmethod
     def _normalize(value):
@@ -70,27 +70,27 @@ class Interval(Validator):
     
 
 
-    def __init__(self, min_value: Boundary | None | int | float , max_value: Boundary | None | int | float):
+    def __init__(self, minValue: Boundary | None | int | float , maxValue: Boundary | None | int | float):
         
-        self.min_value = self._normalize(min_value)
-        self.max_value = self._normalize(max_value)
+        self.minValue = self._normalize(minValue)
+        self.maxValue = self._normalize(maxValue)
 
 
         
     def _validate(self, value: Any, context: Any = None):
-        if self.min_value.value is not None:
-            if self.min_value.inclusive and value >= self.min_value.value:
+        if self.minValue.value is not None:
+            if self.minValue.inclusive and value >= self.minValue.value:
                 pass
-            elif not self.min_value.inclusive and value > self.min_value.value:
+            elif not self.minValue.inclusive and value > self.minValue.value:
                 pass
             else:
                 return ValidationResult(False, IntervalError(self))
             
             
-        if self.max_value.value is not None:
-            if self.max_value.inclusive and value <= self.max_value.value:
+        if self.maxValue.value is not None:
+            if self.maxValue.inclusive and value <= self.maxValue.value:
                 pass
-            elif not self.max_value.inclusive and value < self.max_value.value:
+            elif not self.maxValue.inclusive and value < self.maxValue.value:
                 pass
             else:
                 return ValidationResult(False, self)
@@ -98,17 +98,17 @@ class Interval(Validator):
         return ValidationResult(True)
     
     def __str__(self):
-        if self.min_value.value is None:
-            min_value = "-∞"
+        if self.minValue.value is None:
+            minValue = "-∞"
         else:
-            min_value = self.min_value.value
+            minValue = self.minValue.value
 
-        if self.max_value.value is None:
-            max_value = "+∞"
+        if self.maxValue.value is None:
+            maxValue = "+∞"
         else:
-            max_value = self.max_value.value
+            maxValue = self.maxValue.value
             
-        return f"{self.min_value.symbol_left()}{min_value},{max_value}{self.max_value.symbol_right()}"
+        return f"{self.minValue.symbolLeft()}{minValue},{maxValue}{self.maxValue.symbolRight()}"
 
 
 
@@ -117,20 +117,20 @@ class Length(Validator):
     限制值长度在指定范围内。
     允许的类型：str
     '''
-    allow_types = str | dict | list | None #type: ignore
+    allowTypes = str | dict | list | None #type: ignore
 
-    def __init__(self, min_value: int | None, max_value: int | None):
-        self.min_value = min_value
-        self.max_value = max_value
+    def __init__(self, minValue: int | None, maxValue: int | None):
+        self.minValue = minValue
+        self.maxValue = maxValue
         
     def _validate(self, value: Any, context: Any = None):
         if not isinstance(value, str):
-            return ValidationResult(False, LengthError(self.min_value, self.max_value))
+            return ValidationResult(False, LengthError(self.minValue, self.maxValue))
 
-        if self.min_value is None or self.min_value <= len(value) and self.max_value is None or self.max_value >= len(value):
+        if self.minValue is None or self.minValue <= len(value) and self.maxValue is None or self.maxValue >= len(value):
             return ValidationResult(True)
         else:
-            return  ValidationResult(False, LengthError(self.min_value, self.max_value))
+            return  ValidationResult(False, LengthError(self.minValue, self.maxValue))
 
 
 class Choices(Validator):
@@ -138,7 +138,7 @@ class Choices(Validator):
     限制值只能是指定的选项。
     允许的类型：Any
     '''
-    allow_types = None
+    allowTypes = None
 
     def __init__(self, *choices):
         self.choices = choices
@@ -155,7 +155,7 @@ class FunctionHandler(Validator):
     自定义验证器。
     允许的类型：Any
     '''
-    allow_types = None
+    allowTypes = None
 
     def __init__(self, func: Callable):
         self.func = func
@@ -166,4 +166,4 @@ class FunctionHandler(Validator):
         if isinstance(result, ValidationResult):
             return result   
         else:
-            raise UnsupportedVerifyHandlerError(self.__class__)
+            raise UnsupportedValidatorError(self.__class__)

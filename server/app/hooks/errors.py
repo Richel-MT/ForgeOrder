@@ -1,87 +1,91 @@
 import json
 
-from flask import current_app
+from flask import current_app, g
 from werkzeug.exceptions import UnsupportedMediaType
 
-from core.log.console import get_console_logger
+from core.log import getConsoleLogger, getLogger
 
-from ..db.get_db import close_database_flask
-from core.utils import make_response
-import extensions
+from ..db.connections import closeDatabase
 import traceback
-import sqlite3
-from core.db.exceptions import ExecuteError
+from core.database.database.exceptions import DatabaseLockedError
+from app.routes.schema import GLOBAL
 
-def unsupported_media_type(e: UnsupportedMediaType):
-        return make_response(
-            1001,
-            e.description,
-        ), 415
+# 415
+def unsupportedMediaType(e: UnsupportedMediaType):
 
-def method_not_allowed(e):
-        return make_response(
-            1002,
-            405,
-        ), 405
+	return GLOBAL.PAYLOAD_ERROR(e.description), 415
+# 405
+def methodNotAllowed(e):
+	return GLOBAL.METHOD_ERROR(), 405
+    
+# 404
+def notFound(e):
+	return GLOBAL.NOT_FOUND(), 404
+
+# 500
+def internalServerError(e):
+	return GLOBAL.SERVER_ERROR(), 500
     
 
-def not_found(e):
-        return make_response(
-            1003,
-            404,
-        ), 404
+# 数据库错误处理
+def handleDatabaseLockedError(e: DatabaseLockedError):
+	g.logger.warning({
+			"traceback": traceback.format_exception(type(e), e, e.__traceback__)
+	}, "DatabaseBusy")
+	return GLOBAL.DATABASE_BUSY(), 503
+
+def databaseError(e):
+	return GLOBAL.DATABASE_ERROR(), 500
+
+def teardownAppContext(error):
+	if error is not None:
+		# 有错误，回滚事务
+		if g.database is not None:
+			g.database.rollback()
+		logs = {
+					"error": {
+						"msg": str(error),
+						"type": type(error).__name__,
+					},
+					"traceback": None
+					
+				}
+                
+		if isinstance(error, Exception):
+			logs["traceback"] = traceback.format_exception(type(error), error, error.__traceback__) # type: ignore
+	
+		consoleLogger = getConsoleLogger("flask")
+	
+		consoleLogger.warning('\n'.join(traceback.format_exception(type(error), error, error.__traceback__))) # type: ignore
+
+		logger = getLogger()
+		logger.error(
+			logs
+		, "FLASK_APP", "RequestError")
+        
+	else:
+		
+		# 无错误，提交事务，防止未提交事务
+		if g.database is not None:
+			g.database.commit()
+
+	# 关闭数据库连接
+	closeDatabase()
+                        
+
+	
+
+	return current_app
 
 
-def internal_server_error(e):
-        return make_response(
-            9001,
-            500,
-        ), 500
-    
 
-def argument_exception(e):
-        return make_response(
-            1001,
-            e.args_,
-        ), 400
-    
-def handle_execute_error(e: ExecuteError):
-    extensions.logger.error(
-        {"sql": e.sql, "origin_error": str(e.origin_error)},
-        "FLASK_APP",
-        "ExecuteError"
-    )
-    return make_response(9002, 500), 500
+def setupErrorHandlers(app):
+    app.errorhandler(405)(methodNotAllowed)
 
+    app.errorhandler(404)(notFound)
+    app.errorhandler(500)(internalServerError)
+    app.errorhandler(415)(unsupportedMediaType)
 
-def handle_sqlite_error(e: sqlite3.Error):
-    extensions.logger.error(
-        {"type": type(e).__name__, "msg": str(e)},
-        "FLASK_APP",
-        "SqliteError"
-    )
-    return make_response(9002, 500), 500
+    app.errorhandler(DatabaseLockedError)(handleDatabaseLockedError)
 
-
-def teardown_appcontext(error):
-        close_database_flask()
-        if error is not None:
-            logs = {
-                    "error": {
-                        "msg": str(error),
-                        "type": type(error).__name__,
-                    },
-                    "traceback": None
-                    
-                }
-            if isinstance(error, Exception):
-                logs["traceback"] = traceback.format_exception(type(error), error, error.__traceback__) # type: ignore
-
-            logger = get_console_logger("flask")
-
-            logger.warning('\n'.join(traceback.format_exception(type(error), error, error.__traceback__))) # type: ignore
-            extensions.logger.error(json.dumps(
-                logs
-            ), "FLASK_APP", "RequestError")
-
-        return current_app
+    app.teardown_appcontext(teardownAppContext)

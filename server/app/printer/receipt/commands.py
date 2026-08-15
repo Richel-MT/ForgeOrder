@@ -16,9 +16,9 @@ class Text(Command):
     scale: tuple[int, int] = (1, 1) # 缩放，width，height
     invert: bool = False
 
-    new_line: bool = True
+    newLine: bool = True
 
-    def get_style(self):
+    def getStyle(self):
         # print(self)
         return {
             "font": self.font,
@@ -37,7 +37,7 @@ class QRCode(Command):
     size: int = 3 # 二维码大小
     center: bool = False
 
-    def to_dict(self):
+    def toDict(self):
         return {
             "content": self.content,
             "size": self.size,
@@ -57,7 +57,7 @@ class Row:
 
         self.divider: bool = divider
 
-    def to_dict(self):
+    def toDict(self):
         return {
             "contents": self.contents,
             "divider": self.divider,
@@ -68,7 +68,7 @@ class Column:
         self.width: int = width
         self.spacing: int = spacing
 
-    def to_dict(self):
+    def toDict(self):
         return {
             "width": self.width,
             "spacing": self.spacing,
@@ -81,11 +81,11 @@ class Table(Command):
         self.rows: list[Row] = rows
 
 
-    def to_dict(self):
+    def toDict(self):
 
         return {
-            "columns": [column.to_dict() for column in self.columns],
-            "rows": [row.to_dict() for row in self.rows],
+            "columns": [column.toDict() for column in self.columns],
+            "rows": [row.toDict() for row in self.rows],
         }
 
 
@@ -105,24 +105,24 @@ class CommandBuilder:
             underline: int = 0, #0:无下划线 #1:但下划线
             scale: tuple[int, int] = (1, 1), # 缩放，width，height
             invert: bool = False,
-            new_line: bool = True,
+            newLine: bool = True,
              ):
-        text_command = Text(text, font, align, bold, underline, scale, invert, new_line)
+        textCommand = Text(text, font, align, bold, underline, scale, invert, newLine)
 
-        self.receipt.add(text_command)
+        self.receipt.add(textCommand)
 
-        return text_command
+        return textCommand
 
-    def qr_code(self,
+    def qrCode(self,
                  content: str,
                  size: int = 3,
                  center: bool = False
                  ):
-        qr_code_command = QRCode(content, size, center)
+        qrCodeCommand = QRCode(content, size, center)
 
-        self.receipt.add(qr_code_command)
+        self.receipt.add(qrCodeCommand)
 
-        return qr_code_command
+        return qrCodeCommand
 
     def divider(self):
         divider = Divider()

@@ -1,2 +1,2 @@
-from .parser import create_parser
-from .command import execute_command
+from .parser import createParser
+from .command import executeCommand

@@ -21,10 +21,10 @@ class ValidationError:
 
 @dataclass
 class ValueTypeError(ValidationError):
-    expected_type: type
+    expectedType: type
 
     def __str__(self) -> str:
-        return f"The handler only allows {self.expected_type} type."
+        return f"The handler only allows {self.expectedType} type."
 
 
 

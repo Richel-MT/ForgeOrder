@@ -1,0 +1,25 @@
+from dataclasses import dataclass
+from typing import Any
+from core.utils.server import makeResponse
+
+@dataclass
+class ResponseInfo:
+    status_code: int
+    name: str
+    dataType: type | None
+
+    def __call__(self, data: Any = None):
+        return makeResponse(self.status_code, data, self.name)
+
+class ResponseGenerator:
+    def __init__(self, responses: list[ResponseInfo]):
+        self.responses = responses
+
+    def __getattr__(self, name):
+        for resp in self.responses:
+            if resp.name == name:
+                return resp
+            
+        raise AttributeError(name)
+
+    

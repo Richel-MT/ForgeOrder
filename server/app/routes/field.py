@@ -9,12 +9,12 @@ class RequestField(FieldDefinition):
 
     def __init__(self,
                 key: str,
-                value_type: type,
+                valueType: type,
                 required: bool,
                 default: Any = None,
                 validator: Validator | None = None
                 ):
-        super().__init__(key, value_type, default, validator)
+        super().__init__(key, valueType, default, validator)
 
         self.required : bool = required
 

@@ -4,31 +4,44 @@ from core.validation.field import FieldDefinition
 from core.validation.validators import Choices, NotEmpty, Interval, FunctionHandler, AllOf, Open, Closed
 from core.validation.base import ValidationResult
 
-# from core.config.validation import Choices, NotEmpty, SettingsProperty, NotEmpty, Interval, FunctionHandler, AllOf, Open, Closed, VerifyError, VerifyResult
 
-def auth_secret_key_verify(value: str):
-    if os.environ.get("ENV") == "product" and value == "development_key":
-        return ValidationResult(False, ValidationResult("生产环境不能使用开发密钥"))
-    else:
-        return ValidationResult(True)
+class CONFIG:
+    # Server
+    SERVER_HOST = "server.host"
+    SERVER_PORT = "server.port"
+    SERVER_ENV = "server.env"
+    SERVER_FIRST_START = "server.first_start"
     
+    # Log
+    LOG_LEVEL = "log.level"
+    LOG_DATABASE = "log.database"
+    LOG_DEBUG_IGNORE = "log.debug_ignore"
+    LOG_IGNORE_CLIENT_ERROR = "log.ignore_client_error"
+    
+    # Database
+    DATABASE_PATH = "database.path"
+    
+    # Auth
+    AUTH_AVAILABLE_TIME = "auth.available_time"
 
+
+    
+    
 CONFIG_ITEMS = [
-    FieldDefinition("server.host", str, "0.0.0.0", NotEmpty()),
-    FieldDefinition("server.port", int, 5000, Interval(1, 65535)),
-    FieldDefinition("log.level", str, "info", Choices("debug", "info", "warning", "error", "critical")),
-    FieldDefinition("log.database", str, "data/log.db", NotEmpty()),
+    FieldDefinition(CONFIG.SERVER_HOST, str, "0.0.0.0", NotEmpty()),
+    FieldDefinition(CONFIG.SERVER_PORT, int, 5000, Interval(1, 65535)),
+    FieldDefinition(CONFIG.LOG_LEVEL, str, "info", Choices("debug", "info", "warning", "error", "critical")),
+    FieldDefinition(CONFIG.LOG_DATABASE, str, "data/log.db", NotEmpty()),
 
-    FieldDefinition("log.debug_ignore", list, []),
-    FieldDefinition("log.ignore_client_error", bool, False),
+    FieldDefinition(CONFIG.LOG_DEBUG_IGNORE, list, []),
+    FieldDefinition(CONFIG.LOG_IGNORE_CLIENT_ERROR, bool, False),
 
-    FieldDefinition("database.path", str, "data/main.db", NotEmpty()),
+    FieldDefinition(CONFIG.DATABASE_PATH, str, "data/main.db", NotEmpty()),
 
-    FieldDefinition("auth.secret_key", str, "development_key", AllOf(NotEmpty(), FunctionHandler(auth_secret_key_verify))),
-    FieldDefinition("auth.available_time", int, 60, Interval(Open(0), None)), # 无上限
+    FieldDefinition(CONFIG.AUTH_AVAILABLE_TIME, int, 60, Interval(Open(0), None)), # 无上限
 
-    FieldDefinition("server.env", str, "dev", Choices("dev", "product")),
-    FieldDefinition("server.first_start", bool, True),
+    FieldDefinition(CONFIG.SERVER_ENV, str, "dev", Choices("dev", "product")),
+    FieldDefinition(CONFIG.SERVER_FIRST_START, bool, True),
 
 ]
 

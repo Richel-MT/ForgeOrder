@@ -5,7 +5,7 @@
                 <div>
                     <div class="table-card-title-container">
                         <div class="table-card-title">{{ table.name }}</div>
-                        <div class="table-card-subtitle" v-if="!table.is_available">(已禁用)</div>
+                        <div class="table-card-subtitle" v-if="!table.isAvailable">(已禁用)</div>
                     </div>
                     <div class="table-card-status">
                         

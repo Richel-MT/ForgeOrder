@@ -15,13 +15,14 @@ import socket
     
 #     return args_invalid
       
-def make_response(status: int, data: dict | list | int | str | bool | None):
+def makeResponse(status: int, data: dict | list | int | str | bool | None, message: str = ""):
     return jsonify({
         "status": status,
-        "data": data
+        "data": data,
+        "message": message
     })
 
-def get_client_ip():
+def getClientIp():
     env = os.environ.get("ENV", "product")
     if env == "dev":
         # 开发环境优先使用 X-Real-IP 头
@@ -30,7 +31,7 @@ def get_client_ip():
         return request.remote_addr
     
 
-def get_local_ip():
+def getLocalIp():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))

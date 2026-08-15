@@ -1,171 +1,158 @@
 import logging
 import os
 import sys
-from venv import logger
+from typing import cast
 
-from app.app_settings.global_connection import SettingsConnection
+from app.db.repository import RepositoryManager
+from app.service import initService
+from app.service.settings import SettingsService
+from core.database.database import Database
+
 from app.printer.service import PrintManager
-from core.utils import get_local_ip
-import extensions
-from core.auth import AuthManager
-from app.config import setup_config
-from core.log.logger import setup_logger
-from app.routes.manager import RouteManager
-from app.hooks.schema import CLIENT_ERROR
-from app.db.main_db import MainDatabase
-from core.log import get_console_logger
-from app.app_settings.manager import SettingsManager
-from app.cli import create_parser, execute_command
-from app.config.verify import verify_config
+from app.config import config, CONFIG
+from core.log import getConsoleLogger
+from core.log import initLogger, getLogger, shutdownLogger
+
+from app.cli import createParser, executeCommand
 from app.exceptions import UserError
 
-console_logger= get_console_logger("startup")
+consoleLogger= getConsoleLogger("startup")
 
-def init_root_user(reset = False):
+def initRootUser(reset = False):
 
     import random
-    from werkzeug.security import generate_password_hash
-    from app.db.main_db import MainDatabase
+    from app.service import initService, UserService
 
 
     password = "".join(random.choices("abcdefghijklmnopqrstuvwxyz1234567890", k=8))
-    password_hash = generate_password_hash(password)
 
-    database = MainDatabase(extensions.config.get("database.path"))
 
-    if reset:
-        root_user = database.users.get_from_username("root")
-        if root_user:
-            root_user_id = root_user['id']
-
-            database.users.change_pasword(root_user_id, password_hash)
-
-            console_logger.info("重置root用户密码：%s" % password)
-            return
-
-        else:
-            console_logger.warning("root用户不存在，无法重置密码")
-
-    database.users.new_s("root", password_hash, True, True)
-    console_logger.info("创建root用户，密码：%s" % password)
-    database.close()
-
+    db, _, service = cast(tuple[Database, None, UserService], initService(config.get(CONFIG.DATABASE_PATH), UserService))
     
-    
-    extensions.config.set("server.first_start", False)
+    try:
+        if reset:
+            status, rootUser = service.get(username="root")
 
-def init_log():
-    logger, thread, queue = setup_logger(__name__,
-                extensions.config.get("log.database"), # type: ignore
-                extensions.config.get("log.level")) #type: ignore
+            
 
-    extensions.logger = logger
-    extensions.db_logger_thread = thread
-    extensions.db_logger_queue = queue
+            if status is service.USER.SUCCESS:
+                rootUser = cast(dict, rootUser)
+                
+                rootUserId = rootUser['id']
+
+                service.forceChangePassword(rootUserId, password)
+
+                consoleLogger.info("重置root用户密码：%s" % password)
+                return
+
+            else:
+                consoleLogger.warning("root用户不存在，无法重置密码")
+
+        service.create("root", password, True, True)
 
 
-    # 处理log.ignore_client_error
-    if extensions.config.get("log.ignore_client_error"):
-        for error in CLIENT_ERROR:
-            extensions.logger.setIgnoreAction(error)
+        consoleLogger.info("创建root用户，密码：%s" % password)
 
-def init_config():
+        
+        config.set(CONFIG.SERVER_FIRST_START, False)
+
+    finally:
+        db.close()
+
+def initLog():
+
+
+    initLogger(__name__, config.get(CONFIG.LOG_DATABASE), config.get(CONFIG.LOG_LEVEL))
+
+    getLogger()
+
+def initConfig():
     if not os.path.exists("data"):
             os.makedirs("data")
 
     # 加载配置文件
-    extensions.config = setup_config()
+    config.initConfig()
     
 
 
-def init_args():
-    parser = create_parser()
+def initArguments():
+    parser = createParser()
 
     args = parser.parse_args()
 
     if len(sys.argv) > 1:
-        console_logger.info(f"命令行参数：{' '.join(sys.argv[1:])}")
+        consoleLogger.info(f"命令行参数：{' '.join(sys.argv[1:])}")
 
-    return execute_command(args)
+    return executeCommand(args)
 
 
-def verify_config_and_settings():
+def validateAppSettings():
     # 验证配置项
     try:
-        verify_config()
 
+        db, _, service = initService(config.get(CONFIG.DATABASE_PATH), SettingsService)
 
-        # 验证数据库的settings
-        db = MainDatabase(extensions.config.get("database.path"))
-        manager = SettingsManager(db)
+        try:
+            service  = cast(SettingsService, service)
 
-
-        manager._init()
+            service._init()
+        finally:
+            db.close()
 
     except UserError as e:
-            console_logger.error(f"启动失败：{e} \n {e.hint}")
+            consoleLogger.error(f"启动失败：{e} \n {e.hint}")
             sys.exit(1)
 
 def init():
 
-    console_logger.info("正在初始化...")
+    consoleLogger.info("正在初始化...")
 
     # 初始化设置
-    init_config()
+    initConfig()
 
     
     # 初始化日志记录器
-    init_log()
+    initLog()
 
 
-    # 初始化认证管理器
-    extensions.auth_manager = AuthManager(
-            extensions.config.get("auth.secret_key"),
-            int(extensions.config.get("auth.available_time")),
-        )
-    
-
-    # 取本地ip
-    extensions.local_ip = get_local_ip()
 
 
-    # 初始化ArgumentsManager
-    extensions.route_manager = RouteManager()
+
+    if config.get(CONFIG.SERVER_FIRST_START):
+        initRootUser()
 
 
-    if extensions.config.get("server.first_start"):
-        init_root_user()
+    stopRunning = initArguments()
 
-
-    stop_running = init_args()
-
-    if stop_running:
+    if stopRunning:
         shutdown()
         sys.exit(0)
 
 
-    verify_config_and_settings()
-
-
-    extensions.app_settings = SettingsConnection(extensions.config.get("database.path"))
+    # 初始化数据库的表结构
+    db = Database(config.get(CONFIG.DATABASE_PATH))
+    db.connect()
     
-    extensions.print_manager = PrintManager(extensions.logger)
+    repos = RepositoryManager(db)
+    repos.init()
+
+    # 关闭数据库连接
+    db.close()
+
+    validateAppSettings()
+
+
+    
+    printManager = PrintManager()
 
 def shutdown():
     # 关闭数据库日志记录器线程
-    if extensions.db_logger_thread is None:
-        return
     
-    extensions.db_logger_queue.join()
-    extensions.db_logger_queue.put(None)
+    shutdownLogger()
 
-    extensions.db_logger_thread.join()
-
-    # 关闭全局的AppSettings数据库连接
-    extensions.app_settings.db.close()
 
     # 关闭打印服务
-    extensions.print_manager.shutdown()
+    PrintManager.getInstance().shutdown()
 
     # 关闭日志记录器
     logging.shutdown()

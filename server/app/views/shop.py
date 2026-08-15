@@ -1,56 +1,51 @@
 import time
+from typing import cast
 
-from flask import g, request
+from flask import g
 
-from app.app_settings.manager import SettingsManager
-from app.routes.res_generator import ResponseInfo
-from core.db.exceptions import ColumnNotFoundError, NotFoundError
-from core.utils import make_response
-from app.routes.app_bp import AppBlueprint
-from app.db.main_db.exceptions import CategoryNotFoundError
-from ..db.get_db import get_database_flask
+from app.routes.responseGenerator import ResponseInfo
+from app.service import SettingsService, ShopService
+from app.routes.blueprint import AppBlueprint
 from app.routes.field import *
 
-shop_bp = AppBlueprint("shop", __name__)
+shopBlueprint = AppBlueprint("shop", __name__)
 
 # 店铺状态
-@shop_bp.get("/api/shop/getBusinessState" , auth=True, 
+@shopBlueprint.get("/api/shop/getBusinessState" , requiresAuth=True, 
              responses=[
                  ResponseInfo(0, "OK", bool)
              ])
-def get_business_state():
-    db = get_database_flask()
-    sm = SettingsManager(db)
+def getBusinessState():
 
-    is_business = sm.get("shop.isBusiness")
+    service = SettingsService(g.repos)
+
+    isBusiness = service.get("shop.isBusiness")
     
     return g.res.OK(
-        0,
-        is_business
+        isBusiness
     )
 
-@shop_bp.post("/api/shop/setBusinessState",
-            auth=True,
-            is_admin=True,
+@shopBlueprint.post("/api/shop/setBusinessState",
+            requiresAuth=True,
+            isAdmin=True,
             arguments=[
-                RequestField("is_business", bool, True)
+                RequestField("isBusiness", bool, True)
             ],
             responses=[
                 ResponseInfo(0, "OK", None)
             ])
-def set_business_state():
-    is_business = g.args["is_business"]
+def setBusinessState():
+    isBusiness = g.args["isBusiness"]
     
-    db = get_database_flask()
-    sm = SettingsManager(db)
+    service = SettingsService(g.repos)
 
-    sm.set("shop.isBusiness", is_business)
+    service.set("shop.isBusiness", isBusiness)
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("Shop")
 
     g.logger.info({
-        "is_business": is_business,
-        "operator": g.user_info["user"]["id"]
+        "isBusiness": isBusiness,
+        "operator": g.userInfo["user"]["id"]
     },  "UpdateBusinessState")
 
     return g.res.OK()
@@ -58,14 +53,17 @@ def set_business_state():
 
 
 # 菜品
-@shop_bp.get("/api/shop/dishes/getAll" , auth=True,
+@shopBlueprint.get("/api/shop/dishes/getAll" , requiresAuth=True,
              responses=[
                  ResponseInfo(0, "OK", dict)
              ])
-def get_all_dishes():
-    db = get_database_flask()
+def getAllDishes():
 
-    dishes, categories = db.dishes.get_all()
+    service = ShopService(g.repos)
+
+    _, data = service.dishes.getAll()
+
+    categories, dishes = cast(tuple, data)
 
     return g.res.OK(
         {
@@ -74,7 +72,7 @@ def get_all_dishes():
         }
     )
 
-@shop_bp.post("/api/shop/dishes/get" , auth=True,
+@shopBlueprint.post("/api/shop/dishes/get" , requiresAuth=True,
               arguments=[
                   RequestField("id", int, True)
               ],
@@ -82,100 +80,123 @@ def get_all_dishes():
                   ResponseInfo(0, "OK", dict),
                   ResponseInfo(3001, "DishNotFound", None)
               ])
-def get_dish():
-    dish_id = g.args["id"]
+def getDish():
+    dishId = g.args["id"]
 
 
-    db = get_database_flask()
+    service = ShopService(g.repos)
 
-    try:
-        dish = db.dishes.get_from_id(dish_id)
 
-    except NotFoundError as e:
+    status, data = service.dishes.get(dishId)
+
+    if status == service.RESULT.DISH_NOT_FOUND:
         return g.res.DishNotFound()
 
+    
 
-    return g.res.OK(dict(dish))
+    return g.res.OK(data)
 
-@shop_bp.post("/api/shop/dishes/update", auth=True, is_admin=True,
+@shopBlueprint.post("/api/shop/dishes/update", requiresAuth=True, isAdmin=True,
               arguments=[
-                  RequestField("dish_id", int, True),
-                  RequestField("changed_items", dict, True),
-                  RequestField("changed_choices", list, True)
+                  RequestField("dishId", int, True),
+                  RequestField("changedItems", dict, True),
+                  RequestField("changedChoices", list, True)
               ],
               responses=[
                   ResponseInfo(0, "OK", None),
                   ResponseInfo(3001, "NoChange", None),
-                  ResponseInfo(3002, "DishNotFound", None)
+                  ResponseInfo(3002, "DishNotFound", None),
+                  ResponseInfo(3003, "ChangedItemsNotFound", None), # 更改的信息不存在
+                  ResponseInfo(3004, "ChangedItemsValueError", None), # 更改的信息 值非法
+                  ResponseInfo(3005, "ChoiceNotFound", None) # 更改的选项不存在
               ])
-def update_dish():
-    dish_id: int = g.args["dish_id"]
-    changed_items : dict = g.args["changed_items"]
-    changed_choices : list = g.args["changed_choices"]
+def updateDish():
+    dishId: int = g.args["dishId"]
+    changedItems : dict = g.args["changedItems"]
+    changedChoices : list = g.args["changedChoices"]
 
-    db = get_database_flask()
+    service = ShopService(g.repos)
 
     
     if AllOf( # failed
-        Not(NotEmpty().bind(changed_items)), # null -> pass
-        Not(NotEmpty().bind(changed_choices))  # null -> pass
+        Not(NotEmpty().bind(changedItems)), # null -> pass
+        Not(NotEmpty().bind(changedChoices))  # null -> pass
     ).validate():
         
         return g.res.NoChange()
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("Shop")
     
 
 
-    try:
-        db.dishes.update(dish_id, changed_items, changed_choices)
+    status, data = service.dishes.update(dishId, changedItems, changedChoices)
 
-        g.logger.info({
-            "id": dish_id,
-            "changed_items": changed_items,
-            "changed_choices": changed_choices
-        }, "UpdateDish")
-        
-        return g.res.OK()
+    match status:
+        case service.RESULT.SUCCESS:
 
-    except NotFoundError:
-        return g.res.DishNotFound()
+            g.logger.info({
+                "id": dishId,
+                "changedItems": changedItems,
+                "changedChoices": changedChoices
+            }, "UpdateDish")
+            
+            return g.res.OK()
 
-@shop_bp.post("/api/shop/dishes/delete", auth=True, is_admin=True,
+        case service.RESULT.CHANGED_ITEMS_NOT_FOUND:
+            return g.res.ChangedItemsNotFound({
+                "id": dishId,
+                "key": data
+            })
+
+        case service.RESULT.DISH_NOT_FOUND:
+            return g.res.DishNotFound({
+                "id": dishId
+            })
+
+        case service.RESULT.VALUE_ERROR:
+            return g.res.ChangedItemsValueError({
+                "id": dishId,
+            })
+
+        case service.RESULT.CHOICE_NOT_FOUND:
+            return g.res.ChoiceNotFound({
+                "id": dishId,
+                "name": data
+            })
+
+
+
+
+@shopBlueprint.post("/api/shop/dishes/delete", requiresAuth=True, isAdmin=True,
                arguments=[
-                   RequestField("dish_id", int, True)
+                   RequestField("dishId", int, True)
                ],
                responses=[
                    ResponseInfo(0, "OK", None),
                    ResponseInfo(3001, "DishNotFound", None)
                ])
-def delete_dish():
-    dish_id: int = g.args["dish_id"]
+def deleteDish():
+    dishId: int = g.args["dishId"]
 
-    db = get_database_flask()
+    service = ShopService(g.repos)
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("Shop")
     
     
-    try:
-        db.dishes.delete(dish_id)
+    status, data = service.dishes.delete(dishId)
 
-        g.logger.info({
-                "id": dish_id
-            }, "DeleteDish")
-
-        
-        return g.res.OK()
-    except NotFoundError:
+    if status == service.RESULT.DISH_NOT_FOUND:
         return g.res.DishNotFound()
+
+    return g.res.OK()
     
-@shop_bp.post("/api/shop/dishes/new", auth=True, is_admin=True, arguments=[
+@shopBlueprint.post("/api/shop/dishes/new", requiresAuth=True, isAdmin=True, arguments=[
     RequestField("name", str, True, None, NotEmpty()),
     RequestField("price", int, True, None, Interval(Open(0), None)),
     RequestField("category", int, True),
     RequestField("description", str, False, ""),
     RequestField("image", str, False, ""),
-    RequestField("is_available", bool, True),
+    RequestField("isAvailable", bool, True),
     RequestField("choices", dict, False, {})
 ],
 responses=[
@@ -183,130 +204,92 @@ responses=[
     ResponseInfo(3001, "CategoryNotFound", None)
 ]
 )
-def new_dish():
+def newDish():
     name: str = g.args["name"]
     price: int = g.args["price"]
     category: int = g.args["category"]
     description: str = g.args["description"]
     image: str = g.args["image"]
-    is_available: bool = g.args["is_available"]
+    isAvailable: bool = g.args["isAvailable"]
     choices: dict = g.args["choices"]
 
-    db = get_database_flask()
+    service = ShopService(g.repos)
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("Shop")
 
-    try:
-        dish_id = db.dishes.create(
-            name,
-            price,
-            category,
-            description,
-            image,
-            is_available,
-            choices
-        )
+    status, data = service.dishes.create(name, price, category, description, isAvailable, choices)
 
-        g.logger.info({
-            "id": dish_id,
-            "name": name,
-            "price": price,
-            "category": category,
-            "description": description,
-            "image": image,
-            "is_available": is_available,
-            "choices": choices
-        }, "NewDish")
-
-        return g.res.OK()
-    
-    except CategoryNotFoundError as e:
+    if status == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
+
+    return g.res.OK()
+    
     
 
 # 分类
-@shop_bp.post("/api/shop/category/delete", auth=True, is_admin=True,
+@shopBlueprint.post("/api/shop/category/delete", requiresAuth=True, isAdmin=True,
               arguments=[
-                  RequestField("cateogry_id", int, True)
+                  RequestField("categoryId", int, True)
               ],
               responses=[
                   ResponseInfo(0, "OK", None),
                   ResponseInfo(3001, "CategoryNotFound", None)
               ])
-def delete_category():
-    category_id: int = g.args["category_id"]
+def deleteCategory():
+    categoryId: int = g.args["categoryId"]
 
-    db = get_database_flask()
 
-    # 删除该分类下的所有菜品
-    db.dishes.delete_by_category(category_id)
+    g.logger.setCategory("Shop")
 
-    g.logger.set_category("SHOP")
+    service = ShopService(g.repos)
 
-    try:
-        
-        name = db.category.get_from_id(category_id)["name"]
+    service.dishes.deleteByCategory(categoryId)
 
-        db.category.update(category_id, f"{name}_disabled_{time.time()}")
+    result, data = service.dishesCategory.delete(categoryId)
 
-        db.category.delete(category_id)
-
-        g.logger.info({
-                "id": category_id
-            }, "DeleteCategory")
-        
-        return g.res.OK()
-    
-    except NotFoundError as e :
-
+    if result == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
+    
+    return g.res.OK()
 
-@shop_bp.get("/api/shop/category/getAll" , auth=True)
-def get_all_categories():
-    db = get_database_flask()
+@shopBlueprint.get("/api/shop/category/getAll" , requiresAuth=True, 
+             responses=[
+                 ResponseInfo(0, "OK", None)
+             ])
+def getAllCategories():
 
-    categories = db.category.get_all()
-    categories = [dict(category) for category in categories]
+    service = ShopService(g.repos)
 
-    return make_response(
-        0,
-        categories
+    return g.res.OK(    
+        service.dishesCategory.getAll().data
     )
 
 
-@shop_bp.post("/api/shop/category/update", auth=True, is_admin=True, 
+@shopBlueprint.post("/api/shop/category/update", requiresAuth=True, isAdmin=True, 
               arguments=[
-                  RequestField("category_id", int, True),
-                  RequestField("category_name", str, True, None, NotEmpty())
+                  RequestField("categoryId", int, True),
+                  RequestField("categoryName", str, True, None, NotEmpty())
               ],
               responses=[
                   ResponseInfo(0, "OK", None),
                   ResponseInfo(3001, "CategoryNotFound", None)
               ])
-def edit_category():
+def editCategory():
+    categoryId: int = g.args["categoryId"]
+    categoryName: str = g.args["categoryName"]
 
+    service = ShopService(g.repos)
 
-    category_id: int = g.args["category_id"]
-    category_name: str = g.args["category_name"]
+    g.logger.setCategory("Shop")
 
-    db = get_database_flask()
+    status, data = service.dishesCategory.update(categoryId, categoryName)
 
-    g.logger.set_category("SHOP")
-
-    try:
-        db.category.update(category_id, category_name)
-
-        g.logger.info({
-                "id": category_id,
-                "name": category_name
-            }, "UpdateCategory")
-
-        return g.res.OK()
-    
-    except NotFoundError:
+    if status == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
+        
+    return g.res.OK()
 
-@shop_bp.post("/api/shop/category/new", auth=True, is_admin=True,
+@shopBlueprint.post("/api/shop/category/new", requiresAuth=True, isAdmin=True,
               arguments=[
                   RequestField("name", str, True, None, NotEmpty())
               ],
@@ -314,40 +297,39 @@ def edit_category():
                   ResponseInfo(0, "OK", None),
                   ResponseInfo(3001, "CategoryNameExist", None)
               ])
-def new_category():
+def newCategory():
     
     name: str = g.args["name"]
 
-    db = get_database_flask()
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("Shop")
 
-    try:
-        category_id = db.category.new(name)
 
-        g.logger.info({
-                "id": category_id,
-                "name": name
-            }, "NewCategory")
-        
-        return g.res.OK()
-    except ValueError:
+    service = ShopService(g.repos)
+    status, data = service.dishesCategory.create(name)
+
+    if status == service.RESULT.CATEGORY_ALREADY_EXIST:
         return g.res.CategoryNameExist()
+    
+    return g.res.OK()
      
-
-@shop_bp.get("/api/shop/tables/getAll", auth=True, responses=[
+# 桌台
+@shopBlueprint.get("/api/shop/tables/getAll", requiresAuth=True, responses=[
                   ResponseInfo(0, "OK", None)
               ])
-def get_all_tables():
-    db = get_database_flask()
+def getAllTables():
 
-    tables = db.tables.get_all()
+    service = ShopService(g.repos)
+
+
+
+    status, data = service.tables.getAll()
 
     return g.res.OK(
-        tables
+        data
     )
 
-@shop_bp.post("/api/shop/tables/new", auth=True, is_admin=True,
+@shopBlueprint.post("/api/shop/tables/new", requiresAuth=True, isAdmin=True,
              arguments=[
                   RequestField("name", str, True, None, NotEmpty())
              ],
@@ -355,27 +337,27 @@ def get_all_tables():
                   ResponseInfo(0, "OK", None),
                   ResponseInfo(3001, "TableNameExist", None)
              ])
-def new_table():
+def newTable():
     name: str = g.args["name"]
 
-    db = get_database_flask()
+    service = ShopService(g.repos)
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("Shop")
 
-    try:
-        table_id = db.tables.new(name, True)
-    except ValueError:
 
+    status, data = service.tables.create(name)
+
+    if status == service.RESULT.TABLE_ALREADY_EXIST:
         return g.res.TableNameExist()
-    else:
-        g.logger.info({
-                "id": table_id,
-                "name": name
-            }, "NewTable")
-        
-        return g.res.OK()
 
-@shop_bp.post("/api/shop/tables/update", auth=True, is_admin=True,
+    g.logger.info({
+            "id": data,
+            "name": name
+        }, "NewTable")
+        
+    return g.res.OK()
+
+@shopBlueprint.post("/api/shop/tables/update", requiresAuth=True, isAdmin=True,
              arguments=[
                   RequestField("id", int, True),
                   RequestField("name", str, True, None, NotEmpty())
@@ -385,31 +367,30 @@ def new_table():
                   ResponseInfo(3001, "TableNotFound", None),
                   ResponseInfo(3002, "TableNameExist", None)
              ])
-def update_table():
-    table_id: int = g.args["id"]
-    new_name: str = g.args["name"]
+def updateTable():
+    tableId: int = g.args["id"]
+    newName: str = g.args["name"]
 
-    db = get_database_flask()
+    service = ShopService(g.repos)
 
-    g.logger.set_category("SHOP")
+    g.logger.setCategory("Shop")
 
-    try:
-        db.tables.update(table_id, new_name, True)
-    except NotFoundError:
+
+    status, data = service.tables.update(tableId, newName)
+
+    if status == service.RESULT.TABLE_NOT_FOUND:
         return g.res.TableNotFound()
-
-    except ValueError:
+    elif status == service.RESULT.TABLE_ALREADY_EXIST:
         return g.res.TableNameExist()
-    
     else:
         g.logger.info({
-                "id": table_id,
-                "name": new_name
+                "id": tableId,
+                "name": newName
             }, "UpdateTable")
         
         return g.res.OK()
 
-@shop_bp.post("/api/shop/tables/delete", auth=True, is_admin=True,
+@shopBlueprint.post("/api/shop/tables/delete", requiresAuth=True, isAdmin=True,
              arguments=[
                   RequestField("id", int, True)
              ],
@@ -417,24 +398,18 @@ def update_table():
                   ResponseInfo(0, "OK", None),
                   ResponseInfo(3001, "TableNotFound", None)
              ])
-def delete_table():
-    table_id: int = g.args["id"]
+def deleteTable():
+    tableId = g.args["id"]
 
+    service = ShopService(g.repos)
 
-    db = get_database_flask()
-    g.logger.set_category("SHOP")
+    result, data = service.tables.delete(tableId)
 
-    try:
-        db.tables.soft_delete(table_id)
-
-    except NotFoundError:
+    if result == service.RESULT.TABLE_NOT_FOUND:
         return g.res.TableNotFound()
-    else:
-        g.logger.info({
-                "id": table_id
-            }, "DeleteTable")
-        
-        return g.res.OK()
+
+    return g.res.OK()
+
 
 
 

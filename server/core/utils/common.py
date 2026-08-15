@@ -12,9 +12,9 @@ import os
     
 #     return info
 
-def pad_string(string: str,
+def padString(string: str,
                length: int,
-               pad_char: str = "0",
+               padChar: str = "0",
                position: Literal["left", "right"] = "left") -> str:
     '''
     根据长度补齐字符串
@@ -23,10 +23,10 @@ def pad_string(string: str,
     if len(string) >= length:
         return string
     
-    pad_length = length - len(string)
+    padLength = length - len(string)
 
     if position == "left":
-        return pad_char * pad_length + string
+        return padChar * padLength + string
     else:
-        return string + pad_char * pad_length
+        return string + padChar * padLength
     

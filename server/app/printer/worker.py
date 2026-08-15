@@ -1,6 +1,6 @@
 import threading
 from queue import Queue, Empty
-import json
+from typing import cast
 import traceback
 import datetime
 
@@ -8,70 +8,79 @@ from escpos.printer import Usb, Network, Win32Raw
 from escpos.escpos import Escpos
 
 
-from app.app_settings.manager import SettingsManager
-from core.log.console import get_console_logger
-from core.log.context import get_log_context
+from app.db.repository import RepositoryManager
+from app.service import SettingsService
+from core.log.context import getLogContext
 from core.log.logger import Logger
-from app.db.get_db import get_database
-from core.db.exceptions import NotFoundError
+from app.db.connections import getDatabase_
+from app.service import initService
+from app.service.printTask import PrintTaskService
+from app.service.settings import SettingsService
 from .renderer import Renderer
 
 
-def connect_printer(connect_info: dict) -> Escpos: #type: ignore
-    if connect_info["type"] == "Network":
-        return Network(connect_info["ip"], connect_info["port"], connect_info["timeout"], profile=connect_info["profile"], encoding=connect_info["encoding"])
-    elif connect_info["type"] == "Usb":
-        return Usb(connect_info["vid"], connect_info["pid"], encoding=connect_info["encoding"], profile=connect_info["profile"])
-    elif connect_info["type"] == "Win32Raw":
-        return Win32Raw(connect_info["name"], profile=connect_info["profile"], encoding=connect_info["encoding"])
+def connectPrinter(connectInfo: dict) -> Escpos: #type: ignore
+    if connectInfo["type"] == "Network":
+        return Network(connectInfo["ip"], connectInfo["port"], connectInfo["timeout"], profile=connectInfo["profile"], encoding=connectInfo["encoding"])
+    elif connectInfo["type"] == "Usb":
+        return Usb(connectInfo["vid"], connectInfo["pid"], encoding=connectInfo["encoding"], profile=connectInfo["profile"])
+    elif connectInfo["type"] == "Win32Raw":
+        return Win32Raw(connectInfo["name"], profile=connectInfo["profile"], encoding=connectInfo["encoding"])
 
 
-def print_task(commands: list, printer: Escpos, qr_info: dict, dots: int):
-    renderer = Renderer(printer, qr_info)
+def printTask(commands: list, printer: Escpos, qrInfo: dict, dots: int):
+    renderer = Renderer(printer, qrInfo)
 
     renderer.render(commands, dots)
 
     printer.cut()
 
 
-def print_worker(q: Queue, logger: Logger):
-    c_logger = get_console_logger("printWorker")
+def printWorker(q: Queue, logger: Logger):
 
-    log_ctx = get_log_context(logger, "PRINT_WORKER")
+    logContext = getLogContext(logger, "PrinterWorker")
 
-    db = get_database()
-    sm = SettingsManager(db)
+    database = getDatabase_()
+    repos = RepositoryManager(database)
+
+    settingsService = SettingsService(repos)
+    printTaskService = PrintTaskService(repos)
 
 
     # 初始化连接信息
-    connect_info = {}
+    connectInfo = {}
 
-    connect_info["type"] = sm.get("printer.connection.type")
-    if connect_info["type"] == "Network":
-        connect_info["ip"] = sm.get("printer.connection.network.ip")
-        connect_info["port"] = sm.get("printer.connection.network.port")
-        connect_info["timeout"] = sm.get("printer.connection.network.timeout")
-    elif connect_info["type"] == "Usb":
+    connectInfo["type"] = settingsService.get("printer.connection.type")
+    if connectInfo["type"] == "Network":
+        connectInfo["ip"] = settingsService.get("printer.connection.network.ip")
+        connectInfo["port"] = settingsService.get("printer.connection.network.port")
+        connectInfo["timeout"] = settingsService.get("printer.connection.network.timeout")
+    elif connectInfo["type"] == "Usb":
 
-        connect_info["vid"] = sm.get("printer.connection.usb.vid")
-        connect_info["pid"] = sm.get("printer.connection.usb.pid")
+        connectInfo["vid"] = settingsService.get("printer.connection.usb.vid")
+        connectInfo["pid"] = settingsService.get("printer.connection.usb.pid")
 
-    elif connect_info["type"] == "Win32Raw":
-        connect_info["name"] = sm.get("printer.connection.win32.name")
+    elif connectInfo["type"] == "Win32Raw":
+        connectInfo["name"] = settingsService.get("printer.connection.win32.name")
 
-    connect_info["encoding"] = sm.get("printer.encoding")
-    connect_info["profile"] = sm.get("printer.profile")
+    connectInfo["encoding"] = settingsService.get("printer.encoding")
+    connectInfo["profile"] = settingsService.get("printer.profile")
 
 
-    qr_info = {}
-    qr_info["model"] = sm.get("printer.QRCode.model")
-    qr_info["native"] = sm.get("printer.QRCode.native")
-    qr_info["correction"] = sm.get("printer.QRCode.correction")
+    qrInfo = {}
+    qrInfo["model"] = settingsService.get("printer.QRCode.model")
+    qrInfo["native"] = settingsService.get("printer.QRCode.native")
+    qrInfo["correction"] = settingsService.get("printer.QRCode.correction")
 
-    dots = sm.get("printer.dotsPerLine")
+    dots = settingsService.get("printer.dotsPerLine")
 
     printer: Escpos | None = None
-    retry_connect_count = 0
+    retryConnectCount = 0
+
+    logContext.info({
+        "connectInfo": connectInfo,
+        "qrInfo": qrInfo,
+    }, "WorkerStarted")
 
     while True:
         # 从队列中获取任务
@@ -79,10 +88,10 @@ def print_worker(q: Queue, logger: Logger):
             entry = q.get(timeout=5)
         except Empty:
             # 五秒内没有其他任务
-            log_ctx.debug("5秒内没有任务", "DebugMsg")
 
             if printer is not None:
-                log_ctx.debug("关闭打印机连接", "DebugMsg")
+                logContext.debug({"message":
+                               "Printer connection closed because no print task was received within 5s."}, "ClosePrinterConnection")
                 printer.close()
                 printer = None
 
@@ -91,21 +100,26 @@ def print_worker(q: Queue, logger: Logger):
         if entry is None:
             break
 
-        started_time = datetime.datetime.now()
-        db.print_task.update(entry, 1, None, started_time)
+        startTime = datetime.datetime.now()
 
         
 
-        log_ctx.debug(f"获取任务 %s" % entry, "DebugMsg")
 
         # 连接打印机
         if printer is None:
             try:
-                printer = connect_printer(connect_info)
-            except Exception as e:
-                retry_connect_count += 1
+                printer = connectPrinter(connectInfo)
 
-                log_ctx.warning({
+                logContext.debug({
+                    "message": "Connected printer"
+                }, "ConnectPrinter")
+            except Exception as e:
+
+                # 重试次数加1
+                retryConnectCount += 1
+
+                # 记录本次的连接错误信息
+                logContext.warning({
                     "id": entry,
                     "error": {
                         "name": e.__class__.__name__,
@@ -115,51 +129,39 @@ def print_worker(q: Queue, logger: Logger):
                 }, "ConnectError")
 
                 now = datetime.datetime.now()
-                db.print_task.update(entry, 3, "PrinterConnectError", started_time, now)
+                printTaskService.update(entry, 3, "PrinterConnectError")
 
-                if retry_connect_count >= 5:
-                    log_ctx.error("", "RetryConnectExhausted")
+                # 重试次数超过5词，跳出本次循环
+                if retryConnectCount >= 5:
+                    logContext.error("", "RetryConnectExhausted")
                     break
 
+    
+                # 重试连接打印机
                 continue
 
-            retry_connect_count = 0
+            retryConnectCount = 0
 
-        log_ctx.debug("连接打印机成功", "DebugMsg")
         # 读取设置
-        try:
-            print_info = db.print_task.get(entry)
-            content = json.loads(print_info["content"])
-        except NotFoundError:
-            log_ctx.warning({
+
+        status, printInfo = printTaskService.get(entry)
+
+        if status == printTaskService.GET.TASK_NOT_FOUND:
+        
+            logContext.warning({
                 "id": entry,
             }, "NotFoundTask")
 
-            now = datetime.datetime.now()
-            db.print_task.update(entry, 3, "NotFoundTask", started_time, now)
-            
-            continue
-
-        except json.JSONDecodeError as e:
-            log_ctx.warning({
-                "id": entry,
-                "error": str(e)
-            }, "InvalidTaskContent")
-
-            now = datetime.datetime.now()
-            db.print_task.update(entry, 3, "InvalidTaskContent", started_time, now)
-
-            
-            continue
-
         
+            continue
 
+        printInfo = cast(dict, printInfo)
 
         # 打印任务
         try:
-            print_task(content["commands"], printer, qr_info, dots)
+            printTask(printInfo["commands"], printer, qrInfo, dots)
         except Exception as e:
-            log_ctx.warning({
+            logContext.warning({
                 "id": entry,
                 "error": {
                     "name": e.__class__.__name__,
@@ -167,38 +169,34 @@ def print_worker(q: Queue, logger: Logger):
                     "traceback": traceback.format_exception(e)
                 }
             }, "PrintTaskError")
+
             now = datetime.datetime.now()
-            db.print_task.update(entry, 3, "PrintTaskError", started_time, now)
+
+            printTaskService.update(entry, 3, "PrintTaskError")
 
             printer.close()
             printer = None
 
             continue
 
-        now = datetime.datetime.now()
-        db.print_task.update(entry, 2, None, started_time, now)
-
-        log_ctx.debug("打印任务成功", "DebugMsg")
+        printTaskService.update(entry, 2, None)
 
 
-        log_ctx.info({
+        logContext.info({
             "id": entry,
         }, "PrintTaskFinished")
 
-           
+    database.close()      
 
-    db.close()
+    logContext.info("", "WorkerStopped")
 
-    log_ctx.info("", "StoppedWorker")
+    
 
 
-
-        
-
-def create_print_worker(logger: Logger):
+def createPrintWorker(logger: Logger):
     q = Queue()
 
-    thread = threading.Thread(target=print_worker, args=( q, logger), name="PrintWorker")
+    thread = threading.Thread(target=printWorker, args=( q, logger), name="PrintWorker")
     thread.daemon = True
     thread.start()
 
