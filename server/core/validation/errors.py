@@ -81,3 +81,64 @@ class AllOfError(ValidationError):
 
     def __str__(self) -> str:
         return "The value must match all of the following validators: " + ", ".join([str(child) for child in self.children])
+
+
+class ForEachError(ValidationError):
+    children: list[ValidationError]
+
+    def __init__(self, *children):
+        self.children = list(children)
+
+    def __str__(self) -> str:
+        return "Each element of the value must match the following validators: " + ", ".join([str(child) for child in self.children])
+
+
+class FieldTypeError(ValidationError):
+    fieldKey: str
+    expectedType: type
+
+    def __init__(self, fieldKey: str, expectedType: type):
+        self.fieldKey = fieldKey
+        self.expectedType = expectedType
+
+    def __str__(self) -> str:
+        return f"Field '{self.fieldKey}' must be of type {self.expectedType}."
+
+class MissingRequiredFieldError(ValidationError):
+    fieldKey: str
+
+    def __init__(self, fieldKey: str):
+        self.fieldKey = fieldKey
+
+    def __str__(self) -> str:
+        return f"Missing required field '{self.fieldKey}'."
+
+class FieldValidationError(ValidationError):
+    fieldKey: str
+    error: ValidationError
+
+    def __init__(self, fieldKey: str, error: ValidationError):
+        self.fieldKey = fieldKey
+        self.error = error
+
+    def __str__(self) -> str:
+        return f"Field '{self.fieldKey}' validation error: {self.error}"
+
+class UndefinedFieldError(ValidationError):
+    fieldKey: str
+
+    def __init__(self, fieldKey: str):
+        self.fieldKey = fieldKey
+
+    def __str__(self) -> str:
+        return f"Field '{self.fieldKey}' is not defined in the schema."
+
+
+class DictOfError(ValidationError):
+    children: list[ValidationError]
+
+    def __init__(self, *children):
+        self.children = list(children)
+
+    def __str__(self) -> str:
+        return "Dictionary field validation failed:  " + ", ".join([str(child) for child in self.children])

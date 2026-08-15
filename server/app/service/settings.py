@@ -6,7 +6,7 @@ from .exceptions import *
 from core.typeConvert import converter, TypeConvertError
 from core.validation.field import FieldDefinition
 from core.validation.validators import Choices, Interval, NotEmpty, Closed, If
-from core.validation.condition import RefIs
+from core.validation.condition import RefEqual
 
 
 SETTINGS = [
@@ -17,25 +17,25 @@ SETTINGS = [
     FieldDefinition("printer.enabled", bool, False), # 是否启用打印机
 
     FieldDefinition("printer.connection.type", str, "", 
-                    If(RefIs("printer.enabled", True),Choices("Network", "Usb", "Win32Raw",))),
+                    If(RefEqual("printer.enabled", True),Choices("Network", "Usb", "Win32Raw",))),
 
     FieldDefinition("printer.connection.network.ip", str, "",
-                     If(RefIs("printer.connection.type", "Network"), NotEmpty())),
+                     If(RefEqual("printer.connection.type", "Network"), NotEmpty())),
 
     FieldDefinition("printer.connection.network.port", int, 9100, 
-                     If(RefIs("printer.connection.type", "Network"),Interval(Closed(1), Closed(65535)))
+                     If(RefEqual("printer.connection.type", "Network"),Interval(Closed(1), Closed(65535)))
                      ),
     FieldDefinition("printer.connection.network.timeout", int, 10, 
-                     If(RefIs("printer.connection.type", "Network"),Interval(0, None))),
+                     If(RefEqual("printer.connection.type", "Network"),Interval(0, None))),
 
     FieldDefinition("printer.connection.usb.vid", int, 0, 
-                     If(RefIs("printer.connection.type", "Usb"),NotEmpty())),
+                     If(RefEqual("printer.connection.type", "Usb"),NotEmpty())),
 
     FieldDefinition("printer.connection.usb.pid", int, 0, 
-                     If(RefIs("printer.connection.type", "Usb"),NotEmpty())),
+                     If(RefEqual("printer.connection.type", "Usb"),NotEmpty())),
 
     FieldDefinition("printer.connection.win32.name", str, "", 
-                     If(RefIs("printer.connection.type", "Win32Raw"),NotEmpty())),
+                     If(RefEqual("printer.connection.type", "Win32Raw"),NotEmpty())),
 
 
     FieldDefinition("printer.encoding", str, "UTF-8", NotEmpty()),
