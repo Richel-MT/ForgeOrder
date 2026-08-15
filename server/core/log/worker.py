@@ -5,9 +5,10 @@ import sqlite3
 import os
 
 from .schema import BUFFER_SIZE
-
-from .log_db import LogDatabase
-
+from .service import initService
+from ..database.database.exceptions import DatabaseError
+from ..database.repository.exceptions import RepositoryError
+from .console import getConsoleLogger
 
 def writeTextLog(entry):
     now = datetime.datetime.now()
@@ -28,18 +29,19 @@ def writeTextLog(entry):
 {entry}
 ''')
         else:
-            f.write(entry)
+            f.write(str(entry))
         
 
-def worker(q: queue.Queue, db_name: str):
+def worker(q: queue.Queue, databaseName: str):
     bufferCount = 0
 
     # 连接数据库
-    log_db = LogDatabase(db_name)
-    
-    try:
-        
-        while True:
+    database, service = initService(databaseName)
+    logger = getConsoleLogger(__name__)
+
+    while True:
+        try:
+            
             entry = q.get()
 
             if entry is None:
@@ -47,32 +49,36 @@ def worker(q: queue.Queue, db_name: str):
                 break
 
 
-            log_db.insert_log(*entry)
+            service.insertLog(*entry)
 
             bufferCount += 1
 
             if bufferCount >= BUFFER_SIZE:
-                log_db.commit()
+                service.commit()
                 bufferCount = 0
 
             q.task_done()
-    except sqlite3.OperationalError as e:
-        writeTextLog(f"数据库操作错误：{e}")
+            
+        except (DatabaseError, RepositoryError) as e:
+            logger.warning(f"数据库错误：{e}")
 
-        try:
-            writeTextLog(entry)
-        except:
-            pass
+            try:
+                writeTextLog(entry)
+            except NameError:
+                # entry可能未定义
+                pass
 
+        except (KeyboardInterrupt, EOFError):
+            break
 
-    log_db.commit()
+    service.commit()
 
-    log_db.close()
+    database.close()
 
-def createWorker(db_name: str):
+def createWorker(databaseName: str):
     q = queue.Queue()
 
-    thread = threading.Thread(target=worker, args=(q, db_name), name="LogWorker")
+    thread = threading.Thread(target=worker, args=(q, databaseName), name="LogWorker")
     thread.daemon = True
     thread.start()
 

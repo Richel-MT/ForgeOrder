@@ -35,6 +35,8 @@ class Logger(logging.Logger):
 
     def log(self, msg: str | dict | list , level: int, category: str, action: str, requestId: str = None): # type:ignore
         extra = {"category": category, "action": action, "requestId": requestId}
+        
+        extra["originMsg"] = msg
 
         if isinstance(msg, (dict, list)):
             msg = json.dumps(msg, ensure_ascii=False, indent=2)
@@ -43,7 +45,7 @@ class Logger(logging.Logger):
         else:
             msg = str(msg)
 
-        extra["originMsg"] = msg
+        
 
         if category in self.ignoreCategory or action in self.ignoreActions:
             return
@@ -95,7 +97,18 @@ class DatabaseHandler(logging.Handler):
             case _:
                 level = logging.INFO
 
-        self.q.put((time, level, record.category, record.action, record.originMsg, record.requestId))
+        if not record.originMsg:
+            # 原始数据为空
+            msg = None
+        elif isinstance(record.originMsg, str):
+            msg = {"message": record.originMsg}
+        else:
+            msg = record.originMsg
+
+            
+            
+
+        self.q.put((time, level, record.category, record.action, msg, record.requestId))
         
         
 
