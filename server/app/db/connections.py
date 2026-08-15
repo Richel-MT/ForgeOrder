@@ -1,10 +1,9 @@
 from flask import g
 
-import extensions
 
 from .respository import RepositoryManager
 from core.database.database import Database
-
+from app.config import config, CONFIG
 
 def getDatabase():
     '''
@@ -35,7 +34,7 @@ def getDatabase_():
     获取一个数据库连接，返回数据库连接对象。
     与`get_database`方法不同的是，此方法不一定需要请求上下文。
     '''
-    db =  Database(extensions.config.get("database.path"))
+    db =  Database(config.get(CONFIG.DATABASE_PATH))
 
     try:
         db._isAvailable()

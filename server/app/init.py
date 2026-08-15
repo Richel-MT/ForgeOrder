@@ -9,15 +9,11 @@ from app.service.settings import SettingsService
 from core.database.database import Database
 
 from app.printer.service import PrintManager
-import extensions
-from app.config import setupConfig
-from core.log.logger import setupLogger
-from app.routes.manager import RouteManager
-from app.hooks.schema import CLIENT_ERROR
+from app.config import config, CONFIG
 from core.log import getConsoleLogger
+from core.log import initLogger, getLogger, shutdownLogger
 
 from app.cli import createParser, executeCommand
-from app.config.validate import validateConfig
 from app.exceptions import UserError
 
 consoleLogger= getConsoleLogger("startup")
@@ -30,7 +26,8 @@ def initRootUser(reset = False):
 
     password = "".join(random.choices("abcdefghijklmnopqrstuvwxyz1234567890", k=8))
 
-    db, _, service = cast(tuple[Database, None, UserService], initService(extensions.config.get("database.path"), UserService))
+
+    db, _, service = cast(tuple[Database, None, UserService], initService(config.get(CONFIG.DATABASE_PATH), UserService))
     
     try:
         if reset:
@@ -57,31 +54,24 @@ def initRootUser(reset = False):
         consoleLogger.info("创建root用户，密码：%s" % password)
 
         
-        extensions.config.set("server.first_start", False)
+        config.set(CONFIG.SERVER_FIRST_START, False)
+
     finally:
         db.close()
 
 def initLog():
-    logger, thread, queue = setupLogger(__name__,
-                extensions.config.get("log.database"), # type: ignore
-                extensions.config.get("log.level")) #type: ignore
-
-    extensions.logger = logger
-    extensions.dbLoggerThread = thread
-    extensions.dbLoggerQueue = queue
 
 
-    # 处理log.ignore_client_error
-    if extensions.config.get("log.ignore_client_error"):
-        for error in CLIENT_ERROR:
-            extensions.logger.setIgnoreAction(error)
+    initLogger(__name__, config.get(CONFIG.LOG_DATABASE), config.get(CONFIG.LOG_LEVEL))
+
+    getLogger()
 
 def initConfig():
     if not os.path.exists("data"):
             os.makedirs("data")
 
     # 加载配置文件
-    extensions.config = setupConfig()
+    config.initConfig()
     
 
 
@@ -96,12 +86,11 @@ def initArguments():
     return executeCommand(args)
 
 
-def validateConfigAndSettings():
+def validateAppSettings():
     # 验证配置项
     try:
-        validateConfig()
 
-        db, _, service = initService(extensions.config.get("database.path"), SettingsService)
+        db, _, service = initService(config.get(CONFIG.DATABASE_PATH), SettingsService)
 
         try:
             service  = cast(SettingsService, service)
@@ -127,11 +116,9 @@ def init():
 
 
 
-    # 初始化ArgumentsManager
-    extensions.routeManager = RouteManager()
 
 
-    if extensions.config.get("server.first_start"):
+    if config.get(CONFIG.SERVER_FIRST_START):
         initRootUser()
 
 
@@ -143,7 +130,7 @@ def init():
 
 
     # 初始化数据库的表结构
-    db = Database(extensions.config.get("database.path"))
+    db = Database(config.get(CONFIG.DATABASE_PATH))
     db.connect()
     
     repos = RepositoryManager(db)
@@ -152,26 +139,20 @@ def init():
     # 关闭数据库连接
     db.close()
 
-    validateConfigAndSettings()
+    validateAppSettings()
 
 
     
-    extensions.printManager = PrintManager(extensions.logger)
+    print_manager = PrintManager()
 
 def shutdown():
     # 关闭数据库日志记录器线程
-    if extensions.dbLoggerThread is None:
-        return
     
-    extensions.dbLoggerQueue.join()
-    extensions.dbLoggerQueue.put(None)
-
-    extensions.dbLoggerThread.join()
-
+    shutdownLogger()
 
 
     # 关闭打印服务
-    extensions.printManager.shutdown()
+    PrintManager.getInstance().shutdown()
 
     # 关闭日志记录器
     logging.shutdown()

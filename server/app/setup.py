@@ -1,11 +1,13 @@
 import os
 import datetime
+
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
+
 from .hooks.beforeRequest import beforeRequest
 from .hooks.afterRequest import afterRequest
 from .hooks.errors import *
-import extensions
+from app.routes.manager import RouteManager
 
 class JSONProvider(DefaultJSONProvider):
     ensure_ascii = False
@@ -15,18 +17,31 @@ class JSONProvider(DefaultJSONProvider):
             return obj.isoformat()
         else:
             return super().default(obj)
+        
+class MyFlaskApp(Flask):
+    routeManager: 'RouteManager'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.routeManager = RouteManager()
+
+
+
 
 
 
 def setupApp():
-    app = Flask(__name__, static_folder=os.path.join(extensions.rootDir, "static"), template_folder="res", static_url_path="/")
+    app = MyFlaskApp(__name__)
 
     app.json_provider_class = JSONProvider
     app.json = JSONProvider(app)
 
+    
+
     from app import blueprints
     for bp in blueprints:
-        bp.registerForApp(app, extensions.routeManager)
+        bp.registerForApp(app, app.routeManager)
 
     
     app.before_request(beforeRequest) # type: ignore

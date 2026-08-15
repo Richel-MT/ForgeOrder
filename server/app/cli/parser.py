@@ -1,18 +1,17 @@
 import argparse
 
-import extensions
-
+from app.const import VERSION
 
 def createParser():
     parser = argparse.ArgumentParser(
         prog="ForgeOrder",
-        description=f"ForgeOrder 服务器命令行工具 {extensions.version}",
+        description=f"ForgeOrder 服务器命令行工具 {VERSION}",
     )
 
     parser.add_argument(
         "--version", "-v",
         action="version",
-        version=extensions.version,
+        version=VERSION,
         help="显示版本信息"
     )
 

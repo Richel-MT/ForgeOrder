@@ -4,11 +4,11 @@ from ssl import VerifyFlags
 
 from flask.cli import pass_script_info
 
-import extensions
 from .exceptions import ConfigError
 from .schema import CONFIG_ITEMS
 from core.validation.base import ValidationResult
 from core.validation.errors import *
+from core.config.json_config import JSONConfig
 
 def validateErrorToStr(error: ValidationResult):
     errorString = ''
@@ -52,11 +52,11 @@ def errorsToString(errors: dict[str, ValidationResult]):
     return errorsList
 
 
-def validateConfig(fix=False):
+def validateConfig(config: JSONConfig, fix=False):
     errors: dict[str, ValidationResult] = {}
 
     for item in CONFIG_ITEMS:
-        value = extensions.config.get(item.key)
+        value = config.get(item.key)
 
         result = item.validate(value)
                     
@@ -68,12 +68,9 @@ def validateConfig(fix=False):
             continue
 
 
-    # print(errors)
     if errors:
         if fix:
             return errors
         else:
             raise ConfigError(errorsToString(errors))
     
-
-    # print("pass")

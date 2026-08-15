@@ -5,8 +5,9 @@ from flask import request, g
 
 from app.db.connections import getDatabase
 from app.service.users import UserService
-import extensions
+from app.routes import routeManager
 from core.utils.server import makeResponse, getClientIp
+from core.log import getLogger
 from app.log import RequestLogContext
 from app.routes.responseGenerator import ResponseGenerator
 
@@ -15,7 +16,7 @@ def _handleAuth():
     logger = g.logger.getLogContext("BeforeRequest")
 
     if  request.path.startswith("/api/"):
-        checkResult, routeData = extensions.routeManager.getAuthConfig(request.path)
+        checkResult, routeData = routeManager.getAuthConfig(request.path)
         
         if not checkResult:
             # 路由不存在
@@ -57,7 +58,7 @@ def _handleAuth():
         ), 401
 
     # 使用UserService验证Token
-    service = UserService(g.repos, extensions.config)
+    service = UserService(g.repos)
 
     result = service.checkToken(token)
     
@@ -152,15 +153,15 @@ def _handleAuth():
         g.userInfo = result.data
 
 def _handlerArguments():
-    logger = extensions.getLogContext(extensions.logger, "BeforeRequest")
+    logger = g.logger.getLogContext("BeforeRequest")
 
-    if not extensions.routeManager.hasArguments(request.path):
+    if not routeManager.hasArguments(request.path):
         return None
     
     
     body = request.get_json()
 
-    result, data = extensions.routeManager.validateArguments(request.path, body)
+    result, data = routeManager.validateArguments(request.path, body)
 
     if result:
         g.args = data
@@ -185,14 +186,14 @@ def _handlerArguments():
 
 def _handleRequestInfo():
     g.requestId = str(uuid.uuid4())
-
-    g.logger = RequestLogContext(extensions.logger, "Request")
+    
+    g.logger = RequestLogContext(getLogger(), "BeforeRequest")
 
     g.startTime = time.time()
 
 
     try:
-        responses = extensions.routeManager.routes[request.path]["responses"]
+        responses = routeManager.routes[request.path]["responses"]
     except KeyError: 
         responses = {}
 

@@ -2,9 +2,10 @@ import time
 import os
 
 from app.init import init, shutdown
+from app.const import VERSION
 from core.errorHandler.excepthook import install
-from core.log import getConsoleLogger
-import extensions
+from core.log import getConsoleLogger, getLogContext, getLogger
+from app.config import config, CONFIG
 from app.setup import setupApp
 
 install()
@@ -18,12 +19,12 @@ if __name__ == "__main__":
     init()
 
     ## 设置环境变量
-    os.environ["ENV"] = extensions.config.get("server.env")
+    os.environ["ENV"] = config.get(CONFIG.SERVER_ENV)
 
-    logger = extensions.getLogContext(extensions.logger, "Main")
+    logger = getLogContext(getLogger(), "Main")
     
     logger.debug({
-        "version": extensions.version,
+        "version": VERSION,
         "environment": os.environ["ENV"],
     }, "RuntimeInfo")
 
@@ -34,8 +35,8 @@ if __name__ == "__main__":
     
     consoleLogger.info("正在启动HTTP服务...")
 
-    host = extensions.config.get("server.host")
-    port = extensions.config.get("server.port")
+    host = config.get(CONFIG.SERVER_HOST)
+    port = config.get(CONFIG.SERVER_PORT)
 
     logger.info({
             "host": host,

@@ -17,12 +17,6 @@ class Logger(logging.Logger):
         self.ignoreDebug = []
 
     def setLevel(self, level: int | str) -> None:
-
-
-        if level == logging.DEBUG:
-            import extensions
-            self.ignoreDebug: list = extensions.config.get("log.debug_ignore")
-
         return super().setLevel(level)
     
     def setIgnoreCategory(self, category: str) -> None:

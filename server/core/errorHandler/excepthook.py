@@ -7,7 +7,8 @@ import traceback
 from core.log.logger import Logger
 from .error_report import generateErrorReport
 from app.exceptions import UserError
-from core.log import getConsoleLogger
+from core.log import getConsoleLogger, getLogger
+
 
 def generateUserErrorInfo(error: UserError):
     info = f'''程序无法继续运行。原因：
@@ -21,7 +22,6 @@ def generateUserErrorInfo(error: UserError):
 
 
 def excepthook(type, value, tb, thread: threading.Thread | None = None):
-    import extensions
 
     if issubclass(type, UserError):
         generateUserErrorInfo(value)
@@ -37,10 +37,15 @@ def excepthook(type, value, tb, thread: threading.Thread | None = None):
     if not thread:
         thread = threading.current_thread()
 
-    if hasattr(extensions, 'logger') and isinstance(extensions.logger, Logger):
-        
+    isLoggerInitlized = True
+    try:
+        logger = getLogger()
+    except ValueError:
+        # 日志还未初始化
+        isLoggerInitlized = False
 
-        extensions.logger.error(
+    if isLoggerInitlized:
+        logger.error(
                 {
                 "type": type.__name__,
                 "value": str(value),
@@ -53,10 +58,10 @@ def excepthook(type, value, tb, thread: threading.Thread | None = None):
             
         
         
-    logger = getConsoleLogger("errorHandler")
-    logger.error(f"Uncaught exception: {type.__name__}: {value}  in thread {thread.name}")
+    consoleLogger = getConsoleLogger("errorHandler")
+    consoleLogger.error(f"Uncaught exception: {type.__name__}: {value}  in thread {thread.name}")
     
-    logger.error(''.join(traceback.format_exception(type, value, tb)))
+    consoleLogger.error(''.join(traceback.format_exception(type, value, tb)))
 
     generateErrorReport(
         errorType="critical",

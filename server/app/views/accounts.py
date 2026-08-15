@@ -4,7 +4,6 @@ from flask import  request, g
 
 from app.routes.responseGenerator import ResponseInfo
 from app.service.users import UserService
-import extensions
 from app.routes.blueprint import AppBlueprint
 from .exceptions import *
 from app.routes.field import RequestField, NotEmpty
@@ -39,7 +38,7 @@ def login():
 
     ip : str = cast(str, getClientIp())
 
-    service = UserService(g.repos, extensions.config)
+    service = UserService(g.repos)
 
     result = service.login(username, password, ip, cover)
 
@@ -73,7 +72,7 @@ def logout():
     
     token = token.split(" ")[1] #type: ignore
     
-    service = UserService(g.repos, extensions.config)
+    service = UserService(g.repos)
 
     result = service.logout(token)
 

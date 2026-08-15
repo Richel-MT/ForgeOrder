@@ -3,7 +3,8 @@ import os
 
 from flask import (Blueprint, current_app, send_from_directory, request)
 from app.routes.blueprint import AppBlueprint
-import extensions
+from app.routes import routeManager
+
 
 basicBlueprint = AppBlueprint("basic", __name__)
 
@@ -11,7 +12,7 @@ basicBlueprint = AppBlueprint("basic", __name__)
 def route_info():
     routeName: str = request.args.get("path") #type: ignore
 
-    route = extensions.routeManager.routes.get(routeName)
+    route = routeManager.routes.get(routeName)
 
     if route is None:
             return {

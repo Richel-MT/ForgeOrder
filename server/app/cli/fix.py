@@ -3,6 +3,7 @@ import sys
 import time
 
 from core.log import getConsoleLogger
+from app.config import config, CONFIG
 
 
 def _fixConfig():
@@ -13,7 +14,7 @@ def _fixConfig():
 
     logger = getConsoleLogger("fix")
 
-    errors = validateConfig(True)
+    errors = validateConfig(config.getConfigInstance(), True)
 
     if not errors:
         logger.info("未找到配置项问题")
@@ -33,7 +34,7 @@ def _fixConfig():
             logger.info(f"已修复{key}(默认值：{fixed_value})")
 
 
-            extensions.config.set(key, fixed_value)
+            config.set(key, fixed_value)
         
 
 

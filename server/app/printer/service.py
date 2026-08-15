@@ -5,21 +5,36 @@ from ..service.printTask import PrintTaskService
 
 from .receipt import Receipt
 from .worker import createPrintWorker
-from  core.log.logger import Logger
+from core.log import getLogger
 
 
 
 
 class PrintManager:
-    def __init__(self, logger: Logger):
+
+    _instance = None
+    
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+
+    def __init__(self):
+
+        if hasattr(self, '_initialized'):
+            return
+        
         self.queue: Queue
         self.workerThread : Thread
-        self.logger = logger
 
         self._init()
 
     def _init(self):
-        self.queue, self.workerThread = createPrintWorker(self.logger)
+
+        logger = getLogger()
+
+        self.queue, self.workerThread = createPrintWorker(logger)
 
     def new(self, content: Receipt, service: PrintTaskService, context: dict = {}, ):
 
@@ -31,7 +46,7 @@ class PrintManager:
         self.queue.put(taskId)
 
 
-        self.logger.info({
+        getLogger().info({
             "id": taskId,
         }, "PRINTER", "PrintTaskCreated")
 
@@ -43,13 +58,17 @@ class PrintManager:
 
         self.workerThread.join()
 
+    @classmethod
+    def getInstance(cls):
+        if cls._instance is None:
+            raise ValueError("PrintManager not initialized")
+        
+        return cls._instance 
 
 
-if __name__ == "__main__":
-    pm = PrintManager(Logger("fuck"))
+
+
 
     
-
-    # pm.new(receipt, {"fuck": "fuck"})
 
 

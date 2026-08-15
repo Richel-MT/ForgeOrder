@@ -3,10 +3,9 @@ import json
 from flask import current_app, g
 from werkzeug.exceptions import UnsupportedMediaType
 
-from core.log.console import getConsoleLogger
+from core.log import getConsoleLogger, getLogger
 
 from ..db.connections import closeDatabase
-import extensions
 import traceback
 from core.database.database.exceptions import DatabaseLockedError
 from app.routes.schema import GLOBAL
@@ -55,10 +54,12 @@ def teardownAppContext(error):
 		if isinstance(error, Exception):
 			logs["traceback"] = traceback.format_exception(type(error), error, error.__traceback__) # type: ignore
 	
-		logger = getConsoleLogger("flask")
+		consoleLogger = getConsoleLogger("flask")
 	
-		logger.warning('\n'.join(traceback.format_exception(type(error), error, error.__traceback__))) # type: ignore
-		extensions.logger.error(
+		consoleLogger.warning('\n'.join(traceback.format_exception(type(error), error, error.__traceback__))) # type: ignore
+
+		logger = getLogger()
+		logger.error(
 			logs
 		, "FLASK_APP", "RequestError")
         

@@ -5,7 +5,7 @@ from enum import Enum, auto
 from typing import cast 
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from core.config.json_config import JSONConfig
+from app.config import config, CONFIG
 from .base import Service, Result
 from ..db.respository import RepositoryManager
 from core.database.repository.exceptions import RecordNotFoundError
@@ -63,14 +63,12 @@ class UserService(Service):
         )
 
     
-    def __init__(self, repositoryManager: RepositoryManager, config: JSONConfig | None = None):
+    def __init__(self, repositoryManager: RepositoryManager):
         super().__init__(repositoryManager)
 
 
-        if config is None:
-            from extensions import config
         
-        self.availableTime = config.get("auth.available_time")
+        self.availableTime = config.get(CONFIG.AUTH_AVAILABLE_TIME)
 
         
 
