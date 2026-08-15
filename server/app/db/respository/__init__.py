@@ -2,7 +2,7 @@ from core.database.repository.manager import RepositoryManagerBase
 from core.database.database import Database
 from .dishes import *
 from .orders import *
-from .print_task import PrintTaskRepository
+from .printTask import PrintTaskRepository
 from .settings import SettingsRepository
 from .tables import TablesRepository
 from .users import UsersRepository
