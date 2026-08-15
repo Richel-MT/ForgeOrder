@@ -1,6 +1,5 @@
 import sqlite3
 
-from core.db.database import Database
 
 class DatabaseError(Exception):
     '''数据库连接基类'''

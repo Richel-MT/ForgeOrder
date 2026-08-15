@@ -1,4 +1,0 @@
-
-class LogException(Exception):
-    pass
-

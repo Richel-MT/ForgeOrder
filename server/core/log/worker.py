@@ -1,8 +1,6 @@
 import datetime
 import queue
 import threading
-import sqlite3
-import os
 
 from .schema import BUFFER_SIZE
 from .service import initService
@@ -58,7 +56,7 @@ def worker(q: queue.Queue, databaseName: str):
                 bufferCount = 0
 
             q.task_done()
-            
+
         except (DatabaseError, RepositoryError) as e:
             logger.warning(f"数据库错误：{e}")
 

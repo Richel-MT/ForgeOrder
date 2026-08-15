@@ -5,7 +5,6 @@ import json
 
 from .schema import *
 
-from .log_db import LogDatabase
 from .worker import createWorker
 
 

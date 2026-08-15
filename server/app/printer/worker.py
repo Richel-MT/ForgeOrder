@@ -14,7 +14,6 @@ from core.log.console import getConsoleLogger
 from core.log.context import getLogContext
 from core.log.logger import Logger
 from app.db.connections import getDatabase_
-from core.db.exceptions import NotFoundError
 from .renderer import Renderer
 
 

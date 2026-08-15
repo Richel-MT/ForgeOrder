@@ -57,7 +57,6 @@ class SettingsService(Service):
         初始化设置项。
         '''
 
-        print("init settings")
         for prop in SETTINGS:
 
             row = self.repositoryManager.settings.get(key=prop.key)
