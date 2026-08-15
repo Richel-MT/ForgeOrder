@@ -30,24 +30,24 @@ def _fixConfig():
             
             property = [item for item in CONFIG_ITEMS if item.key == key][0]
 
-            fixed_value = result.error.fix(property)
-            logger.info(f"已修复{key}(默认值：{fixed_value})")
+            fixedValue = result.error.fix(property)
+            logger.info(f"已修复{key}(默认值：{fixedValue})")
 
 
-            config.set(key, fixed_value)
+            config.set(key, fixedValue)
         
 
 
 def fix(exit: bool = True):
     logger = getConsoleLogger("fix")
-    start_time = time.time()
+    startTime = time.time()
 
     
     _fixConfig()
 
-    end_time = time.time()
+    endTime = time.time()
 
-    logger.info(f"修复完成({int(1000 * (end_time - start_time))}ms)")
+    logger.info(f"修复完成({int(1000 * (endTime - startTime))}ms)")
     
 
         

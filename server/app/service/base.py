@@ -5,8 +5,8 @@ from core.database.service import ServiceBase
 from ..db.respository import RepositoryManager
 
 class Service(ServiceBase):
-    def __init__(self, repo_manager: RepositoryManager):
-            self.repositoryManager = repo_manager
+    def __init__(self, repositoryManager: RepositoryManager):
+            self.repositoryManager = repositoryManager
 
 @dataclass
 class Result:

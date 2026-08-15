@@ -45,13 +45,13 @@ class DishCategory:
         创建菜品分类。
         '''
         try:
-            category_id = self.repos.dishesCategory.insert(name=name)
+            categoryId = self.repos.dishesCategory.insert(name=name)
         except UniqueConstraintError:
             return Result(self.parent.RESULT.CATEGORY_ALREADY_EXIST)
 
         self.repos.dishesCategory.commit()
 
-        return Result(self.parent.RESULT.SUCCESS, category_id)
+        return Result(self.parent.RESULT.SUCCESS, categoryId)
 
     def update(self, categoryId: int, name: str):
         '''
@@ -138,20 +138,20 @@ class Dishes:
         dishChoicesIndex = {}
 
         for choice in dishChoicesRows:
-            dish_id = choice["dishId"]
+            dishId = choice["dishId"]
 
-            if dish_id not in dishChoicesIndex:
-                dishChoicesIndex[dish_id] = {}
+            if dishId not in dishChoicesIndex:
+                dishChoicesIndex[dishId] = {}
 
-            dishChoicesIndex[dish_id][choice["name"]] = choice["options"]
+            dishChoicesIndex[dishId][choice["name"]] = choice["options"]
         
 
         # 3、遍历菜品，将菜品信息组装到结果中
         for dish in dishRows:
 
             # 获取菜品的分类名称
-            category_id = dish["category"]
-            category_name = resultCategories[category_id]
+            categoryId = dish["category"]
+            categoryName = resultCategories[categoryId]
 
             # 将菜品的统计信息添加到菜品信息中
             dish_ = dict(dish.copy())
@@ -161,7 +161,7 @@ class Dishes:
             # 将菜品的选项信息添加到菜品信息中
             dish_["choices"] = dishChoicesIndex.get(dish_["id"], {})
 
-            resultDishes[category_name].append(dish_)
+            resultDishes[categoryName].append(dish_)
 
 
         return Result(self.parent.RESULT.SUCCESS, (resultCategories, resultDishes))
@@ -217,16 +217,16 @@ class Dishes:
         return Result(self.parent.RESULT.SUCCESS, dishId)
 
 
-    def get(self, dish_id: int):
+    def get(self, dishId: int):
         '''获取菜品信息'''
 
-        dish = self.repos.dishes.get(id=dish_id)
+        dish = self.repos.dishes.get(id=dishId)
 
         if not dish:
             return Result(self.parent.RESULT.DISH_NOT_FOUND)
         
-        dishStats = self.repos.dishStats.get(id=dish_id)
-        dishChoices = self.repos.dishChoices.getAll(dishId=dish_id)
+        dishStats = self.repos.dishStats.get(id=dishId)
+        dishChoices = self.repos.dishChoices.getAll(dishId=dishId)
 
         dish = dict(dish)
 

@@ -38,46 +38,47 @@ class PrintTaskService(Service):
         '''
         创建打印任务。
         '''
-        task_id = str(uuid.uuid7())
+        taskId = str(uuid.uuid7())
 
-        content_str = content.renderJSON()
+        contentString = content.renderJSON()
 
-        context_str = json.dumps(context)
 
-        create_time = datetime.datetime.now()
+        contextString = json.dumps(context)
+
+        createTime = datetime.datetime.now()
 
         self.repositoryManager.printTask.insert(
-            id=task_id,
+            id=taskId,
 
-            content=content_str,
-            context=context_str,
-            created_at=create_time
+            content=contentString,
+            context=contextString,
+            createdAt=createTime
         )
 
         self.repositoryManager.printTask.commit()
 
-        return Result(self.CREATE.SUCCESS, task_id)
+        return Result(self.CREATE.SUCCESS, taskId)
 
-    def update(self, task_id: str, status: int, err_message: str | None= None):
+    def update(self, taskId: str, status: int, errorMessage: str | None= None):
         '''
         更新打印任务状态。
         '''
 
-        update_time = datetime.datetime.now()
+        udpateTime = datetime.datetime.now()
 
         if status == 2 or status == 3: # 成功或者出错了
-            finish_time = update_time
+            finishedTime = udpateTime
         else:
-            finish_time = None
+            finishedTime = None
 
         try:
             self.repositoryManager.printTask.update(
-                where={"id": task_id},
+                where={"id": taskId},
                 data={
                     "status": status,
-                    "err_message": err_message,
-                    "finish_time": finish_time,
-                    "updated_at": update_time
+                    "errorMessage": errorMessage,
+                    "finishedAt": finishedTime,
+                    "updatedAt": udpateTime
                 }
             )
         except RecordNotFoundError:

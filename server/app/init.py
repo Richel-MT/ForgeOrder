@@ -143,7 +143,7 @@ def init():
 
 
     
-    print_manager = PrintManager()
+    printManager = PrintManager()
 
 def shutdown():
     # 关闭数据库日志记录器线程

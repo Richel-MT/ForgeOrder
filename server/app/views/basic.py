@@ -9,7 +9,7 @@ from app.routes import routeManager
 basicBlueprint = AppBlueprint("basic", __name__)
 
 @basicBlueprint.route("/routeInfo", noRegister=True)
-def route_info():
+def routeInfo():
     routeName: str = request.args.get("path") #type: ignore
 
     route = routeManager.routes.get(routeName)

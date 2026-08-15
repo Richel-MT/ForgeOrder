@@ -45,13 +45,13 @@ class RouteManager:
         if path not in self.routes:
             return {}
         
-        routes_info = self.routes[path] # 所有args的字段定义
+        routesInfo = self.routes[path] # 所有args的字段定义
 
-        args_final = {}
+        finalArguments = {}
 
         errors = {}
 
-        for key, field in routes_info["args"].items():
+        for key, field in routesInfo["args"].items():
             if key in args.keys():
                 # key本身存在，验证类型
                 if not isinstance(args[key], field.valueType):
@@ -60,13 +60,13 @@ class RouteManager:
 
                 # 执行Validator
                 if not field.validator:
-                    args_final[key] = args[key]
+                    finalArguments[key] = args[key]
                     continue
 
                 result = field.validator.validate(args[key])
 
                 if result.success:
-                    args_final[key] = args[key]
+                    finalArguments[key] = args[key]
                     continue
                 else:
                     errors[key] = ArgumentValidationError(key, result.error) #type: ignore
@@ -78,12 +78,12 @@ class RouteManager:
                 errors[key] = MissingRequiredArgumentError(field.key)
             else:
                 # key不存在，非必填项。
-                args_final[key] = field.default
+                finalArguments[key] = field.default
 
         if errors:
             return False, errors
         else:
-            return True, args_final
+            return True, finalArguments
 
 
     

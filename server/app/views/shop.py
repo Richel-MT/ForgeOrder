@@ -81,13 +81,13 @@ def getAllDishes():
                   ResponseInfo(3001, "DishNotFound", None)
               ])
 def getDish():
-    dish_id = g.args["id"]
+    dishId = g.args["id"]
 
 
     service = ShopService(g.repos)
 
 
-    status, data = service.dishes.get(dish_id)
+    status, data = service.dishes.get(dishId)
 
     if status == service.RESULT.DISH_NOT_FOUND:
         return g.res.DishNotFound()
@@ -229,14 +229,14 @@ def newDish():
 # 分类
 @shopBlueprint.post("/api/shop/category/delete", requiresAuth=True, isAdmin=True,
               arguments=[
-                  RequestField("category_id", int, True)
+                  RequestField("categoryId", int, True)
               ],
               responses=[
                   ResponseInfo(0, "OK", None),
                   ResponseInfo(3001, "CategoryNotFound", None)
               ])
 def deleteCategory():
-    categoryId: int = g.args["category_id"]
+    categoryId: int = g.args["categoryId"]
 
 
     g.logger.setCategory("Shop")

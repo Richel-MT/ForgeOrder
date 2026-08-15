@@ -45,24 +45,24 @@ class Logger(logging.Logger):
         
         super().log(level, msg, extra=extra)
 
-    def info(self, msg: str | dict | list , category: str, action: str, request_id: str = None):  # type:ignore
-        self.log(msg, logging.INFO, category, action, request_id)
+    def info(self, msg: str | dict | list , category: str, action: str, requestId: str = None):  # type:ignore
+        self.log(msg, logging.INFO, category, action, requestId)
 
-    def warning(self, msg: str | dict | list , category: str, action: str, request_id: str = None):  # type:ignore
-        self.log(msg, logging.WARNING, category, action, request_id)
+    def warning(self, msg: str | dict | list , category: str, action: str, requestId: str = None):  # type:ignore
+        self.log(msg, logging.WARNING, category, action, requestId)
 
-    def error(self, msg: str | dict | list , category: str, action: str, request_id: str = None):  # type:ignore
-        self.log(msg, logging.ERROR, category, action)
+    def error(self, msg: str | dict | list , category: str, action: str, requestId: str = None):  # type:ignore
+        self.log(msg, logging.ERROR, category, action, requestId)
 
-    def critical(self, msg: str | dict | list , category: str, action: str, request_id: str = None):  # type:ignore
-        self.log(msg, logging.CRITICAL, category, action, request_id)
+    def critical(self, msg: str | dict | list , category: str, action: str, requestId: str = None):  # type:ignore
+        self.log(msg, logging.CRITICAL, category, action, requestId)
 
-    def debug(self, msg: str | dict | list , category: str, action: str, request_id: str = None):  # type:ignore
+    def debug(self, msg: str | dict | list , category: str, action: str, requestId: str = None):  # type:ignore
         # print(category, self.debug_ignore)
         if category in self.ignoreDebug:
             return
         else:
-            self.log(msg, logging.DEBUG, category, action)
+            self.log(msg, logging.DEBUG, category, action, requestId)
 
 class DatabaseHandler(logging.Handler):
     def __init__(self, queue: queue.Queue):

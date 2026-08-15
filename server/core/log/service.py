@@ -12,7 +12,7 @@ class _Row(TypedDict):
     category: str
     action: str
     message: dict
-    request_id: str | None
+    requestId: str | None
 
 class LogRepository(Repository[_Row]):
     columns = [

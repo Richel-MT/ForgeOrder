@@ -203,36 +203,4 @@ WHERE {' AND '.join([f'{key} = ?' for key in where.keys()])}
 
 
     
-if __name__ == '__main__':
-    from .schema import *
-    db = Database('test.db')
-    db.connect()
-
-    class TestRepo(Repository):
-        table_name: str = 'fuck'
-        columns = [
-        Column('id', Integer(), primaryKey=True),
-        Column('name', String(255), notNull=True),
-        Column('age', Integer()),
-        Column('email', String(255)),
-        Column('created_at', DateTime()),
-        Column('is_active', Boolean()),
-        Column('data', JSON()),
-    ]
-        
-    repo = TestRepo(db)
-    repo._init()
-
-    # repo.insert(name='test123', age=18, email='test@example.com')
-
-    repo.update(where={
-        "id": 1
-    }, data={
-        "age": 20,
-    })
-
-
-    repo.commit()
-    
-    
         

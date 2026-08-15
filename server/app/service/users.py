@@ -98,9 +98,9 @@ class UserService(Service):
             return Result(self.LOGIN.USER_DISABLED)
         
         # 检查token是否存在
-        token_info = self.repositoryManager.tokens.get(userId=users["id"])
+        tokenInfo = self.repositoryManager.tokens.get(userId=users["id"])
 
-        if token_info is None:
+        if tokenInfo is None:
             # token不存在，生成新的token
             token = self._generateToken()
             expireTime = datetime.now() + timedelta(days=self.availableTime)
@@ -110,14 +110,14 @@ class UserService(Service):
 
         else:
             # token存在
-            token = token_info["token"]
+            token = tokenInfo["token"]
 
             # 判断是否有效
-            if token_info["status"] != 0 or token_info["expireTime"] < datetime.now():
+            if tokenInfo["status"] != 0 or tokenInfo["expireTime"] < datetime.now():
                 # token无效
                 # 删除旧token
                 self.repositoryManager.tokens.update(
-                    where={"id": token_info["id"]},
+                    where={"id": tokenInfo["id"]},
                     data={"status": 3}
                 )
 
@@ -128,16 +128,16 @@ class UserService(Service):
                 self._insertToken(users["id"], token, expireTime, ip)
         
                 
-            if token_info["ip"] != ip:
+            if tokenInfo["ip"] != ip:
                 # token有效
                 if not cover:
                     return Result(self.LOGIN.NEW_DEVICE, {
-                        "oldDevice": token_info["ip"]
+                        "oldDevice": tokenInfo["ip"]
                     })
                 else:
                     # 删除旧token
                     self.repositoryManager.tokens.update(
-                        where={"id": token_info["id"]},
+                        where={"id": tokenInfo["id"]},
                         data={"status": 3}
                     )
 
@@ -161,8 +161,8 @@ class UserService(Service):
                            
             
         # 删除敏感信息
-        user_info = dict(users.copy())
-        del user_info["password"]
+        userInfo = dict(users.copy())
+        del userInfo["password"]
 
         # 更新users表中的last_login_at
         self.repositoryManager.users.update(
@@ -176,7 +176,7 @@ class UserService(Service):
 
         return Result(self.LOGIN.SUCCESS if not repeatLogin else self.LOGIN.REPEAT_LOGIN, {
             "token": token,
-            "user": user_info,
+            "user": userInfo,
         })
 
     def logout(self, token: str):
@@ -253,10 +253,10 @@ class UserService(Service):
         self.repositoryManager.tokens.commit()
 
         # 获取用户信息
-        user_info = self.repositoryManager.users.get(id=tokenInfo["userId"])
+        userInfo = self.repositoryManager.users.get(id=tokenInfo["userId"])
 
         tokenInfo = dict(tokenInfo)
-        tokenInfo["user"] = user_info
+        tokenInfo["user"] = userInfo
         return Result(self.AUTH.SUCCESS, tokenInfo)
 
 

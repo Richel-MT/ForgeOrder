@@ -6,59 +6,59 @@ from escpos.constants import QR_ECLEVEL_L, QR_ECLEVEL_M, QR_ECLEVEL_Q, QR_ECLEVE
 from .schema import QRCodeInfo
 from ..receipt.schema import FONT_A_WIDTH, FONT_B_WIDTH, CH_WIDTH
 
-def get_char_width(font: str, scale: int = 1):
+def getCharWidth(font: str, scale: int = 1):
     if font == "a":
         return FONT_A_WIDTH * scale
     else:
         return FONT_B_WIDTH * scale
 
-def length_of_str(text: str, font: str, scale: int = 1):
-    char_width = get_char_width(font, scale)
+def lengthOfString(text: str, font: str, scale: int = 1):
+    charWidth = getCharWidth(font, scale)
 
     length = 0
     for char in text:
-        width_property = unicodedata.east_asian_width(char)
+        widthProperty = unicodedata.east_asian_width(char)
 
-        if width_property in ('F', 'W'):
+        if widthProperty in ('F', 'W'):
             length += CH_WIDTH * scale
         else:
-            length += char_width
+            length += charWidth
 
     return length
 
-def length_to_char_count(length: int, font: str, scale: int = 1):
-    char_width = get_char_width(font, scale)
+def lengthToCharCount(length: int, font: str, scale: int = 1):
+    charWidth = getCharWidth(font, scale)
 
-    return length // char_width
+    return length // charWidth
 
-def get_first_chars(text: str, count: int, font: str, scale: int = 1):
+def getFirstChars(text: str, count: int, font: str, scale: int = 1):
     # print(text, count)
 
-    text_count = 0
-    text_final = ''
+    textCount = 0
+    finalText = ''
 
     for char in text:
-        text_count += length_of_str(char, font, scale)
+        textCount += lengthOfString(char, font, scale)
         
-        if text_count >= count:
-            return text_final
+        if textCount >= count:
+            return finalText
         else:
-            text_final += char
+            finalText += char
 
-    return text_final
+    return finalText
 
 class Renderer:
-    def __init__(self, printer: Escpos, qr_info: QRCodeInfo):
+    def __init__(self, printer: Escpos, qrInfo: QRCodeInfo):
         self.printer = printer
 
-        self.qr_info = qr_info
+        self.qrInfo = qrInfo
 
     def render(self, commands: list[dict], dots: int):
         for command in commands:
-            self.render_command(command, dots)
+            self.renderCommand(command, dots)
 
-    def _text(self, cmd_info: dict):
-        style = cmd_info["style"].copy()
+    def _text(self, commandInfo: dict):
+        style = commandInfo["style"].copy()
 
         if "font" in style:
             style["font"] = style["font"].lower()
@@ -68,22 +68,22 @@ class Renderer:
             style["height"] = style["scale"][1]
             del style["scale"]
 
-            style["custom_size"] = True
+            style["customSize"] = True
         
         self.printer.set(**style)
 
-        if cmd_info["newline"]:
-            self.printer.textln(cmd_info["text"])
+        if commandInfo["newline"]:
+            self.printer.textln(commandInfo["text"])
         else:
-            self.printer.text(cmd_info["text"])
+            self.printer.text(commandInfo["text"])
 
-    def _qr(self, cmd_info: dict):
-        content = cmd_info["content"]
+    def _qr(self, commandInfo: dict):
+        content = commandInfo["content"]
 
-        args = cmd_info
+        args = commandInfo
         del args["content"]
 
-        args = args | self.qr_info
+        args = args | self.qrInfo
 
         ec = QR_ECLEVEL_L
         match args["correction"]:
@@ -104,60 +104,60 @@ class Renderer:
                         center=args["center"],
                         )
 
-    def _divider(self, cmd_info: dict, dots: int):
-        self.printer.set(font=cmd_info["font"])
+    def _divider(self, commandInfo: dict, dots: int):
+        self.printer.set(font=commandInfo["font"])
 
-        char_width = FONT_A_WIDTH if cmd_info["font"] == "a" else FONT_B_WIDTH
+        charWidth = FONT_A_WIDTH if commandInfo["font"] == "a" else FONT_B_WIDTH
 
-        char_width *= cmd_info["width"]
+        charWidth *= commandInfo["width"]
 
-        char_count = dots // char_width
+        charCount = dots // charWidth
 
-        self.printer.textln("-" * char_count)
+        self.printer.textln("-" * charCount)
 
-    def _table(self, cmd_info: dict, dots: int):
-        columns = cmd_info["value"]["columns"]
+    def _table(self, commandInfo: dict, dots: int):
+        columns = commandInfo["value"]["columns"]
 
-        rows = cmd_info["value"]["rows"]
+        rows = commandInfo["value"]["rows"]
 
         for row in rows:
             contents = row["contents"]
             divider = row["divider"]
 
-            remain_text = ""
+            remainText = ""
 
             for i, content in enumerate(contents):
                 column = columns[i]
 
-                length = length_of_str(content, cmd_info["font"], cmd_info["width"])
+                length = lengthOfString(content, commandInfo["font"], commandInfo["width"])
                 if  length > column["width"]:
-                    text = get_first_chars(content, column["width"], cmd_info["font"], cmd_info["width"])
+                    text = getFirstChars(content, column["width"], commandInfo["font"], commandInfo["width"])
 
-                    remain_text = content[len(text):]
+                    remainText = content[len(text):]
 
                     # print(text, remain_text)
 
                     self.printer.text(text)
 
-                    text_length = length_of_str(text, cmd_info["font"], cmd_info["width"])
+                    textLength = lengthOfString(text, commandInfo["font"], commandInfo["width"])
 
-                    self.printer.text(" " * (length_to_char_count(column["width"] - text_length , cmd_info["font"], cmd_info["width"]) ))
+                    self.printer.text(" " * (lengthToCharCount(column["width"] - textLength , commandInfo["font"], commandInfo["width"]) ))
 
                 else:
                     text = content
                     self.printer.text(content)
 
-                    self.printer.text(" " * (length_to_char_count(column["width"] - length , cmd_info["font"], cmd_info["width"]) ))
+                    self.printer.text(" " * (lengthToCharCount(column["width"] - length , commandInfo["font"], commandInfo["width"]) ))
 
             self.printer.textln()
 
-            if remain_text:
-                self.printer.textln(remain_text)
+            if remainText:
+                self.printer.textln(remainText)
 
             if divider:
                 self._divider({
-                    "font": cmd_info["font"],
-                    "width": cmd_info["width"],
+                    "font": commandInfo["font"],
+                    "width": commandInfo["width"],
                 }, dots)
 
 
@@ -166,7 +166,7 @@ class Renderer:
 
             
 
-    def render_command(self, command: dict, dots: int):
+    def renderCommand(self, command: dict, dots: int):
         match command["type"]:
             case "text":
                 self._text(command["value"])

@@ -73,6 +73,14 @@ def analyze_file(filepath: str) -> list:
     # 仅保留 snake_case 的名称
     return [(line, name) for line, name in collector.results if is_snake_case(name)]
 
+ignore = ["remote_addr", "task_done", "exc_traceback", "exc_type", "exc_value", "format_exception", "current_thread", "row_factory", "current_app", "static_folder", "send_from_directory", "generate_password_hash", "check_password_hash", "register_blueprnt", "import_name",
+            "status_code", "token_urlsafe", "parse_args", "ensure_ascii", "json_provider_class",
+            "before_request", "after_request", "new_option", "delete_option",  "get_json",
+            "new_choice", "delete_choice", "east_asian_width", "teardown_appcontext",
+            "register_blueprint", "delete_choice", "flask_route", "content_length",
+            "add_argument", 
+          ]
+
 def main():
     root = os.getcwd()
     for dirpath, dirnames, filenames in os.walk(root):
@@ -86,7 +94,7 @@ def main():
                 rel_path = os.path.relpath(full_path, root)
                 findings = analyze_file(full_path)
                 for line, name in findings:
-                    if '_'  in name:
+                    if '_'  in name and name not in ignore:
                         print(f"{rel_path}:{line}: {name}")
 
 if __name__ == '__main__':
