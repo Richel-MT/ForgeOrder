@@ -23,12 +23,12 @@ class Equal(Condition):
             rightValue = self.rightValue.get(context)
 
 
-        return leftValue == rightValue
+        return leftValue == rightValue #type: ignore
 
     def __str__(self):
         return f"{self.leftValue} == {self.rightValue}"
 
-class RefIs(Condition):
+class RefEqual(Condition):
     def __init__(self, name: str, value: Any):
         self.ref = Ref(name)
         self.value = value
