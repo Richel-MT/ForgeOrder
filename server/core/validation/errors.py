@@ -90,7 +90,7 @@ class ForEachError(ValidationError):
         self.children = list(children)
 
     def __str__(self) -> str:
-        return "The value must match all of the following validators: " + ", ".join([str(child) for child in self.children])
+        return "Each element of the value must match the following validators: " + ", ".join([str(child) for child in self.children])
 
 
 class FieldTypeError(ValidationError):
@@ -141,4 +141,4 @@ class DictOfError(ValidationError):
         self.children = list(children)
 
     def __str__(self) -> str:
-        return "The following validation errors occurred: " + ", ".join([str(child) for child in self.children])
+        return "Dictionary field validation failed:  " + ", ".join([str(child) for child in self.children])

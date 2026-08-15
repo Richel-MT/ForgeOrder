@@ -4,6 +4,7 @@ from .base import Validator
 from ..base import ValidationResult
 from ..errors import *
 from ..condition import Condition
+from ..exceptions import NotIterableError
 
 
 class AnyOf(Validator):
@@ -83,7 +84,7 @@ class ForEach(Validator):
 
     def _validate(self, value: Any, context: Any = None):
         if not hasattr(value, "__iter__"):
-            raise ValueError("ForEach validator requires an iterable value.")
+            raise NotIterableError(ForEach, type(value))
 
 
         errors = []
@@ -116,14 +117,16 @@ class DictOf(Validator):
     allowTypes = dict
 
     def __init__(self, *fields: _Field, strictMode: bool = False):
-        self.fields = fields
+        self.fields: list[_Field] = list(fields)
 
         self.strictMode = strictMode
 
+    
     def Field(self, key: str, valueType: type, required: bool, validator: Validator | None = None):
         field = _Field(key, valueType, required, validator)
 
-        return field
+        self.fields.append(field)
+        return self
 
     def _validate(self, value: dict, context: Any = None):
 
@@ -155,7 +158,7 @@ class DictOf(Validator):
         if self.strictMode:
             for key in value.keys():
                 if key not in fieldKeys:
-                    errors.append(FieldValidationError(key, UndefinedFieldError(key)))
+                    errors.append(UndefinedFieldError(key))
             
 
         if len(errors) == 0:
