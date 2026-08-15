@@ -1,6 +1,6 @@
 import threading
 from queue import Queue, Empty
-import json
+from typing import cast
 import traceback
 import datetime
 
@@ -10,10 +10,12 @@ from escpos.escpos import Escpos
 
 from app.db.respository import RepositoryManager
 from app.service import SettingsService
-from core.log.console import getConsoleLogger
 from core.log.context import getLogContext
 from core.log.logger import Logger
 from app.db.connections import getDatabase_
+from app.service import initService
+from app.service.printTask import PrintTaskService
+from app.service.settings import SettingsService
 from .renderer import Renderer
 
 
@@ -38,11 +40,11 @@ def printWorker(q: Queue, logger: Logger):
 
     logContext = getLogContext(logger, "PrinterWorker")
 
-    db = getDatabase_()
-    db.connect()
+    database = getDatabase_()
+    repos = RepositoryManager(database)
 
-    repos = RepositoryManager(db)
     settingsService = SettingsService(repos)
+    printTaskService = PrintTaskService(repos)
 
 
     # 初始化连接信息
@@ -127,7 +129,7 @@ def printWorker(q: Queue, logger: Logger):
                 }, "ConnectError")
 
                 now = datetime.datetime.now()
-                db.print_task.update(entry, 3, "PrinterConnectError", startTime, now)
+                printTaskService.update(entry, 3, "PrinterConnectError")
 
                 # 重试次数超过5词，跳出本次循环
                 if retryConnectCount >= 5:
@@ -141,37 +143,23 @@ def printWorker(q: Queue, logger: Logger):
             retryConnectCount = 0
 
         # 读取设置
-        try:
-            printInfo = db.print_task.get(entry)
-            content = json.loads(printInfo["content"])
-        except NotFoundError:
+
+        status, printInfo = printTaskService.get(entry)
+
+        if status == printTaskService.GET.TASK_NOT_FOUND:
+        
             logContext.warning({
                 "id": entry,
             }, "NotFoundTask")
 
-            now = datetime.datetime.now()
-            db.print_task.update(entry, 3, "NotFoundTask", startTime, now)
-            
-            continue
-
-        except json.JSONDecodeError as e:
-            logContext.warning({
-                "id": entry,
-                "error": str(e)
-            }, "InvalidTaskContent")
-
-            now = datetime.datetime.now()
-            db.print_task.update(entry, 3, "InvalidTaskContent", startTime, now)
-
-            
-            continue
-
         
+            continue
 
+        printInfo = cast(dict, printInfo)
 
         # 打印任务
         try:
-            printTask(content["commands"], printer, qrInfo, dots)
+            printTask(printInfo["commands"], printer, qrInfo, dots)
         except Exception as e:
             logContext.warning({
                 "id": entry,
@@ -181,31 +169,29 @@ def printWorker(q: Queue, logger: Logger):
                     "traceback": traceback.format_exception(e)
                 }
             }, "PrintTaskError")
+
             now = datetime.datetime.now()
-            db.print_task.update(entry, 3, "PrintTaskError", startTime, now)
+
+            printTaskService.update(entry, 3, "PrintTaskError")
 
             printer.close()
             printer = None
 
             continue
 
-        now = datetime.datetime.now()
-        db.print_task.update(entry, 2, None, startTime, now)
+        printTaskService.update(entry, 2, None)
 
 
         logContext.info({
             "id": entry,
         }, "PrintTaskFinished")
 
-    db.close()       
+    database.close()      
 
     logContext.info("", "WorkerStopped")
 
     
 
-
-
-        
 
 def createPrintWorker(logger: Logger):
     q = Queue()

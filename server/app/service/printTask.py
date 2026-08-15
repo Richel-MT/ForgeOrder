@@ -14,11 +14,26 @@ class UpdateResult(Enum):
     SUCCESS = auto()
     TASK_NOT_FOUND = auto()
 
+class GetResult(Enum):
+    SUCCESS = auto()
+    TASK_NOT_FOUND = auto()
+
 class PrintTaskService(Service):
     CREATE = CreateResult
     UPDATE = UpdateResult
+    GET = GetResult
 
-
+    def get(self, taskId: str):
+        '''
+        获取打印任务。
+        '''
+        try:
+            rows = self.repositoryManager.printTask.get(id=taskId)
+        except RecordNotFoundError:
+            return Result(self.GET.TASK_NOT_FOUND)
+        
+        return Result(self.GET.SUCCESS, rows)
+        
     def create(self, content: Receipt, context: dict = {}):
         '''
         创建打印任务。
