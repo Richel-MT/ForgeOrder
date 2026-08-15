@@ -3,7 +3,7 @@
             <div>
                 <div class="table-card-title-container">
                     <div class="table-card-title">{{ props.name }}</div>
-                    <div class="table-card-subtitle" v-if="!props.is_available">(已禁用)</div>
+                    <div class="table-card-subtitle" v-if="!props.isAvailable">(已禁用)</div>
                 </div>
                 <div class="table-card-status">
                     
@@ -51,7 +51,7 @@
       "name": {
         type: String
       },
-      "is_available": {
+      "isAvailable": {
         type: Boolean
       }
     })

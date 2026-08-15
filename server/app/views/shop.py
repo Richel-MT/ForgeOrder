@@ -260,7 +260,7 @@ def getAllCategories():
 
     service = ShopService(g.repos)
 
-    return g.res.OK(
+    return g.res.OK(    
         service.dishesCategory.getAll().data
     )
 
@@ -282,11 +282,11 @@ def editCategory():
 
     g.logger.setCategory("Shop")
 
-    status = service.dishesCategory.update(categoryId, categoryName)
+    status, data = service.dishesCategory.update(categoryId, categoryName)
 
     if status == service.RESULT.CATEGORY_NOT_FOUND:
         return g.res.CategoryNotFound()
-
+        
     return g.res.OK()
 
 @shopBlueprint.post("/api/shop/category/new", requiresAuth=True, isAdmin=True,

@@ -18,7 +18,7 @@
 
     <div class="container mdui-prose" v-if="!isError">
 
-        <h2 v-if="!isNew">{{ $t('shop.dish_edit.title', {name: dishData.name}) }}</h2> 
+        <h2 v-if="!isNew">{{ $t('shop.dish_ed/it.title', {name: dishData.name}) }}</h2> 
         <h2 v-else>{{ $t('shop.new_dish.title') }}</h2> 
 
         <div style="margin-bottom: 24px; font-size: 18px">
@@ -70,7 +70,7 @@
 
             <div class="setting-item">
                 <div class="setting-item-key">{{ $t('shop.dish_edit.dish_available') }}</div>
-                <mdui-switch :checked="dishData.is_available" ref="isAvailableSwitch" :disabled="isLoading"></mdui-switch>
+                <mdui-switch :checked="dishData.isAvailable" ref="isAvailableSwitch" :disabled="isLoading"></mdui-switch>
             </div>
 
             <div class="setting-item">
@@ -372,8 +372,8 @@
             dishData_.isAvailable = false
         }
 
-        if (dishData_.isAvailable !== originDishData.is_available) {
-            changed.is_available = dishData_.is_available
+        if (dishData_.isAvailable !== originDishData.isAvailable) {
+            changed.isAvailable = dishData_.isAvailable
         }
 
         // 分类

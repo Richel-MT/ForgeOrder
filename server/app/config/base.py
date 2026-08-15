@@ -1,4 +1,4 @@
-from core.config.json_config import JSONConfig
+from core.config.jsonConfig import JSONConfig
 from .schema import CONFIG_ITEMS
 from .validate import validateConfig
 

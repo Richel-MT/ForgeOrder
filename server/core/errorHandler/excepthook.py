@@ -37,14 +37,14 @@ def excepthook(type, value, tb, thread: threading.Thread | None = None):
     if not thread:
         thread = threading.current_thread()
 
-    isLoggerInitlized = True
+    isLoggerInitialized = True
     try:
         logger = getLogger()
     except ValueError:
         # 日志还未初始化
-        isLoggerInitlized = False
+        isLoggerInitialized = False
 
-    if isLoggerInitlized:
+    if isLoggerInitialized:
         logger.error(
                 {
                 "type": type.__name__,

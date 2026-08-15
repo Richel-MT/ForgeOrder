@@ -1,14 +1,12 @@
 # 验证配置项的有效性
 import os
-from ssl import VerifyFlags
 
-from flask.cli import pass_script_info
 
 from .exceptions import ConfigError
 from .schema import CONFIG_ITEMS
 from core.validation.base import ValidationResult
 from core.validation.errors import *
-from core.config.json_config import JSONConfig
+from core.config.jsonConfig import JSONConfig
 
 def validateErrorToStr(error: ValidationResult):
     errorString = ''

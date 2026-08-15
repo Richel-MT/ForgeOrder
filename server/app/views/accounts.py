@@ -69,8 +69,11 @@ def logout():
 
     token = request.headers.get("Authorization")
 
-    
-    token = token.split(" ")[1] #type: ignore
+    try:
+        token = token.split(" ")[1] #type: ignore
+    except IndexError:
+        # 无空格
+        return g.res.TokenInvalid()
     
     service = UserService(g.repos)
 

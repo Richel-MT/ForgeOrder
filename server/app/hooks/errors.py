@@ -11,7 +11,7 @@ from core.database.database.exceptions import DatabaseLockedError
 from app.routes.schema import GLOBAL
 
 # 415
-def upsupportedMediaType(e: UnsupportedMediaType):
+def unsupportedMediaType(e: UnsupportedMediaType):
 
 	return GLOBAL.PAYLOAD_ERROR(e.description), 415
 # 405
@@ -84,7 +84,7 @@ def setupErrorHandlers(app):
 
     app.errorhandler(404)(notFound)
     app.errorhandler(500)(internalServerError)
-    app.errorhandler(415)(upsupportedMediaType)
+    app.errorhandler(415)(unsupportedMediaType)
 
     app.errorhandler(DatabaseLockedError)(handleDatabaseLockedError)
 

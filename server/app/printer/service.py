@@ -43,7 +43,8 @@ class PrintManager:
 
         taskId = result.data
 
-        self.queue.put(taskId)
+        if taskId is not None:
+            self.queue.put(taskId)
 
 
         getLogger().info({

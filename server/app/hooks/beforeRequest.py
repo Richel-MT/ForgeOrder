@@ -152,7 +152,7 @@ def _handleAuth():
         # 继续请求
         g.userInfo = result.data
 
-def _handlerArguments():
+def _handleArguments():
     logger = g.logger.getLogContext("BeforeRequest")
 
     if not routeManager.hasArguments(request.path):
@@ -208,7 +208,7 @@ def beforeRequest():
     handlers = [
         _handleRequestInfo,
         _handleAuth,
-        _handlerArguments,
+        _handleArguments,
         
     ]
 

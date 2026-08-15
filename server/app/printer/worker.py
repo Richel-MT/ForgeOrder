@@ -8,7 +8,7 @@ from escpos.printer import Usb, Network, Win32Raw
 from escpos.escpos import Escpos
 
 
-from app.db.respository import RepositoryManager
+from app.db.repository import RepositoryManager
 from app.service import SettingsService
 from core.log.context import getLogContext
 from core.log.logger import Logger

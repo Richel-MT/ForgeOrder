@@ -7,7 +7,6 @@ from app.config import config, CONFIG
 
 
 def _fixConfig():
-    import extensions
     from app.config.schema import CONFIG_ITEMS
     # from core.config.validation import 
     from app.config.validate import validateConfig

@@ -38,9 +38,9 @@ class LogService:
 
         self.repo: LogRepository = None # type: ignore
 
-        self._initRepositroy()
+        self._initRepository()
 
-    def _initRepositroy(self):
+    def _initRepository(self):
         # !: 表名总由日期构成无需注意SQL注入问题
         now = datetime.datetime.now().strftime("%Y%m%d")
 
@@ -61,7 +61,7 @@ class LogService:
                 requestId: str | None = None
                 ):
 
-        self._initRepositroy()
+        self._initRepository()
 
         self.repo.insert(
             time=time,
@@ -75,9 +75,9 @@ class LogService:
     def commit(self):
         self.repo.commit()
 
-def initService(logDatabseName: str):
+def initService(logDatabaseName: str):
 
-    database = Database(logDatabseName)
+    database = Database(logDatabaseName)
 
     database.connect()
 

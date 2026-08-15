@@ -3,7 +3,7 @@ from enum import Enum, auto
 from typing import cast
 
 from .base import Service, Result
-from app.db.respository import RepositoryManager
+from app.db.repository import RepositoryManager
 from core.database.repository.exceptions import RecordNotFoundError, TypeMismatchError
 from core.database.database.exceptions import UniqueConstraintError
 
@@ -258,7 +258,7 @@ class Dishes:
             )
 
             self.repos.dishStats.delete(
-                where={"dishId": dishId}
+                where={"id": dishId}
             )
 
 
@@ -445,7 +445,7 @@ class Dishes:
             result = self._updateDishItems(dishId, changedItems)
 
             if result.code != self.parent.RESULT.SUCCESS:
-                self.repos.dishChoices.rollback()
+                self.repos.dishes.rollback()
 
                 return result
         

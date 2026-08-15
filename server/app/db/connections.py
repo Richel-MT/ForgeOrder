@@ -1,7 +1,7 @@
 from flask import g
 
 
-from .respository import RepositoryManager
+from .repository import RepositoryManager
 from core.database.database import Database
 from app.config import config, CONFIG
 

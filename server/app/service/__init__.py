@@ -4,7 +4,7 @@ from .shop import ShopService
 from .base import Service
 
 from core.database.database import Database
-from ..db.respository import RepositoryManager
+from ..db.repository import RepositoryManager
 
 
 

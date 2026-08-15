@@ -1,7 +1,7 @@
 from typing import Any
 
 from .validate import validateConfig
-from core.config.json_config import JSONConfig
+from core.config.jsonConfig import JSONConfig
 from .base import setupConfig
 from .schema import CONFIG, CONFIG_PATH
 

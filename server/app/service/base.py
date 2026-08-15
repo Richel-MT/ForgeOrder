@@ -2,7 +2,7 @@ from typing import Any
 from dataclasses import dataclass
 
 from core.database.service import ServiceBase
-from ..db.respository import RepositoryManager
+from ..db.repository import RepositoryManager
 
 class Service(ServiceBase):
     def __init__(self, repositoryManager: RepositoryManager):

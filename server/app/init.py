@@ -3,7 +3,7 @@ import os
 import sys
 from typing import cast
 
-from app.db.respository import RepositoryManager
+from app.db.repository import RepositoryManager
 from app.service import initService
 from app.service.settings import SettingsService
 from core.database.database import Database

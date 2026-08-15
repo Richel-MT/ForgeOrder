@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.config import config, CONFIG
 from .base import Service, Result
-from ..db.respository import RepositoryManager
+from ..db.repository import RepositoryManager
 from core.database.repository.exceptions import RecordNotFoundError
 
 class LoginResult(Enum):
@@ -103,7 +103,7 @@ class UserService(Service):
         if tokenInfo is None:
             # token不存在，生成新的token
             token = self._generateToken()
-            expireTime = datetime.now() + timedelta(days=self.availableTime)
+            expireTime = datetime.now() + timedelta(minutes=self.availableTime)
 
             self._insertToken(users["id"], token, expireTime, ip)
             
@@ -146,10 +146,10 @@ class UserService(Service):
                     expireTime = datetime.now() + timedelta(days=self.availableTime)
 
                     self.repositoryManager.tokens.insert(
-                        user_id=users["id"],
+                        userId=users["id"],
                         token=token,
                         status=0,
-                        expire_time=expireTime,
+                        expireTime=expireTime,
                         ip=ip,
                     )
 

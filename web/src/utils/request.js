@@ -30,7 +30,7 @@ request.interceptors.response.use(
     error => {
         const logger = createLogger("Auth")
         // 处理401错误
-        if (error.response.status === 401) {
+        if (error.response?.status === 401) {
             
             // 识别status
             const status = error.response.data.status
