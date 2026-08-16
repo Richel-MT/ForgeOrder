@@ -116,7 +116,7 @@ class DictOf(Validator):
     '''
     allowTypes = dict
 
-    def __init__(self, *fields: _Field, strictMode: bool = False):
+    def __init__(self, strictMode: bool = False, *fields: _Field):
         self.fields: list[_Field] = list(fields)
 
         self.strictMode = strictMode
