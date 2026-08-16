@@ -63,10 +63,11 @@ class ManyOperate:
         kwargs_ = {}
 
         for key, value in kwargs.items():
-            if not isinstance(value, tuple):
-                kwargs_[key] = tuple(value)
+            if not isinstance(value, (tuple, list)):
+                kwargs_[key] = (value,)
             else:
-                kwargs_[key] = value
+                kwargs_[key] = tuple(value)
+                
 
 
         sql = f'''
@@ -113,7 +114,10 @@ class Repository(Generic[RowType]):
         return self.db.execute(sql, params)
 
     def setCustomSQL(self, sql: str):
-        '''设置在执行SQL语句后添加的SQL语句，在执行下一个execute方法后自动清除'''
+        '''在执行SQL的语句后添加SQL片段。注意：
+        1. SQL片段是一次性的，在执行一次操作后将被清除
+        2. 使用时需注意语法问题
+        '''
         self.customSQL = sql
 
     def clearCustomSQL(self):
