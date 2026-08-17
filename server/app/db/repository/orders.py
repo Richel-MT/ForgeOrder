@@ -96,7 +96,7 @@ class OrderItemsRepository(Repository[_OrderItemsRow]):
         Column("id", Integer(), primaryKey=True, autoIncrement=True),
 
         Column("orderId", String(36), notNull=True, foreign=("orders", "id")),
-        Column("subOrderId", Integer(), notNull=True, foreign=("subOrders", "id")),  # 子订单id
+        Column("subOrderId", Integer(), notNull=True, foreign=("subOrders", "subOrderId")),  # 子订单id
 
         Column("dishId", Integer(), notNull=True, foreign=("dishes", "id")),  # 菜品id
 
