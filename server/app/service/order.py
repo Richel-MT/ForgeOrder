@@ -140,7 +140,7 @@ class OrderService(Service):
         # 将子订单信息插入到数据库
         self.repos.subOrders.insert(
             totalOrderId=orderId,
-            subOrderId=0,
+            subOrderId=1,
             note=note,
             createdAt=currentTime,
         )
