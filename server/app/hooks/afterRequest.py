@@ -23,10 +23,11 @@ def afterRequest(response: Response):
         if not response.json.get("status") and not response.json.get("message"):
             raise ValueError(f"Response is invalid.")
         else:
-            g.logger.warning({
-                            "status": response.json["status"],
-                            "message": response.json["message"],
-            }, "ResponseStatusError")
+            if response.json["status"] != 0:
+                g.logger.warning({
+                                "status": response.json["status"],
+                                "message": response.json["message"],
+                }, "ResponseStatusError")
 
     if cost > 500:
         g.logger.warning('', "TooSlowRequest")
