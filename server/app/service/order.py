@@ -1,6 +1,7 @@
 from enum import Enum, auto
 from typing import TypedDict
 import datetime
+import uuid
 
 from .base import Service, Result
 from core.utils.common import padString
@@ -111,20 +112,9 @@ class OrderService(Service):
             totalPrice += dishTotalPrice
 
         # 生成订单ID
-        orderId = ""
+        orderId = str(uuid.uuid7())
 
-        currentTime = datetime.datetime.now()
-        currentDateString = currentTime.strftime("%Y%m%d")
-
-        # 获取最新的订单号
-        lastOrder = self.repos.orders.execute("SELECT * FROM orders ORDER BY id DESC").fetchone()
-
-        if lastOrder is None:
-            orderId = currentDateString + "0001"
-        else:
-            orderId = currentDateString + padString(str(int(str(lastOrder["id"])[-4:]) + 1), 4,)
-
-        orderId = int(orderId)
+        currentTime= datetime.datetime.now()
 
         # 数据库操作
         # 将总订单信息插入数据库
