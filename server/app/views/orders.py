@@ -22,7 +22,7 @@ ordersBlueprint = AppBlueprint("orders", __name__)
     ],
     responses=[
         _Res(0, "OK", None),
-        _Res(3011, "TableNotFond", None),
+        _Res(3011, "TableNotFound", None),
         _Res(3012, "TableNotAvailable", None),
         _Res(3021, "DishNotFound", None),
         _Res(3022, "DishNotAvailable", None),

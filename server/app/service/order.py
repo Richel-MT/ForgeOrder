@@ -53,12 +53,13 @@ class OrderService(Service):
             return Result(self.RESULT.INVALID_PARTY_SIZE)
 
         # 查询数据库获取桌台信息
-        table = self.repos.tables.get(id=tableId)
+        if orderType == 0:
+            table = self.repos.tables.get(id=tableId)
 
-        if table is None:
-            return Result(self.RESULT.TABLE_NOT_FOUND)
-        elif not table["isAvailable"]:
-            return Result(self.RESULT.TABLE_NOT_AVAILABLE)
+            if table is None:
+                return Result(self.RESULT.TABLE_NOT_FOUND)
+            elif not table["isAvailable"]:
+                return Result(self.RESULT.TABLE_NOT_AVAILABLE)
 
 
         # 查询数据库判断用户是否存在
