@@ -137,15 +137,6 @@ class OrderService(Service):
             partySize=partySize,
         )
 
-        # 查询数据库判断是否已有子订单
-        subOrder = self.repos.subOrders.get(totalOrderId=orderId)
-
-        if subOrder is not None:
-            # 子订单已存在
-
-            self.repos.orders.rollback() # 由于已经插入了总订单信息，需要回滚
-            
-            return Result(self.RESULT.ORDER_ALREADY_EXIST)
 
         # 将子订单信息插入到数据库
         self.repos.subOrders.insert(
