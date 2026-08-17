@@ -117,7 +117,7 @@
         const index = tables.value.findIndex(table => table.id == selectedTable.value)
         console.log(tables.value, index)
         emit('update:orderInfo', {
-            "orderType": orderType.value,
+            "orderType": Number(orderType.value),
             "partySize": partySize.value,
             "tableId": selectedTable.value,
             "tableName": tables.value[index].name

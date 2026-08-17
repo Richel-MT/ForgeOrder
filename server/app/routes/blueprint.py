@@ -48,21 +48,23 @@ class AppBlueprint(Blueprint):
     def get(self, rule: str,
             requiresAuth: bool = False,
             isAdmin: bool = False,
+            responses: list[ResponseInfo] | None = None,
             **options
             ):
         
         options.setdefault("methods", ["GET"])
-        return self.route(rule, None, requiresAuth, isAdmin, **options)
+        return self.route(rule, None, requiresAuth, isAdmin, responses, **options)
     
     def post(self, rule: str,
-            arguments: list[RequestField] | None = None,
             requiresAuth: bool = False,
             isAdmin: bool = False,
+            arguments: list[RequestField] | None = None,
+            responses: list[ResponseInfo] | None = None,
             **options
             ):
         
         options.setdefault("methods", ["POST"])
-        return self.route(rule, arguments, requiresAuth, isAdmin, **options)
+        return self.route(rule, arguments, requiresAuth, isAdmin, responses, **options)
     
     
         

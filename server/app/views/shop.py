@@ -45,7 +45,7 @@ def setBusinessState():
 
     g.logger.info({
         "isBusiness": isBusiness,
-        "operator": g.userInfo["user"]["id"]
+        "operator": g.userInfo["id"]
     },  "UpdateBusinessState")
 
     return g.res.OK()

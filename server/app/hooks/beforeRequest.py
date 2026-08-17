@@ -150,7 +150,7 @@ def _handleAuth():
             
         
         # 继续请求
-        g.userInfo = result.data
+        g.userInfo = result.data["user"] #type: ignore
 
 def _handleArguments():
     logger = g.logger.getLogContext("BeforeRequest")
