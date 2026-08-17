@@ -4,7 +4,6 @@ import datetime
 import uuid
 
 from .base import Service, Result
-from core.utils.common import padString
 
 class ResultCode(Enum):
     INVALID_ORDER_TYPE = auto() # 订单类型不正确
