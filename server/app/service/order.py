@@ -9,17 +9,21 @@ from core.utils.common import padString
 class ResultCode(Enum):
     INVALID_ORDER_TYPE = auto() # 订单类型不正确
 
+    INVALID_PARTY_SIZE = auto() # 订单人数不正确
+
     TABLE_NOT_FOUND = auto() # 桌台不存在
     TABLE_NOT_AVAILABLE = auto() # 桌台不可用
 
     CREATOR_NOT_FOUND = auto()
 
     DISH_NOT_FOUND = auto()
+    DISH_COUNT_NOT_AVAILABLE = auto()
     DISH_NOT_AVAILABLE = auto()
     DISH_CHOICE_NOT_FOUND = auto()
     DISH_CHOICE_OPTION_NOT_FOUND = auto()
 
     ORDER_ALREADY_EXIST = auto()
+
 
     SUCCESS = auto()
 
@@ -45,6 +49,10 @@ class OrderService(Service):
         if orderType not in (0, 1):
             return Result(self.RESULT.INVALID_ORDER_TYPE)
 
+        # 判断partySize
+        if partySize <= 0:
+            return Result(self.RESULT.INVALID_PARTY_SIZE)
+
         # 查询数据库获取桌台信息
         table = self.repos.tables.get(id=tableId)
 
@@ -65,6 +73,10 @@ class OrderService(Service):
         totalPrice = 0
 
         for dish in dishes:
+            # 判断 count 是否有效
+            if dish["count"] <= 0:
+                return Result(self.RESULT.DISH_COUNT_NOT_AVAILABLE, dish["id"])
+            
             # 获取菜品信息
             dishInfo = self.repos.dishes.get(id=dish["id"], isDeleted=False) #type: ignore
 
@@ -118,7 +130,6 @@ class OrderService(Service):
 
         # 数据库操作
         # 将总订单信息插入数据库
-        print(orderId)
         self.repos.orders.insert(
             id=orderId,
             type=orderType,
