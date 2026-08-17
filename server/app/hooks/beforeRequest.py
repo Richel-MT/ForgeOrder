@@ -6,24 +6,22 @@ from flask import request, g
 from app.db.connections import getDatabase
 from app.service.users import UserService
 from app.routes import routeManager
-from core.utils.server import makeResponse, getClientIp
+from core.utils.server import getClientIp
 from core.log import getLogger
 from app.log import RequestLogContext
 from app.routes.responseGenerator import ResponseGenerator
+from app.routes.schema import GLOBAL
 
 def _handleAuth():
     # 获取日志上下文
-    logger = g.logger.getLogContext("BeforeRequest")
+    logger = g.logger.getLogContext("Auth")
 
     if  request.path.startswith("/api/"):
         checkResult, routeData = routeManager.getAuthConfig(request.path)
         
         if not checkResult:
             # 路由不存在
-            return makeResponse(
-                1003,
-                None
-            ), 404
+            return GLOBAL.NOT_FOUND(), 404
         
 
         if not routeData["requiresAuth"]: #type: ignore
@@ -42,20 +40,14 @@ def _handleAuth():
     # 检查Token是否存在
     if token is None:
         # Token不存在
-        return makeResponse(
-            2001,
-            None
-        ), 401
+        return GLOBAL.TOKEN_INVALID_ERROR(), 401
     
     elif token.startswith("Bearer "):
         # Token格式正确
         token = token.split(" ")[1] # 提取token部分
     else:
         # Token格式错误
-        return makeResponse(
-            2003,
-            None
-        ), 401
+        return GLOBAL.TOKEN_INVALID_ERROR(), 401
 
     # 使用UserService验证Token
     service = UserService(g.repos)
@@ -67,49 +59,41 @@ def _handleAuth():
         match result.code:
             case service.AUTH.TOKEN_INVALID:
                 # Token无效
-                logger.info({
+                logger.warning({
                     "ip": getClientIp(),
                     "error": "InvalidToken"
                 }, "AuthError")
 
-                return makeResponse(
-                    2003,
-                    None
-                ) , 401
+                return GLOBAL.TOKEN_INVALID_ERROR(), 401
+            
             case service.AUTH.TOKEN_EXPIRED:
                 # Token过期
-                logger.info({
+                logger.warning({
                     "ip": getClientIp(),
                     "error": "TokenExpire"
                 }, "AuthError")
                 
 
-                return makeResponse(
-                    2004,
-                    None
-                ) , 401
+                return GLOBAL.TOKEN_EXPIRED_ERROR(), 401
+            
             case service.AUTH.TOKEN_LOGOUT:
                 # 用户已退出登录
-                logger.info({
+                logger.warning({
                     "ip": getClientIp(),
                     "error": "TokenLogout"
                 }, "AuthError")
                 # 用户退出登录
-                return makeResponse(
-                    2003,
-                    None
-                ) , 401
+
+                return GLOBAL.TOKEN_INVALID_ERROR(), 401
+            
             case service.AUTH.TOKEN_OLD_DEVICE:
                 # 旧设备登录
-                logger.info({
+                logger.warning({
                     "ip": getClientIp(),
                     "error": "OldDevice"
                 }, "AuthError")
 
-                return makeResponse(
-                    2005,
-                    None
-                ) , 401
+                return GLOBAL.OLD_DEVICE_TOKEN(), 401
     else:
         # Token有效
 
@@ -117,16 +101,13 @@ def _handleAuth():
         tokenInfo: dict = result.data #type: ignore
         if tokenInfo["ip"] != getClientIp(): # type: ignore
             # ip不一致
-            logger.info({
+            logger.warning({
                 "ip": getClientIp(),
                 "tokenIp": tokenInfo["ip"],
                 "error": "IPNotMatch"
             }, "AuthError") # type: ignore
             
-            return makeResponse(
-                2003,
-                None
-            ) , 401
+            return GLOBAL.TOKEN_INVALID_ERROR(), 401
 
 
 
@@ -143,17 +124,14 @@ def _handleAuth():
                         "ip": getClientIp(),
                     },  "NonAdminUserAccess"
                 )
-                return makeResponse( # type: ignore
-                2002,
-                None
-            ), 401
+                return GLOBAL.PERMISSION_ERROR(), 401
             
         
         # 继续请求
         g.userInfo = result.data["user"] #type: ignore
 
 def _handleArguments():
-    logger = g.logger.getLogContext("BeforeRequest")
+    logger = g.logger.getLogContext("RequestArguments")
 
     if not routeManager.hasArguments(request.path):
         return None
@@ -178,11 +156,9 @@ def _handleArguments():
             })
 
         # 失败
-        
-        return makeResponse(
-            1001,
-            errorInfo
-        ), 400
+        logger.info(errorInfo, "ArgumentsError")
+
+        return GLOBAL.ARGUMNET_ERROR(errorInfo), 400
 
 def _handleRequestInfo():
     g.requestId = str(uuid.uuid4())
@@ -191,13 +167,20 @@ def _handleRequestInfo():
 
     g.startTime = time.time()
 
+    g.logger.info({
+        "requestId": g.requestId,
+        "ip": request.remote_addr,
+        "path": request.path,
+        "method": request.method,
+    }, "RequestInfo", g.requestId)
+
 
     try:
         responses = routeManager.routes[request.path]["responses"]
     except KeyError: 
         responses = {}
 
-    g.res = ResponseGenerator(responses)
+    g.res = ResponseGenerator(responses) #type: ignore
 
     getDatabase()
 

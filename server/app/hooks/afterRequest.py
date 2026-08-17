@@ -12,17 +12,19 @@ def afterRequest(response: Response):
 
     logInfo = {
         "httpStatus": response.status_code,
-        # "actionStatus": response.json["status"],
-        # "actionMessage": response.json["message"],
         "size": response.content_length, #bytes
         "duration": round(cost, 2), #ms
     }
 
-    if response.json:
-        logInfo["actionStatus"] = response.json["status"]
-        logInfo["actionMessage"] = response.json["message"]
 
     g.logger.info(logInfo, "ResponseInfo")
+
+    if response.json:
+        if response.json["status"] != 0:
+            g.logger.warning({
+                "status": response.json["status"],
+                "message": response.json["message"],
+            }, "ResponseStatusError")
 
     if cost > 500:
         g.logger.warning('', "TooSlowRequest")
