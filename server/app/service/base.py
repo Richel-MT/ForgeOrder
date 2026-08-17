@@ -8,6 +8,8 @@ class Service(ServiceBase):
     def __init__(self, repositoryManager: RepositoryManager):
             self.repositoryManager = repositoryManager
 
+            self.repos : RepositoryManager = repositoryManager
+
 @dataclass
 class Result:
     code: Any

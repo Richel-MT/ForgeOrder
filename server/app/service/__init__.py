@@ -1,6 +1,7 @@
 from .settings import SettingsService
 from .users import UserService
 from .shop import ShopService
+from .order import OrderService
 from .base import Service
 
 from core.database.database import Database

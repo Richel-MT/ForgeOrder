@@ -66,6 +66,7 @@
 
 <script setup>
     import { ref, onMounted } from 'vue'
+    import request from '@/utils/request.js'
 
     import '@mdui/icons/done.js'
 
@@ -80,12 +81,28 @@
             emit('update:index', props.index - 1)
     }
 
-    const nextStep = () => {
+    const nextStep = async () => {
         const orderInfo = props.orderInfo
 
         orderInfo.dishes = props.dishInfo['dishes']
         orderInfo.note = note.value
 
-        console.log(orderInfo)
+        const body = {
+            orderType: orderInfo.orderType,
+            partySize: orderInfo.partySize,
+            tableId: orderInfo.tableId,
+            note: orderInfo.note || "",
+            dishes: orderInfo.dishes.map(dish => ({
+                id: dish.id,
+                count: dish.count,
+                choices: dish.choices || {}
+            })) 
+        }
+
+        const response = await request.post("/order/new", body)
+
+        console.log(response.data.message)
+
+
     }
 </script>

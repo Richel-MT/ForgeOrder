@@ -18,22 +18,30 @@ class OrdersRepository(Repository[_OrdersRow]):
         Column("type", Integer(), notNull=True), #  0: 堂食 --1：打包
         Column("tableId", Integer(), notNull=True, foreign=("tables", "id")),
         Column("partySize", Integer(), notNull=True, default=1), # 人数，默认1人
+        
     ]
 
 
 
 class _SubOrdersRow(TypedDict):
     id: int
+    totalOrderId : int
+    subOrderId: int
     note: str | None
     createdAt: datetime.datetime
+    finishedAt: datetime.datetime | None
+
 
 class SubOrdersRepository(Repository[_SubOrdersRow]):
     tableName = "subOrders"
 
     columns = [
-        Column("id", Integer(), primaryKey=True, foreign=("orders", "id")),
+        Column("id", Integer(), primaryKey=True, autoIncrement=True),
+        Column("totalOrderId", Integer(), notNull=True, foreign=("orders", "id")),
+        Column("subOrderId", Integer(), notNull=True),
         Column("note", String()), # 子订单备注
         Column("createdAt", DateTime(), notNull=True), # 子订单的创建时间
+        Column("finishedAt", DateTime()), # 完成时间（菜品全部完成）
     ]
 
 class _OrderStatusRow(TypedDict):
@@ -62,7 +70,7 @@ class OrderStatusRepository(Repository[_OrderStatusRow]):
         Column("updatedAt", DateTime(), notNull=True), # 最后更新时间
         Column("finishedAt", DateTime()), # 完成时间（菜品全部完成）
         Column("payAt", DateTime()), # 支付时间
-        Column("cashier", Integer(), notNull=True, foreign=("users", "id")),  # 收银员id
+        Column("cashier", Integer(), foreign=("users", "id")),  # 收银员id
         Column("payMethod", Integer()), # 0: 现金 --1: 支付宝 --2: 微信
         Column("totalAmount", Integer(), notNull=True), # 订单总金额
         Column("discount", Integer()), # 优惠金额
@@ -98,8 +106,6 @@ class OrderItemsRepository(Repository[_OrderItemsRow]):
         Column("totalPrice", Integer(), notNull=True),  # 总金额
 
         Column("choices", JSON()),  # 选择的选项
-
-        Column("isFinished", Boolean(), notNull=True, default=False),  # 是否完成
         
         Column("finishedAt", DateTime()),  # 完成时间
     ]
