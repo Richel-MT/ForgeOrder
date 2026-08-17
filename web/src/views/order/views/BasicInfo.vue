@@ -120,7 +120,7 @@
             "orderType": Number(orderType.value),
             "partySize": partySize.value,
             "tableId": selectedTable.value,
-            "tableName": tables.value[index].name
+            "tableName": tables.value[index]?.name || ""
         })
     }
 

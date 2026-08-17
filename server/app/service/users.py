@@ -126,14 +126,20 @@ class UserService(Service):
                 expireTime = datetime.now() + timedelta(days=self.availableTime)
 
                 self._insertToken(users["id"], token, expireTime, ip)
+
+                # 重新获取token确保tokenInfo为最新的信息
+                tokenInfo = self.repositoryManager.tokens.get(userId=users["id"])
+
+                repeatLogin = False
         
                 
-            if tokenInfo["ip"] != ip:
+            elif tokenInfo["ip"] != ip:
                 # token有效
                 if not cover:
                     return Result(self.LOGIN.NEW_DEVICE, {
                         "oldDevice": tokenInfo["ip"]
                     })
+                
                 else:
                     # 删除旧token
                     self.repositoryManager.tokens.update(
@@ -152,6 +158,11 @@ class UserService(Service):
                         expireTime=expireTime,
                         ip=ip,
                     )
+
+                    # 重新获取token确保tokenInfo为最新的信息
+                    tokenInfo = self.repositoryManager.tokens.get(userId=users["id"])
+
+                    repeatLogin = False
 
             else:
                 # ip相同，同一设备的重复登录

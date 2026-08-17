@@ -21,28 +21,12 @@ class RequestLogContext(LogContext):
     def __init__(self, logger: Logger, category: str = ""):
         super().__init__(logger, category)
 
-        if hasattr(g, 'args'):
-            args = g.args
-        else:
-            args = {}
             
-        self.requestInfo = {
-            "requestId": g.requestId,
-            "ip": request.remote_addr,
-            "path": request.path,
-            "method": request.method,
-            "args": args,
-        }
-
-        self.requestInfoLogged = False
-
     def setCategory(self, category: str):
         self.category = category
 
     def _onBeforeLog(self):
-        if not self.requestInfoLogged:
-            self.logger.info(self.requestInfo, "Request","RequestInfo", g.requestId)
-            self.requestInfoLogged = True
+        pass
 
     def log(self, msg: str | dict | list , level: int, action: str, requestId: str = None):
         self._onBeforeLog()
