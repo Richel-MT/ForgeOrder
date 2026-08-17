@@ -20,10 +20,12 @@ def afterRequest(response: Response):
     g.logger.info(logInfo, "ResponseInfo")
 
     if response.json:
-        if response.json["status"] != 0:
+        if not response.json.get("status") and not response.json.get("message"):
+            raise ValueError(f"Response is invalid.")
+        else:
             g.logger.warning({
-                "status": response.json["status"],
-                "message": response.json["message"],
+                            "status": response.json["status"],
+                            "message": response.json["message"],
             }, "ResponseStatusError")
 
     if cost > 500:
