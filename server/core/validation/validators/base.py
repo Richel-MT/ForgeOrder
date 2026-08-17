@@ -14,7 +14,7 @@ class Validator:
         else:
             # return VerifyResult(False, ValueTypeError(self.allow_types))
         
-            raise UnsupportedTypeError(self, self.allowTypes, type(value))
+            raise UnsupportedTypeError(type(self), self.allowTypes, type(value))
         
     def _validate(self, value: Any, context: Any = None) -> ValidationResult: #type: ignore
         pass

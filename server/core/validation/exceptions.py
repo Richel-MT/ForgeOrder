@@ -30,7 +30,7 @@ class UnsupportedTypeError(Exception):
         self.valueType = valueType
 
         super().__init__(
-            f"Validator ' {self.validatorClass.__class__.__name__}' does not support type {self.valueType}, expected type is {expectedType}."
+            f"Validator ' {self.validatorClass.__name__}' does not support type {self.valueType}, expected type is {expectedType}."
         )
 
 class NotIterableError(Exception):
