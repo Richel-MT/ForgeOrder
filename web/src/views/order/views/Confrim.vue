@@ -84,8 +84,6 @@
     const nextStep = async () => {
         const orderInfo = props.orderInfo
 
-        console.log(orderInfo)
-
         orderInfo.dishes = props.dishInfo['dishes']
         orderInfo.note = note.value
 
