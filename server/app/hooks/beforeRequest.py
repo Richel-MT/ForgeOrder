@@ -42,7 +42,7 @@ def _handleAuth():
         # Token不存在
         return GLOBAL.TOKEN_INVALID_ERROR(), 401
     
-    elif token.startswith("Bearer "):
+    elif token.startswith("Bearer ") and len(token.split(" ")) > 1:
         # Token格式正确
         token = token.split(" ")[1] # 提取token部分
     else:
