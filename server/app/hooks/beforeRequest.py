@@ -139,22 +139,44 @@ def _handleAuth():
 def _handleArguments():
     logger = g.logger.getLogContext("RequestArguments")
 
-    if not routeManager.hasParameters(request.path):
-        return None
-    
-    body = request.get_json()
+    (hasBodyParams, bodyParams), (hasPathParams, pathParams) = routeManager.hasParameters(request.endpoint)
 
+    if not hasBodyParams and not hasPathParams:
+        g.args = {}
 
-    result, data = routeManager.validateParameters(request.endpoint, request.path, body, request.view_args)
+        if request.view_args:
+            g.logger.warning(request.view_args, "RouteParametersRuleMissing") #type: ignore
 
-    if result:
-        g.args = data
-        # print(g.args)
+    errors = {}
+
+    params = {}
+
+    if hasBodyParams:
+        body = request.get_json()
+
+        errors_, params_ = routeManager.validateBodyParameters(bodyParams, body)
+
+        if len(errors_) > 0:
+            errors.update(errors_)
+        else:
+            params.update(params_)
+
+    if hasPathParams:
+        errors_, params_ = routeManager.validatePathParameters(request.path, pathParams, request.view_args)
+
+        if len(errors_) > 0:
+            errors.update(errors_)
+        else:
+            params.update(params_)
+        
+
+    if len(errors) == 0:
+        g.args = params
         return None
     
     else:
         errorInfo = []
-        for key, value in data.items():
+        for key, value in errors.items():
             errorInfo.append({
                 "key": key,
                 "error": value.__class__.__name__,
@@ -192,7 +214,6 @@ def _handleRequestInfo():
     return None
 
 def beforeRequest():
-    print(request.endpoint)
     # 请求前的逻辑
     handlers = [
         _handleRequestInfo,

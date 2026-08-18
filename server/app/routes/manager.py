@@ -21,27 +21,46 @@ class RouteManager:
         if endpoint in self.routes:
             raise RouteAlreadyRegisteredError(endpoint)
         
-        params_ = {}
+        bodyParams_ = {}
+        pathParams_ = {}
 
-        for arg in params:
-            params_[arg.key] = arg
+        for field in params:
+            if isinstance(field, BodyField):
+                bodyParams_[field.key] = field
+            elif isinstance(field, PathField):
+                pathParams_[field.key] = field
+            else:
+                raise ValueError(f"Invalid parameter type: {type(field)}")
 
         self.routes[endpoint] = { # type: ignore
             "isAdmin": isAdmin,
             "requiresAuth": requiresAuth,
-            "params": params_,
+            "bodyParams": bodyParams_,
+            "pathParams": pathParams_,
             "responses": responses,
         }
 
-        
 
     def hasParameters(self, endpoint: str):
-        if endpoint in self.routes and len(self.routes[endpoint]["params"]) > 0:  
-            return True
-        else:
-            return False
+        hasBodyParams = False
+        hasPathParams = False
 
-    def _validateBodyParameters(self, paramatersInfo: dict[str, BodyField], params: dict):
+        bodyParams = {}
+        pathParams = {}
+
+        if endpoint in self.routes:
+            if len(self.routes[endpoint]["bodyParams"]) > 0:
+                hasBodyParams = True
+                bodyParams = self.routes[endpoint]["bodyParams"]
+
+            if len(self.routes[endpoint]["pathParams"]) > 0:
+                hasPathParams = True
+                pathParams = self.routes[endpoint]["pathParams"]
+
+        return (hasBodyParams, bodyParams), (hasPathParams, pathParams)
+
+
+    def validateBodyParameters(self, paramatersInfo: dict[str, BodyField], params: dict):
         errors = {}
 
         finalParameters = {}
@@ -73,7 +92,7 @@ class RouteManager:
 
         return errors, finalParameters
 
-    def _validatePathParameters(self, path: str, paramatersInfo: dict[str, PathField], params: dict):
+    def validatePathParameters(self, path: str, paramatersInfo: dict[str, PathField], params: dict):
         errors = {}
 
         finalParameters = {}
@@ -104,42 +123,6 @@ class RouteManager:
                 # 参数不存在
                 errors[key] = MissingRequiredParameterError(key)
 
-        return errors, finalParameters
-
-
-    def validateParameters(self, endpoint: str | None, path: str, bodyParams: dict, pathParams: dict):
-
-        routeInfo = self.routes.get(endpoint, None) #type: ignore
-
-        if not routeInfo:
-            return {}
-
-        errors = {}
-
-        finalParameters = {}
-
-        bodyFields = {}
-        pathFields = {}
-
-        # 遍历routeInfo["params"]，拆分bodyField和pathField
-        for key, field in routeInfo["params"].items():
-            if isinstance(field, BodyField):
-                bodyFields[key] = field
-            elif isinstance(field, PathField):
-                pathFields[key] = field
-            else:
-                raise ValueError(f"Invalid parameter type: {type(field)}")
-
-        # 分别执行验证，合并结果
-        bodyErrors, bodyFinalParameters = self._validateBodyParameters(bodyFields, bodyParams)
-        errors.update(bodyErrors)
-        finalParameters.update(bodyFinalParameters)
-
-        pathErrors, pathFinalParameters = self._validatePathParameters(path, pathFields, pathParams)
-        errors.update(pathErrors)
-        finalParameters.update(pathFinalParameters)
-
-        # 返回最终结果
         return errors, finalParameters
 
 

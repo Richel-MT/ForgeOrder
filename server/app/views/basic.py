@@ -22,7 +22,7 @@ def routeInfo():
     
     arguments = []
 
-    for _, argument in route["params"].items():
+    for _, argument in route["bodyParams"].items():
          arguments.append({
             "key": argument.key,
             "type": str(argument.valueType),
