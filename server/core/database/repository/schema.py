@@ -108,22 +108,28 @@ class JSON(ColumnType):
 
 class DateTime(ColumnType):
     '''日期时间类型'''
-    originType = "TEXT"
+    originType = "INTEGER"
 
     def __init__(self):
-        super().__init__("TEXT", datetime.datetime)
+        super().__init__("INTEGER", datetime.datetime)
 
-    def convertTo(self, value: datetime.datetime) -> str:
+    def convertTo(self, value: datetime.datetime) -> int:
         if value is None:
-                    return None
+            return None
         
-        return value.isoformat()
+        return int(value.timestamp() * 1000)
 
-    def convertFrom(self, value: str) -> datetime.datetime:
+    def convertFrom(self, value: int) -> datetime.datetime:
         if value is None:
-                    return None
+            return None
         
-        return datetime.datetime.fromisoformat(value)
+        datetime_ =  datetime.datetime.fromtimestamp(value / 1000, tz=datetime.timezone.utc)
+
+        datetime_local = datetime_.astimezone()
+
+        return datetime_local
+
+
 
 class Boolean(ColumnType):
     '''布尔类型'''
