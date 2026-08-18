@@ -1,6 +1,4 @@
-from flask import g
-
-
+from app.utils import g
 from .repository import RepositoryManager
 from core.database.database import Database
 from app.config import config, CONFIG
@@ -24,7 +22,7 @@ def closeDatabase():
     关闭数据库连接
     '''
     if "repos" in g:
-        g.repos = None
+        g.repos = None #type: ignore
         
     if "database" in g:
         g.database.close()

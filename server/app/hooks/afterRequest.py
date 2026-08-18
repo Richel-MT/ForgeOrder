@@ -1,6 +1,8 @@
 import time
 
-from flask import g, Response
+from flask import Response
+
+from app.utils import g
 
 
 def afterRequest(response: Response):

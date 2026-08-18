@@ -1,12 +1,13 @@
 import time
 from typing import cast
 
-from flask import g
+
 
 from app.routes.responseGenerator import ResponseInfo
 from app.service import SettingsService, ShopService
 from app.routes.blueprint import AppBlueprint
 from app.routes.field import *
+from app.utils import g
 
 shopBlueprint = AppBlueprint("shop", __name__)
 

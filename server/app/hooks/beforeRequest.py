@@ -11,6 +11,7 @@ from core.log import getLogger
 from app.log import RequestLogContext
 from app.routes.responseGenerator import ResponseGenerator
 from app.routes.schema import GLOBAL
+from app.utils import g
 
 def _handleAuth():
     # 获取日志上下文

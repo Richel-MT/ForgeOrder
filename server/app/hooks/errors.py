@@ -1,14 +1,14 @@
 import json
+import traceback
 
-from flask import current_app, g
+from flask import current_app
 from werkzeug.exceptions import UnsupportedMediaType
 
 from core.log import getConsoleLogger, getLogger
-
 from ..db.connections import closeDatabase
-import traceback
 from core.database.database.exceptions import DatabaseLockedError
 from app.routes.schema import GLOBAL
+from app.utils import g
 
 # 415
 def unsupportedMediaType(e: UnsupportedMediaType):

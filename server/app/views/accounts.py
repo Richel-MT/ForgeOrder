@@ -8,6 +8,7 @@ from app.routes.blueprint import AppBlueprint
 from .exceptions import *
 from app.routes.field import BodyField, NotEmpty
 from core.utils import getClientIp
+from app.utils import g
 
 accountsBlueprint = AppBlueprint("accounts", __name__)
 
