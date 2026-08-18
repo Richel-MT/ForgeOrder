@@ -5,7 +5,11 @@ from core.validation.field import FieldDefinition
 from core.validation.validators import *
 
 @dataclass
-class BodyField(FieldDefinition):    
+class RequestParameterField(FieldDefinition):
+    pass
+
+@dataclass
+class BodyField(RequestParameterField):    
     '''请求头中的参数验证'''
     def __init__(self,
                 key: str,
@@ -22,7 +26,7 @@ class BodyField(FieldDefinition):
             raise ValueError(f"unrequired field {key} must have a default value.")
 
 @dataclass
-class PathField(FieldDefinition):
+class PathField(RequestParameterField):
     '''URL路径中的参数验证'''
     def __init__(self,
                  key: str,

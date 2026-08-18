@@ -133,13 +133,13 @@ def _handleAuth():
 def _handleArguments():
     logger = g.logger.getLogContext("RequestArguments")
 
-    if not routeManager.hasArguments(request.path):
+    if not routeManager.hasParameters(request.path):
         return None
     
     
     body = request.get_json()
 
-    result, data = routeManager.validateArguments(request.path, body)
+    result, data = routeManager.validateParameters(request.path, body)
 
     if result:
         g.args = data
