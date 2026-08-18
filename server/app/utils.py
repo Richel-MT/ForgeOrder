@@ -20,6 +20,7 @@ class GProxy:
     logger: RequestLogContext
 
     startTime: float
+    endTime: float | None
 
     res: ResponseGenerator
 
@@ -30,5 +31,10 @@ class GProxy:
     database: Database
 
     repos: RepositoryManager
+
+
+
+    def __contains__(self, name: str):
+        return hasattr(self, name)
 
 g = cast(GProxy, g_)
