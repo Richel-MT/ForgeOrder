@@ -1,12 +1,13 @@
 import time
 from typing import cast
 
-from flask import g
+
 
 from app.routes.responseGenerator import ResponseInfo
 from app.service import SettingsService, ShopService
 from app.routes.blueprint import AppBlueprint
 from app.routes.field import *
+from app.utils import g
 
 shopBlueprint = AppBlueprint("shop", __name__)
 
@@ -29,7 +30,7 @@ def getBusinessState():
             requiresAuth=True,
             isAdmin=True,
             arguments=[
-                RequestField("isBusiness", bool, True)
+                BodyField("isBusiness", bool, True)
             ],
             responses=[
                 ResponseInfo(0, "OK", None)
@@ -74,7 +75,7 @@ def getAllDishes():
 
 @shopBlueprint.post("/api/shop/dishes/get" , requiresAuth=True,
               arguments=[
-                  RequestField("id", int, True)
+                  BodyField("id", int, True)
               ],
               responses=[
                   ResponseInfo(0, "OK", dict),
@@ -98,9 +99,9 @@ def getDish():
 
 @shopBlueprint.post("/api/shop/dishes/update", requiresAuth=True, isAdmin=True,
               arguments=[
-                  RequestField("dishId", int, True),
-                  RequestField("changedItems", dict, True),
-                  RequestField("changedChoices", list, True)
+                  BodyField("dishId", int, True),
+                  BodyField("changedItems", dict, True),
+                  BodyField("changedChoices", list, True)
               ],
               responses=[
                   ResponseInfo(0, "OK", None),
@@ -169,7 +170,7 @@ def updateDish():
 
 @shopBlueprint.post("/api/shop/dishes/delete", requiresAuth=True, isAdmin=True,
                arguments=[
-                   RequestField("dishId", int, True)
+                   BodyField("dishId", int, True)
                ],
                responses=[
                    ResponseInfo(0, "OK", None),
@@ -191,13 +192,13 @@ def deleteDish():
     return g.res.OK()
     
 @shopBlueprint.post("/api/shop/dishes/new", requiresAuth=True, isAdmin=True, arguments=[
-    RequestField("name", str, True, None, NotEmpty()),
-    RequestField("price", int, True, None, Interval(Open(0), None)),
-    RequestField("category", int, True),
-    RequestField("description", str, False, ""),
-    RequestField("image", str, False, ""),
-    RequestField("isAvailable", bool, True),
-    RequestField("choices", dict, False, {})
+    BodyField("name", str, True, None, NotEmpty()),
+    BodyField("price", int, True, None, Interval(Open(0), None)),
+    BodyField("category", int, True),
+    BodyField("description", str, False, ""),
+    BodyField("image", str, False, ""),
+    BodyField("isAvailable", bool, True),
+    BodyField("choices", dict, False, {})
 ],
 responses=[
     ResponseInfo(0, "OK", None),
@@ -229,7 +230,7 @@ def newDish():
 # 分类
 @shopBlueprint.post("/api/shop/category/delete", requiresAuth=True, isAdmin=True,
               arguments=[
-                  RequestField("categoryId", int, True)
+                  BodyField("categoryId", int, True)
               ],
               responses=[
                   ResponseInfo(0, "OK", None),
@@ -267,8 +268,8 @@ def getAllCategories():
 
 @shopBlueprint.post("/api/shop/category/update", requiresAuth=True, isAdmin=True, 
               arguments=[
-                  RequestField("categoryId", int, True),
-                  RequestField("categoryName", str, True, None, NotEmpty())
+                  BodyField("categoryId", int, True),
+                  BodyField("categoryName", str, True, None, NotEmpty())
               ],
               responses=[
                   ResponseInfo(0, "OK", None),
@@ -291,7 +292,7 @@ def editCategory():
 
 @shopBlueprint.post("/api/shop/category/new", requiresAuth=True, isAdmin=True,
               arguments=[
-                  RequestField("name", str, True, None, NotEmpty())
+                  BodyField("name", str, True, None, NotEmpty())
               ],
               responses=[
                   ResponseInfo(0, "OK", None),
@@ -331,7 +332,7 @@ def getAllTables():
 
 @shopBlueprint.post("/api/shop/tables/new", requiresAuth=True, isAdmin=True,
              arguments=[
-                  RequestField("name", str, True, None, NotEmpty())
+                  BodyField("name", str, True, None, NotEmpty())
              ],
              responses=[
                   ResponseInfo(0, "OK", None),
@@ -359,8 +360,8 @@ def newTable():
 
 @shopBlueprint.post("/api/shop/tables/update", requiresAuth=True, isAdmin=True,
              arguments=[
-                  RequestField("id", int, True),
-                  RequestField("name", str, True, None, NotEmpty())
+                  BodyField("id", int, True),
+                  BodyField("name", str, True, None, NotEmpty())
              ],
              responses=[
                   ResponseInfo(0, "OK", None),
@@ -392,7 +393,7 @@ def updateTable():
 
 @shopBlueprint.post("/api/shop/tables/delete", requiresAuth=True, isAdmin=True,
              arguments=[
-                  RequestField("id", int, True)
+                  BodyField("id", int, True)
              ],
              responses=[
                   ResponseInfo(0, "OK", None),

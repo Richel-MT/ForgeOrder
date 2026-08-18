@@ -1,7 +1,10 @@
+from functools import wraps
+
 from flask import Blueprint, Flask
 
 from .manager import RouteManager
-from .schema import RequestField, ResponseInfo
+from .schema import ResponseInfo
+from .field import RequestParameterField
 
 class AppBlueprint(Blueprint):
     def __init__(self, name: str, import_name: str):
@@ -9,12 +12,14 @@ class AppBlueprint(Blueprint):
 
         self.routes_ = []
 
+        self.endpoints_ = []
+
     def registerForApp(self, app: Flask, routeManager: RouteManager):
         app.register_blueprint(self)
 
         for route in self.routes_:
             # print(route)
-            routeManager.register(route["path"],
+            routeManager.register(route["endpoint"],
                                     route["requiresAuth"],
                                     route["isAdmin"],
                                     route["arguments"],
@@ -22,49 +27,62 @@ class AppBlueprint(Blueprint):
         
 
     def route(self, rule: str,
-            arguments: list[RequestField] | None = None,
+            arguments: list[RequestParameterField] | None = None,
             requiresAuth: bool = False,
             isAdmin: bool = False,
             responses: list[ResponseInfo] | None = None,
-            noRegister: bool = False,
+            noRouteInfo: bool = False,
             **options
             ):
         
         flask_route = super().route(rule, **options)
-        
-        def wrapper(f):
-            if not noRegister:
-                self.routes_.append({
-                    "path": rule,
-                    "requiresAuth": requiresAuth,
-                    "isAdmin": isAdmin,
-                    "arguments": arguments,
-                    "responses": responses,
-                })
 
-            return flask_route(f)
+        if noRouteInfo:
+            def wrapper(f):
+                return flask_route(f)
+            
+        else:
+            def wrapper(f):
+                if not noRouteInfo:
+                    self.routes_.append({
+                        "endpoint": f"{self.name}.{f.__name__}",
+                        "requiresAuth": requiresAuth,
+                        "isAdmin": isAdmin,
+                        "arguments": arguments,
+                        "responses": responses,
+                    })
+
+                @wraps(f)
+                def wrapped_view(**kwargs):
+                    return f()
+
+                return flask_route(wrapped_view)
+        
         return wrapper
     
     def get(self, rule: str,
             requiresAuth: bool = False,
             isAdmin: bool = False,
+            arguments: list[RequestParameterField] | None = None,
             responses: list[ResponseInfo] | None = None,
+            noRouteInfo: bool = False,
             **options
             ):
         
         options.setdefault("methods", ["GET"])
-        return self.route(rule, None, requiresAuth, isAdmin, responses, **options)
+        return self.route(rule, arguments, requiresAuth, isAdmin, responses, noRouteInfo, **options)
     
     def post(self, rule: str,
             requiresAuth: bool = False,
             isAdmin: bool = False,
-            arguments: list[RequestField] | None = None,
+            arguments: list[RequestParameterField] | None = None,
             responses: list[ResponseInfo] | None = None,
+            noRouteInfo: bool = False,
             **options
             ):
         
         options.setdefault("methods", ["POST"])
-        return self.route(rule, arguments, requiresAuth, isAdmin, responses, **options)
+        return self.route(rule, arguments, requiresAuth, isAdmin, responses, noRouteInfo, **options)
     
     
         

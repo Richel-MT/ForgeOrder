@@ -1,7 +1,7 @@
 from .schema import RoutesInfo
 from .responseGenerator import ResponseGenerator, ResponseInfo
 from .exceptions import *
-from .field import RequestField
+from .field import BodyField, PathField, RequestParameterField
 
 
 class RouteManager:
@@ -9,94 +9,142 @@ class RouteManager:
 
         self.routes: dict[str, RoutesInfo] = {}
 
-    def register(self, path: str,
+    def register(self, endpoint: str,
                  requiresAuth: bool= False,
                  isAdmin: bool = False,
-                 args: list[RequestField] | None = None,
+                 params: list[RequestParameterField] | None = None,
                  responses: list[ResponseInfo] | None = None):
 
-        if args is None:
-            args = []
+        if params is None:
+            params = []
 
-        if path in self.routes:
-            raise RouteAlreadyRegisteredError(path)
+        if endpoint in self.routes:
+            raise RouteAlreadyRegisteredError(endpoint)
         
-        args_ = {}
+        bodyParams_ = {}
+        pathParams_ = {}
 
-        for arg in args:
-            args_[arg.key] = arg
+        for field in params:
+            if isinstance(field, BodyField):
+                bodyParams_[field.key] = field
+            elif isinstance(field, PathField):
+                pathParams_[field.key] = field
+            else:
+                raise ValueError(f"Invalid parameter type: {type(field)}")
 
-        self.routes[path] = { # type: ignore
+        self.routes[endpoint] = { # type: ignore
             "isAdmin": isAdmin,
             "requiresAuth": requiresAuth,
-            "args": args_,
+            "bodyParams": bodyParams_,
+            "pathParams": pathParams_,
             "responses": responses,
         }
 
-        
 
-    def hasArguments(self, path: str):
-        if path in self.routes and len(self.routes[path]["args"]) > 0:  
-            return True
-        else:
-            return False
+    def hasParameters(self, endpoint: str):
+        hasBodyParams = False
+        hasPathParams = False
 
-    def validateArguments(self, path: str, args: dict):
-        if path not in self.routes:
-            return {}
-        
-        routesInfo = self.routes[path] # 所有args的字段定义
+        bodyParams = {}
+        pathParams = {}
 
-        finalArguments = {}
+        if endpoint in self.routes:
+            if len(self.routes[endpoint]["bodyParams"]) > 0:
+                hasBodyParams = True
+                bodyParams = self.routes[endpoint]["bodyParams"]
 
+            if len(self.routes[endpoint]["pathParams"]) > 0:
+                hasPathParams = True
+                pathParams = self.routes[endpoint]["pathParams"]
+
+        return (hasBodyParams, bodyParams), (hasPathParams, pathParams)
+
+
+    def validateBodyParameters(self, paramatersInfo: dict[str, BodyField], params: dict):
         errors = {}
 
-        for key, field in routesInfo["args"].items():
-            if key in args.keys():
-                # key本身存在，验证类型
-                if not isinstance(args[key], field.valueType):
-                    errors[key] = InvalidArgumentTypeError(key, field.valueType, type(args[key]))
+        finalParameters = {}
 
+        for key, field in paramatersInfo.items():
+            if key in params.keys():
+                # key本身存在，验证类型
+                if not isinstance(params[key], field.valueType):
+                    errors[key] = ParameterTypeError(key, field.valueType, type(params[key]))
 
                 # 执行Validator
                 if not field.validator:
-                    finalArguments[key] = args[key]
+                    finalParameters[key] = params[key]
                     continue
 
-                result = field.validator.validate(args[key])
+                result = field.validator.validate(params[key])
 
                 if result.success:
-                    finalArguments[key] = args[key]
+                    finalParameters[key] = params[key]
                     continue
                 else:
-                    errors[key] = ArgumentValidationError(key, result.error) #type: ignore
-                
-
-                
+                    errors[key] = ParameterValidationError(key, result.error) #type: ignore
             elif field.required:
                 # key不存在，必填项。
-                errors[key] = MissingRequiredArgumentError(field.key)
+                errors[key] = MissingRequiredParameterError(field.key)
             else:
                 # key不存在，非必填项。
-                finalArguments[key] = field.default
+                finalParameters[key] = field.default
 
-        if errors:
-            return False, errors
-        else:
-            return True, finalArguments
+        return errors, finalParameters
+
+    def validatePathParameters(self, path: str, paramatersInfo: dict[str, PathField], params: dict):
+        errors = {}
+
+        finalParameters = {}
+
+        for key, field in paramatersInfo.items():
+            # 判断参数是否存在
+            if key in params.keys():
+                # 参数存在
+
+                # 验证类型
+                if not isinstance(params[key], field.valueType):
+                    errors[key] = ParameterTypeError(key, field.valueType, type(params[key]))
+
+                # 执行Validator
+                if not field.validator:
+                    finalParameters[key] = params[key]
+                    continue
+
+                result = field.validator.validate(params[key])
+
+                if result.success:
+                    finalParameters[key] = params[key]
+                    continue
+                else:
+                    errors[key] = PathParameterValidationError(path, key, params[key], result.error) #type: ignore
+                
+            else:
+                # 参数不存在
+                errors[key] = MissingRequiredParameterError(key)
+
+        return errors, finalParameters
 
 
-    
 
-    def getAuthConfig(self, path: str):
-        if path not in self.routes:
+    def getAuthConfig(self, endpoint: str):
+        if endpoint not in self.routes:
             return False, None
         
         else:
             return True, {
-                "requiresAuth": self.routes[path]["requiresAuth"],
-                "isAdmin": self.routes[path]["isAdmin"]
+                "requiresAuth": self.routes[endpoint]["requiresAuth"],
+                "isAdmin": self.routes[endpoint]["isAdmin"]
             }
         
         
+    def getResponseInfo(self, endpoint: str | None):
+        if endpoint is None:
+            return []
         
+        result = self.routes.get(endpoint, None)
+
+        if result:
+            return result["responses"]
+        else:
+            return []

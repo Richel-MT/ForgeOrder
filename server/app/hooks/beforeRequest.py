@@ -1,7 +1,8 @@
 import uuid
 import time
 
-from flask import request, g
+from flask import request
+
 
 from app.db.connections import getDatabase
 from app.service.users import UserService
@@ -11,15 +12,20 @@ from core.log import getLogger
 from app.log import RequestLogContext
 from app.routes.responseGenerator import ResponseGenerator
 from app.routes.schema import GLOBAL
+from app.utils import g
 
 def _handleAuth():
     # 获取日志上下文
     logger = g.logger.getLogContext("Auth")
 
     if  request.path.startswith("/api/"):
-        checkResult, routeData = routeManager.getAuthConfig(request.path)
+        checkResult, routeData = routeManager.getAuthConfig(request.endpoint)
         
         if not checkResult:
+            logger.debug({
+                "path": request.path,
+                "endpoint": request.endpoint
+            }, "NotFoundAuthConfig")
             # 路由不存在
             return GLOBAL.NOT_FOUND(), 404
         
@@ -133,22 +139,44 @@ def _handleAuth():
 def _handleArguments():
     logger = g.logger.getLogContext("RequestArguments")
 
-    if not routeManager.hasArguments(request.path):
-        return None
-    
-    
-    body = request.get_json()
+    (hasBodyParams, bodyParams), (hasPathParams, pathParams) = routeManager.hasParameters(request.endpoint)
 
-    result, data = routeManager.validateArguments(request.path, body)
+    if not hasBodyParams and not hasPathParams:
+        g.args = {}
 
-    if result:
-        g.args = data
-        # print(g.args)
+        if request.view_args:
+            g.logger.warning(request.view_args, "RouteParametersRuleMissing") #type: ignore
+
+    errors = {}
+
+    params = {}
+
+    if hasBodyParams:
+        body = request.get_json()
+
+        errors_, params_ = routeManager.validateBodyParameters(bodyParams, body)
+
+        if len(errors_) > 0:
+            errors.update(errors_)
+        else:
+            params.update(params_)
+
+    if hasPathParams:
+        errors_, params_ = routeManager.validatePathParameters(request.path, pathParams, request.view_args)
+
+        if len(errors_) > 0:
+            errors.update(errors_)
+        else:
+            params.update(params_)
+        
+
+    if len(errors) == 0:
+        g.args = params
         return None
     
     else:
         errorInfo = []
-        for key, value in data.items():
+        for key, value in errors.items():
             errorInfo.append({
                 "key": key,
                 "error": value.__class__.__name__,
@@ -175,12 +203,11 @@ def _handleRequestInfo():
     }, "RequestInfo", g.requestId)
 
 
-    try:
-        responses = routeManager.routes[request.path]["responses"]
-    except KeyError: 
-        responses = {}
+    responses = routeManager.getResponseInfo(request.endpoint)
 
-    g.res = ResponseGenerator(responses) #type: ignore
+    g.res = ResponseGenerator(responses)
+
+
 
     getDatabase()
 

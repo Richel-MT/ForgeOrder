@@ -1,14 +1,14 @@
 import json
+import traceback
 
-from flask import current_app, g
+from flask import current_app
 from werkzeug.exceptions import UnsupportedMediaType
 
 from core.log import getConsoleLogger, getLogger
-
 from ..db.connections import closeDatabase
-import traceback
 from core.database.database.exceptions import DatabaseLockedError
 from app.routes.schema import GLOBAL
+from app.utils import g
 
 # 415
 def unsupportedMediaType(e: UnsupportedMediaType):
@@ -37,7 +37,7 @@ def handleDatabaseLockedError(e: DatabaseLockedError):
 def databaseError(e):
 	return GLOBAL.DATABASE_ERROR(), 500
 
-def teardownAppContext(error):
+def teardownAppContext(error): 
 	if error is not None:
 		# 有错误，回滚事务
 		if g.database is not None:

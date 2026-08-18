@@ -8,7 +8,7 @@ from app.routes import routeManager
 
 basicBlueprint = AppBlueprint("basic", __name__)
 
-@basicBlueprint.route("/routeInfo", noRegister=True)
+@basicBlueprint.route("/routeInfo", noRouteInfo=True)
 def routeInfo():
     routeName: str = request.args.get("path") #type: ignore
 
@@ -22,7 +22,7 @@ def routeInfo():
     
     arguments = []
 
-    for _, argument in route["args"].items():
+    for _, argument in route["bodyParams"].items():
          arguments.append({
             "key": argument.key,
             "type": str(argument.valueType),
@@ -48,8 +48,8 @@ def routeInfo():
             "responses": responses,
         }
 
-@basicBlueprint.route("/", defaults={"path": ""}, noRegister=True)
-@basicBlueprint.route("/<path:path>", noRegister=True)
+@basicBlueprint.route("/", defaults={"path": ""}, noRouteInfo=True)
+@basicBlueprint.route("/<path:path>", noRouteInfo=True)
 def index(path: str = ""):
     if "." in path:
         filePath = os.path.join(current_app.static_folder, path) #type: ignore
