@@ -1,7 +1,7 @@
 from .schema import RoutesInfo
 from .responseGenerator import ResponseGenerator, ResponseInfo
 from .exceptions import *
-from .field import RequestField
+from .field import BodyField
 
 
 class RouteManager:
@@ -12,7 +12,7 @@ class RouteManager:
     def register(self, path: str,
                  requiresAuth: bool= False,
                  isAdmin: bool = False,
-                 args: list[RequestField] | None = None,
+                 args: list[BodyField] | None = None,
                  responses: list[ResponseInfo] | None = None):
 
         if args is None:

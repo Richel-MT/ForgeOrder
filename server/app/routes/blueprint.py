@@ -1,7 +1,7 @@
 from flask import Blueprint, Flask
 
 from .manager import RouteManager
-from .schema import RequestField, ResponseInfo
+from .schema import BodyField, ResponseInfo
 
 class AppBlueprint(Blueprint):
     def __init__(self, name: str, import_name: str):
@@ -22,7 +22,7 @@ class AppBlueprint(Blueprint):
         
 
     def route(self, rule: str,
-            arguments: list[RequestField] | None = None,
+            arguments: list[BodyField] | None = None,
             requiresAuth: bool = False,
             isAdmin: bool = False,
             responses: list[ResponseInfo] | None = None,
@@ -58,7 +58,7 @@ class AppBlueprint(Blueprint):
     def post(self, rule: str,
             requiresAuth: bool = False,
             isAdmin: bool = False,
-            arguments: list[RequestField] | None = None,
+            arguments: list[BodyField] | None = None,
             responses: list[ResponseInfo] | None = None,
             **options
             ):

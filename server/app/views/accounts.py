@@ -6,16 +6,16 @@ from app.routes.responseGenerator import ResponseInfo
 from app.service.users import UserService
 from app.routes.blueprint import AppBlueprint
 from .exceptions import *
-from app.routes.field import RequestField, NotEmpty
+from app.routes.field import BodyField, NotEmpty
 from core.utils import getClientIp
 
 accountsBlueprint = AppBlueprint("accounts", __name__)
 
 @accountsBlueprint.post("/api/auth/login",              
     arguments = [   
-        RequestField("username", str, True, None, NotEmpty()),
-        RequestField("password", str, True, None, NotEmpty()),
-        RequestField("cover", bool, False, False)
+        BodyField("username", str, True, None, NotEmpty()),
+        BodyField("password", str, True, None, NotEmpty()),
+        BodyField("cover", bool, False, False)
     ],
     requiresAuth=False,
     isAdmin=False,

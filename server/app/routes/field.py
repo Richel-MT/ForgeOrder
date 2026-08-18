@@ -5,8 +5,8 @@ from core.validation.field import FieldDefinition
 from core.validation.validators import *
 
 @dataclass
-class RequestField(FieldDefinition):    
-
+class BodyField(FieldDefinition):    
+    '''请求头中的参数验证'''
     def __init__(self,
                 key: str,
                 valueType: type,

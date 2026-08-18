@@ -1,7 +1,7 @@
 from app.routes.responseGenerator import ResponseInfo as _Res
 from app.utils import g
 from app.routes.blueprint import AppBlueprint
-from app.routes.field import RequestField as _Field
+from app.routes.field import BodyField as _Field
 from app.routes.field import NotEmpty, Choices, Interval, AllOf, DictOf, ForEach
 from app.service import OrderService
 

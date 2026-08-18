@@ -1,14 +1,14 @@
 from typing import TypedDict, Any
 from dataclasses import dataclass
 
-from .field import RequestField
+from .field import BodyField
 from .responseGenerator import ResponseInfo
 
 
 class RoutesInfo(TypedDict):
     isAdmin: bool
     requiresAuth: bool
-    args: dict[str, RequestField]
+    args: dict[str, BodyField]
     responses: list[ResponseInfo]
 
 
