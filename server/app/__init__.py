@@ -5,9 +5,9 @@ from .views.system import systemBlueprint
 from .views.orders import ordersBlueprint
 
 blueprints = [
-    basicBlueprint,
     accountsBlueprint,
     shopBlueprint,
     systemBlueprint,
-    ordersBlueprint
+    ordersBlueprint,
+    basicBlueprint,
 ]
