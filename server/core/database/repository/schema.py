@@ -122,12 +122,12 @@ class DateTime(ColumnType):
     def convertFrom(self, value: int) -> datetime.datetime:
         if value is None:
             return None
-        
-        datetime_ =  datetime.datetime.fromtimestamp(value / 1000, tz=datetime.timezone.utc)
 
-        datetime_local = datetime_.astimezone()
+        # 读取数据库并转换为本地时区的时间
+        datetime_ =  datetime.datetime.fromtimestamp(value / 1000, tz=datetime.timezone.utc).astimezone() 
 
-        return datetime_local
+
+        return datetime_.replace(tzinfo=None)
 
 
 
