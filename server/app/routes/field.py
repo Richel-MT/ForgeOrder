@@ -20,4 +20,13 @@ class BodyField(FieldDefinition):
 
         if not required and default is None:
             raise ValueError(f"unrequired field {key} must have a default value.")
-        
+
+@dataclass
+class PathField(FieldDefinition):
+    '''URL路径中的参数验证'''
+    def __init__(self,
+                 key: str,
+                 valueType: type,
+                 validator: Validator | None = None
+                 ):
+        super().__init__(key, valueType, None, validator)
