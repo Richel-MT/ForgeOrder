@@ -19,6 +19,7 @@ class OrdersRepository(Repository[_OrdersRow]):
         Column("tableId", Integer(), notNull=True, foreign=("tables", "id")),
         Column("partySize", Integer(), notNull=True, default=1), # 人数，默认1人
         
+        
     ]
 
 
@@ -31,6 +32,8 @@ class _SubOrdersRow(TypedDict):
     createdAt: datetime.datetime
     finishedAt: datetime.datetime | None
 
+    finishedAt: datetime.datetime | None
+
 
 class SubOrdersRepository(Repository[_SubOrdersRow]):
     tableName = "subOrders"
@@ -41,6 +44,7 @@ class SubOrdersRepository(Repository[_SubOrdersRow]):
         Column("subOrderId", Integer(), notNull=True),
         Column("note", String()), # 子订单备注
         Column("createdAt", DateTime(), notNull=True), # 子订单的创建时间
+        Column("finishedAt", DateTime()), # 完成时间（菜品全部完成）
         Column("finishedAt", DateTime()), # 完成时间（菜品全部完成）
     ]
 
@@ -70,6 +74,7 @@ class OrderStatusRepository(Repository[_OrderStatusRow]):
         Column("updatedAt", DateTime(), notNull=True), # 最后更新时间
         Column("finishedAt", DateTime()), # 完成时间（菜品全部完成）
         Column("payAt", DateTime()), # 支付时间
+        Column("cashier", Integer(), foreign=("users", "id")),  # 收银员id
         Column("cashier", Integer(), foreign=("users", "id")),  # 收银员id
         Column("payMethod", Integer()), # 0: 现金 --1: 支付宝 --2: 微信
         Column("totalAmount", Integer(), notNull=True), # 订单总金额
