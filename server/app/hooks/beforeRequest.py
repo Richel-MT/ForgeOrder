@@ -1,7 +1,8 @@
 import uuid
 import time
 
-from flask import request, g
+from flask import request
+
 
 from app.db.connections import getDatabase
 from app.service.users import UserService
@@ -18,9 +19,13 @@ def _handleAuth():
     logger = g.logger.getLogContext("Auth")
 
     if  request.path.startswith("/api/"):
-        checkResult, routeData = routeManager.getAuthConfig(request.path)
+        checkResult, routeData = routeManager.getAuthConfig(request.endpoint)
         
         if not checkResult:
+            logger.debug({
+                "path": request.path,
+                "endpoint": request.endpoint
+            }, "NotFoundAuthConfig")
             # 路由不存在
             return GLOBAL.NOT_FOUND(), 404
         
@@ -137,10 +142,10 @@ def _handleArguments():
     if not routeManager.hasParameters(request.path):
         return None
     
-    
     body = request.get_json()
 
-    result, data = routeManager.validateParameters(request.path, body)
+
+    result, data = routeManager.validateParameters(request.endpoint, request.path, body, request.view_args)
 
     if result:
         g.args = data
@@ -176,18 +181,18 @@ def _handleRequestInfo():
     }, "RequestInfo", g.requestId)
 
 
-    try:
-        responses = routeManager.routes[request.path]["responses"]
-    except KeyError: 
-        responses = {}
+    responses = routeManager.getResponseInfo(request.endpoint)
 
-    g.res = ResponseGenerator(responses) #type: ignore
+    g.res = ResponseGenerator(responses)
+
+
 
     getDatabase()
 
     return None
 
 def beforeRequest():
+    print(request.endpoint)
     # 请求前的逻辑
     handlers = [
         _handleRequestInfo,

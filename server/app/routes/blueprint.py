@@ -1,7 +1,7 @@
 from flask import Blueprint, Flask
 
 from .manager import RouteManager
-from .schema import BodyField, ResponseInfo
+from .schema import RequestParameterField, ResponseInfo
 
 class AppBlueprint(Blueprint):
     def __init__(self, name: str, import_name: str):
@@ -14,7 +14,7 @@ class AppBlueprint(Blueprint):
 
         for route in self.routes_:
             # print(route)
-            routeManager.register(route["path"],
+            routeManager.register(route["endpoint"],
                                     route["requiresAuth"],
                                     route["isAdmin"],
                                     route["arguments"],
@@ -22,20 +22,20 @@ class AppBlueprint(Blueprint):
         
 
     def route(self, rule: str,
-            arguments: list[BodyField] | None = None,
+            arguments: list[RequestParameterField] | None = None,
             requiresAuth: bool = False,
             isAdmin: bool = False,
             responses: list[ResponseInfo] | None = None,
-            noRegister: bool = False,
+            noRouteInfo: bool = False,
             **options
             ):
         
         flask_route = super().route(rule, **options)
         
         def wrapper(f):
-            if not noRegister:
+            if not noRouteInfo:
                 self.routes_.append({
-                    "path": rule,
+                    "endpoint": f"{self.name}.{f.__name__}",
                     "requiresAuth": requiresAuth,
                     "isAdmin": isAdmin,
                     "arguments": arguments,
@@ -43,6 +43,7 @@ class AppBlueprint(Blueprint):
                 })
 
             return flask_route(f)
+        
         return wrapper
     
     def get(self, rule: str,
@@ -58,7 +59,7 @@ class AppBlueprint(Blueprint):
     def post(self, rule: str,
             requiresAuth: bool = False,
             isAdmin: bool = False,
-            arguments: list[BodyField] | None = None,
+            arguments: list[RequestParameterField] | None = None,
             responses: list[ResponseInfo] | None = None,
             **options
             ):

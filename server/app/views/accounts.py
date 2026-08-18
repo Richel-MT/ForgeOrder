@@ -1,6 +1,6 @@
 from typing import cast
 
-from flask import  request, g
+from flask import  request
 
 from app.routes.responseGenerator import ResponseInfo
 from app.service.users import UserService

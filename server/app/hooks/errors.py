@@ -37,7 +37,7 @@ def handleDatabaseLockedError(e: DatabaseLockedError):
 def databaseError(e):
 	return GLOBAL.DATABASE_ERROR(), 500
 
-def teardownAppContext(error):
+def teardownAppContext(error): 
 	if error is not None:
 		# 有错误，回滚事务
 		if g.database is not None:

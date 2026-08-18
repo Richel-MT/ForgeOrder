@@ -9,7 +9,7 @@ class RouteManager:
 
         self.routes: dict[str, RoutesInfo] = {}
 
-    def register(self, path: str,
+    def register(self, endpoint: str,
                  requiresAuth: bool= False,
                  isAdmin: bool = False,
                  params: list[RequestParameterField] | None = None,
@@ -18,25 +18,25 @@ class RouteManager:
         if params is None:
             params = []
 
-        if path in self.routes:
-            raise RouteAlreadyRegisteredError(path)
+        if endpoint in self.routes:
+            raise RouteAlreadyRegisteredError(endpoint)
         
         params_ = {}
 
         for arg in params:
             params_[arg.key] = arg
 
-        self.routes[path] = { # type: ignore
+        self.routes[endpoint] = { # type: ignore
             "isAdmin": isAdmin,
             "requiresAuth": requiresAuth,
-            "args": params_,
+            "params": params_,
             "responses": responses,
         }
 
         
 
-    def hasParameters(self, path: str):
-        if path in self.routes and len(self.routes[path]["params"]) > 0:  
+    def hasParameters(self, endpoint: str):
+        if endpoint in self.routes and len(self.routes[endpoint]["params"]) > 0:  
             return True
         else:
             return False
@@ -107,9 +107,9 @@ class RouteManager:
         return errors, finalParameters
 
 
-    def validateParameters(self, path: str, params: dict):
+    def validateParameters(self, endpoint: str | None, path: str, bodyParams: dict, pathParams: dict):
 
-        routeInfo = self.routes.get(path, None)
+        routeInfo = self.routes.get(endpoint, None) #type: ignore
 
         if not routeInfo:
             return {}
@@ -131,11 +131,11 @@ class RouteManager:
                 raise ValueError(f"Invalid parameter type: {type(field)}")
 
         # 分别执行验证，合并结果
-        bodyErrors, bodyFinalParameters = self._validateBodyParameters(bodyFields, params)
+        bodyErrors, bodyFinalParameters = self._validateBodyParameters(bodyFields, bodyParams)
         errors.update(bodyErrors)
         finalParameters.update(bodyFinalParameters)
 
-        pathErrors, pathFinalParameters = self._validatePathParameters(path, pathFields, params)
+        pathErrors, pathFinalParameters = self._validatePathParameters(path, pathFields, pathParams)
         errors.update(pathErrors)
         finalParameters.update(pathFinalParameters)
 
@@ -144,15 +144,24 @@ class RouteManager:
 
 
 
-    def getAuthConfig(self, path: str):
-        if path not in self.routes:
+    def getAuthConfig(self, endpoint: str):
+        if endpoint not in self.routes:
             return False, None
         
         else:
             return True, {
-                "requiresAuth": self.routes[path]["requiresAuth"],
-                "isAdmin": self.routes[path]["isAdmin"]
+                "requiresAuth": self.routes[endpoint]["requiresAuth"],
+                "isAdmin": self.routes[endpoint]["isAdmin"]
             }
         
         
+    def getResponseInfo(self, endpoint: str | None):
+        if endpoint is None:
+            return []
         
+        result = self.routes.get(endpoint, None)
+
+        if result:
+            return result["responses"]
+        else:
+            return []
