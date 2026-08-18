@@ -37,8 +37,8 @@ def setupApp():
     app.json_provider_class = JSONProvider
     app.json = JSONProvider(app)
 
+    app.logger.disabled = True
     
-
     from app import blueprints
     for bp in blueprints:
         bp.registerForApp(app, app.routeManager)
