@@ -94,7 +94,11 @@ class OrderStatusRepository(Repository[_OrderStatusRow]):
         stampTodayStart = self._convertTo(createdAt=todayStart)["createdAt"]
         stampTodayEnd = self._convertTo(createdAt=todayEnd)["createdAt"]
 
-        cursor = self.execute(f'''SELECT * FROM {self.tableName} WHERE createdAt >= ? AND createdAt <= ? LIMIT ? OFFSET ?''',
+        cursor = self.execute(f'''SELECT * FROM {self.tableName} 
+        WHERE createdAt >= ? AND createdAt <= ? 
+        ORDER BY createdAt DESC
+        LIMIT ? OFFSET ?
+        ''',
                               (stampTodayStart, stampTodayEnd, limit, offset))
 
         result = cursor.fetchall()
