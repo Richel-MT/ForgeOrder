@@ -10,70 +10,132 @@
             </template>
         </TopBar>
 
-        <div class="container mdui-prose">
+        <div class="container mdui-prose main-container" ref="contentContainer">
             <h2>{{$t('orders.main.today')}}</h2>
 
-            <div v-for="i in 10" :key="i">
+            <h3>未完成</h3>
+
+            <div v-for="order in unfinishedOrders" :key="order.id">
                 <OrderCard 
-            :orderId="2026114514" 
-            :orderDisplayId="1"
-            :tableNo="'A1'" 
-            :people="4" 
-            :state="0"
-            :orderType="0"
-            :createTime="new Date('2026-07-06 10:00:00')"
-            :finishedCount="3"
-            :totalCount="5"
-            :unfinishedDishes="[{name:'鱼香肉丝',count:1},{name:'红烧肉',count:2},{name:'青椒肉丝',count:1}, {name:'红烧肉',count:2}, {name:'红烧肉',count:2}]"
-            :tags="['有小孩']"
-            :totalPrice="20000"
+            :orderId="order.id" 
+            :tableId="order.tableId" 
+            :partySize="order.partySize" 
+            :status="order.status"
+            :orderType="order.type"
+            :createTime="new Date(order.createdAt)"
+            :totalPrice="order.totalAmount"
             />
             </div>
 
 
-                 <mdui-fab 
+            <div class="loading-container" v-if="isLoading">
+                <mdui-circular-progress></mdui-circular-progress>
+            </div>
+
+            <div v-if="!hasMore">没有更多了。</div>
+            
+        </div>
+
+        <mdui-fab 
                 class="create-order-button" 
                 @click="pushWithFrom('/order/new')" 
                 extended
-            >
+                >
                 <mdui-icon-edit slot="icon"></mdui-icon-edit>
                 {{ $t('orders.main.add') }}
             </mdui-fab>
 
-
-
-
-        </div>
-
     </div>
 
-    
-    
 </template>
 
 <script setup>
     import '@/assets/transition.css'
+
     import TopBar from '@/components/TopBar.vue'
     import OrderCard from './components/OrderCard.vue'
+    
+    import { pushWithFrom } from '@/utils/routerHelper'
+    import reqeust from '@/utils/request.js'
 
     import 'mdui/components/text-field.js'
-    import 'mdui/components/button-icon.js';
+    import 'mdui/components/button-icon.js'
 
-    import '@mdui/icons/search.js';
-    import { useRouter } from 'vue-router';
+    import '@mdui/icons/search.js'
 
+    import { useRouter } from 'vue-router'
+    import { onMounted, ref } from 'vue'
+    import { useInfiniteScroll } from '@vueuse/core'
 
-    import { pushWithFrom } from '@/utils/routerHelper'
-    
     const router = useRouter();
 
+    const PAGE_SIZE = 10
 
+    const currentPage = ref(0)
+
+    const isLoading = ref(false)
+    const hasMore = ref(true)
+
+    const unfinishedOrders = ref([])
+    const finishedOrders = ref([])
+
+    const contentContainer = ref(null)
+
+    const fetchData = async (page) => {
+        const res = await reqeust.post('/order/getToday', {
+            "offset": PAGE_SIZE * page
+        })
+
+        if (res.data.status == 0) {
+            return {unfinished: res.data.data.unfinished, finished: res.data.data.finished}
+        }
+        
+    }
+
+    const loadMore = async () => {
+        if (isLoading.value || !hasMore.value)  return
+
+        isLoading.value = true
+
+        try {
+            const { unfinished, finished } = await fetchData(currentPage.value)
+
+            if (unfinished.length == 0 && finished.length == 0) {
+                hasMore.value = false
+            } else {
+                unfinishedOrders.value.push(...unfinished)
+                finishedOrders.value.push(...finished)
+
+                currentPage.value ++
+            }
+        } catch (error){
+            console.error("加载失败", error)
+            hasMore.value = false
+        } finally {
+            isLoading.value = false 
+            
+        }
+    }
+
+    onMounted(() => {
+        loadMore()       
+    })
+
+    useInfiniteScroll(
+        contentContainer,     
+        loadMore,            
+        {
+            distance: 100,     
+            direction: 'bottom',
+            interval: 0
+        }
+    )
 
 
 </script>
 
 
-<style>
+<style scoped>
     .create-order-button {
         position: fixed;
         bottom: 120px;
@@ -81,4 +143,16 @@
         transform: translateX(0);
 
     }
+
+    .main-container {
+        height: calc(100vh - 64px - 80px)
+    }
+
+    .loading-container {
+        display: flex;
+        justify-content: center
+    }
+    
+    
+
 </style>

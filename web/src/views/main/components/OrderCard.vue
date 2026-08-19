@@ -1,22 +1,23 @@
 <template>
     <div class="card-container">
-            <mdui-card class="order-card" variant="outlined" clickable>
+            <mdui-card class="order-card" variant="outlined" clickable @click="router.push(`/order/${props.orderId}`)">
                 <!-- 顶部信息-->
                 <div class="card-header">
                     <div class="header-left">
 
                         <div>
-                            <span class="header-left-item-key">订单</span>
-                            <span class="header-left-item-value">{{ orderDisplayId }}</span>
+                            <span class="header-left-item-value">
+                                {{ orderType == 0 ? '堂食' : '外带' }}
+                            </span>
                         </div>
 
                         <div v-if="orderType == 0">
-                            <span class="header-left-item-key">桌号</span>
-                            <span class="header-left-item-value">{{ tableNo }}</span>
+                            <span class="header-left-item-key">桌台</span>
+                            <span class="header-left-item-value">{{ tableName }}</span>
                         </div>
                         <div v-if="orderType == 0">
                             <span class="header-left-item-key">人数</span>
-                            <span class="header-left-item-value">{{ people }}</span>
+                            <span class="header-left-item-value">{{ partySize }}</span>
                         </div>
                         
                     </div>
@@ -26,47 +27,27 @@
 
                 <!--进度信息-->
                 <div class="progress-content">
-                    <div class="progress-label">{{ finishedCount }}/ {{ totalCount }}</div>
-                    <mdui-linear-progress :value="finishedCount" :max="totalCount" class="progress-bar"></mdui-linear-progress>
+                    <div class="progress-label">订单：
+                        <span v-if="finishedSubOrders != -1 && totalSubOrders != -1">{{ finishedSubOrders }}/ {{ totalSubOrders }}</span>
+                        <span v-else>加载中</span>
+                    </div>
+                    <mdui-linear-progress :value=" finishedSubOrders != -1 ? finishedSubOrders : undefined" :max="totalSubOrders != -1 ? totalSubOrders : undefined" class="progress-bar"></mdui-linear-progress>
                 </div>
             
-                <div class="unfinished-dishes">
-                    待完成：    
-                    <span v-for="(dish, index) in unfinishedDishes" :key="dish">
-                        <span v-if="index < 3">
-                            {{ dish.name }}x{{ dish.count }}
-                            <span v-if="index < unfinishedDishes.length - 1">
-                                ,
-                            </span>
-                        </span>
-                        
-                    </span>
-                    <span v-if="unfinishedDishes.length > 3">
-                        ...
-                    </span>
-                </div>
-
-                <!--标签区域-->
-                <div class="tags-content">
-                    <div v-for="tag in tags" :key="tag" >
-                        <mdui-card class="tag-card tag-card-red" variant="outlined">{{ tag }}</mdui-card>
+                <!--进度信息-->
+                <div class="progress-content">
+                    <div class="progress-label">菜品：
+                        <span v-if="finishedDishes != -1 && totalSubOrders != -1">{{ finishedDishes }}/ {{ totalDishes }}</span>
+                        <span v-else>加载中</span>
                     </div>
-
-                    
-                    <div v-if="orderType == 0">
-                        <mdui-card class="tag-card tag-card-blue" variant="outlined">堂食</mdui-card>
-                    </div>
-
-                    <div v-else>
-                        <mdui-card class="tag-card tag-card-green" variant="outlined">外送</mdui-card>
-                    </div>
+                    <mdui-linear-progress :value="finishedDishes != -1 ? finishedDishes : undefined" :max="totalDishes != -1 ? totalDishes : undefined" class="progress-bar"></mdui-linear-progress>
                 </div>
 
                 <!-- 底部信息-->
                 <div class="footer-content">
                     <div>
                         <span class="footer-item">{{ formatDateInTime(createTime) }}</span>
-                        （已等{{ formatWaitTime }}）
+                        （已等{{ waitTime }}）
                     </div>
                     <div class="footer-item">
                         ￥ {{ (totalPrice / 100).toFixed(2) }}
@@ -76,30 +57,12 @@
                 
             </mdui-card>
             <!--操作区域-->
-            <div class="action-content">
-                <mdui-button-icon @click="router.push(`/order/${orderId}/unfinished`)">
-                    <mdui-icon-done-outline></mdui-icon-done-outline>
-                </mdui-button-icon>
-
-                <mdui-button-icon @click="router.push(`/order/${orderId}/checkout`)">
-                    <mdui-icon-payment></mdui-icon-payment>
-                </mdui-button-icon>
-
-                <mdui-button-icon @click="router.push(`/printer/print/${orderId}`)">
-                    <mdui-icon-print></mdui-icon-print>
-                </mdui-button-icon>
-
-                <mdui-button-icon>
-                    <mdui-icon-more-vert></mdui-icon-more-vert>
-                </mdui-button-icon>
-
-            </div>
         </div>
 
 </template> 
 
 <script setup>
-    import { computed } from 'vue'
+    import { computed, ref, onMounted } from 'vue'
 
     import 'mdui/components/card.js';
     import 'mdui/components/fab.js';
@@ -114,48 +77,28 @@
     import '@mdui/icons/edit.js';
 
     import { formatDateInTime, getSub } from '@/utils/date.js';
+
     import { useRouter } from 'vue-router';
+
+    import request from '@/utils/request.js'
 ;
     const router = useRouter();
 
-
-
     const props = defineProps({
         orderId: {  // 订单在系统内的唯一id
-            type: Number,
-            default: 0
-        },
-        orderDisplayId: { // 订单号
-            type: Number,
-            default: 0
-        },
-        tableNo: { // 桌号
             type: String,
-            default: 'A1'
+            default: 0
         },
-        people: {  // 人数
+        tableId: { // 桌号
+            type: Number
+        },
+        partySize: {  // 人数
             type: Number,
             default: 0
         },
-        state: { // 状态
+        status: { // 状态
             type: Number,
             default: 0
-        },
-        finishedCount: { // 已完成的菜品
-            type: Number,
-            default: 0
-        },
-        totalCount: { // 总菜品数
-            type: Number,
-            default: 0
-        },
-        unfinishedDishes: { // 待完成的菜品
-            type: Array,
-            default: []
-        },
-        tags: { // 标签
-            type: Array,
-            default: []
         },
         orderType: { // 订单类型(0: 堂食, 1: 外带)
             type: Number,
@@ -171,25 +114,21 @@
         }
     })
 
-    const orderDisplayId = computed(() => {
-        // 补齐4位数字
-        return props.orderDisplayId.toString().padStart(4, '0')
-    })
 
     const state = computed(() => {
-        if (props.state === 0) {
+        if (props.status === 0) {
             return '已下单'
-        } else if (props.state === 1) {
+        } else if (props.status === 1) {
             return '制作中'
-        } else if (props.state === 2) {
+        } else if (props.status === 2) {
             return '待结账'
-        } else if (props.state === 3) {
+        } else if (props.status === 3) {
             return '已结账'
         }
         
     })
 
-    const formatWaitTime = computed(() => {
+    const waitTime = computed(() => {
         const waitTime = getSub(new Date(), props.createTime)
         
         if (waitTime.hour > 0) {
@@ -200,6 +139,27 @@
             return `${waitTime.second}秒`
         }
     })
+
+    const finishedSubOrders = ref(-1)
+    const totalSubOrders = ref(-1)
+
+    const finishedDishes = ref(-1)
+    const totalDishes = ref(-1)
+
+    const tableName = ref('加载中')
+
+    onMounted(() => {
+        if (props.orderType == 0) {
+            request.post("/shop/tables/get", {
+                id: props.tableId
+            }).then((res) => {
+                tableName.value = res.data.data.name
+            })
+        }
+        
+    })
+
+
 </script>
 
 <style>
