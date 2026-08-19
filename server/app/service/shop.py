@@ -519,6 +519,15 @@ class Tables:
 
         return Result(self.parent.RESULT.SUCCESS)
 
+    def get(self, tableId: int):
+        tableInfo  =self.repos.tables.get(id=tableId)
+
+        if not tableInfo:
+            return Result(self.parent.RESULT.TABLE_NOT_FOUND, tableId)
+
+        return Result(self.parent.RESULT.SUCCESS, tableInfo)
+    
+
 class ShopService(Service):
     RESULT = ResultCode
 

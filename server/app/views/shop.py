@@ -411,6 +411,24 @@ def deleteTable():
 
     return g.res.OK()
 
+@shopBlueprint.post("/api/shop/tables/get", requiresAuth=True, arguments=[
+    BodyField("id", int, True)
+], responses=[
+    ResponseInfo(0, "OK", None),
+    ResponseInfo(3001, "TableNotFound", None)
+])
+def getTable():
+    tableId = g.args["id"]
+
+    service = ShopService(g.repos)
+
+    result, data = service.tables.get(tableId)
+
+    if result == service.RESULT.TABLE_NOT_FOUND:
+        return g.res.TableNotFound(data)
+
+    return g.res.OK(data)
+
 
 
 
