@@ -237,7 +237,7 @@ const deleteDish = () => {
                     onClick: async() => {
                         try{
                             const res = await request.post('/shop/dishes/delete', {
-                                dish_id: currentDish.value.id
+                                dishId: currentDish.value.id
                             })
 
                             if (res.data.status == 0) {
@@ -464,7 +464,7 @@ onBeforeUnmount(() => {
 
 </script>
 
-<style>
+<style scoped>
     .loading-container {
         height: calc(100vh - 65px);
         width: 100%;
