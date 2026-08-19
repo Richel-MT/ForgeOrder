@@ -133,7 +133,7 @@ class OrderService(Service):
         self.repos.orders.insert(
             id=orderId,
             type=orderType,
-            tableId=tableId,
+            tableId=tableId if orderType == 0 else None,
             partySize=partySize,
         )
 
@@ -178,6 +178,36 @@ class OrderService(Service):
 
         return Result(self.RESULT.SUCCESS, (orderId, 1))
 
+    def getToday(self, offset: int = 0, limit: int = 10):
+
+        orderStatus = self.repos.orderStatus.getTodayOrders(offset, limit)
+
+
+        result = {
+            "unfinished": [],
+            "finished": []
+        }
+
+        for statusInfo in orderStatus:
+
+            order = self.repos.orders.get(id=statusInfo["id"])
+
+            
+
+            if order is None:
+                # 实际上不可能抛出这个异常，除非orderStatus查到了，但是order马上被删除了
+                raise ValueError()
+            
+            order_ = dict(order.copy())
+
+            order_.update(statusInfo)
+
+            if order_["status"] != 3:
+                result["unfinished"].append(order_)
+            else:
+                result["finished"].append(order_)
+
+        return Result(self.RESULT.SUCCESS, result)
         
 
         

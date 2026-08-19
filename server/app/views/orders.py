@@ -74,4 +74,23 @@ def newOrder():
                 "errorInfo": str(data)
             })
 
+@ordersBlueprint.post("/api/order/getToday", requiresAuth=True,
+    arguments=[
+    _Field("offset", int, False, 0, AllOf(Interval(0, None))),
+    _Field("limit", int, False, 10, AllOf(Interval(0, None)))
+],
+    responses=[
+    _Res(0, "OK", None)
+])
+def getTodayOrders():
+    offset = g.args["offset"]
+    limit = g.args["limit"]
+
+    service = OrderService(g.repos)
+
+    status, data = service.getToday(offset, limit)
+
+    return g.res.OK(data)
+
+
     
