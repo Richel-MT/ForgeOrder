@@ -92,5 +92,33 @@ def getTodayOrders():
 
     return g.res.OK(data)
 
+@ordersBlueprint.post("/api/order/get", requiresAuth=True,
+    arguments=[
+        _Field("id", str, True, None),
+        _Field("queries", list, True, None, ForEach(Choices("tableName", "subOrdersCount", "dishesCount")))
+    ], responses=[
+        _Res(0, "OK", None),
+        _Res(3001, "PartialError", None),
+        _Res(3999, "UnknownError", None),
+        _Res(3002, "OrderNotFound", None)
+])
+def getOrder():
+    orderId = g.args["id"]
+    queries = g.args["queries"]
 
-    
+    service = OrderService(g.repos)
+
+    status, data = service.get(orderId, queries)
+
+    if status == service.RESULT.SUCCESS:
+        return g.res.OK(data)
+    elif status == service.RESULT.HAS_PARTIAL_ERROR:
+        return g.res.PartialError(data)
+    elif status == service.RESULT.ORDER_NOT_FOUND:
+        return g.res.OrderNotFound()
+    else:
+        g.logger.setCategory("Orders")
+
+        g.logger.warning(str(status), "UnknownError")
+
+        return g.res.UnknownError()

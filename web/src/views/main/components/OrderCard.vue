@@ -1,5 +1,5 @@
 <template>
-    <div class="card-container">
+    <div class="card-container" ref="containerRef">
             <mdui-card class="order-card" variant="outlined" clickable @click="router.push(`/order/${props.orderId}`)">
                 <!-- 顶部信息-->
                 <div class="card-header">
@@ -62,7 +62,8 @@
 </template> 
 
 <script setup>
-    import { computed, ref, onMounted } from 'vue'
+    import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+    import { useIntersectionObserver } from '@vueuse/core'
 
     import 'mdui/components/card.js';
     import 'mdui/components/fab.js';
@@ -148,16 +149,62 @@
 
     const tableName = ref('加载中')
 
-    onMounted(() => {
+    const isLoading = ref(false)
+
+    const isLoaded = ref(false)
+
+    const containerRef= ref(null)
+
+    const fetchData =  async () => {
+        if (isLoading.value || isLoaded.value) return 
+
+        isLoading.value = true
+
+        const queries = ["subOrdersCount", "dishesCount"]
+
         if (props.orderType == 0) {
-            request.post("/shop/tables/get", {
-                id: props.tableId
-            }).then((res) => {
-                tableName.value = res.data.data.name
+            queries.push("tableName")
+        }
+        try {
+            const res = await request.post("/order/get", {
+                "id": props.orderId,
+                "queries": queries
             })
+
+            finishedSubOrders.value = res.data.data.result?.subOrdersCount.finished
+            totalSubOrders.value = res.data.data.result?.subOrdersCount.total
+
+            finishedDishes.value = res.data.data.result?.dishesCount.finished
+            totalDishes.value = res.data.data.result?.dishesCount.total
+
+            tableName.value = res.data.data.result?.tableName
+
+            isLoaded.value = true
+        } catch (error) {
+            console.error("加载失败", error)
+        } finally {
+            isLoading.value = false
         }
         
+    }
+
+    const { stop } = useIntersectionObserver(
+        containerRef,
+        ([{ isIntersecting }]) => {
+            if (isIntersecting && !isLoaded.value && !isLoading.value) {
+                fetchData()
+            }
+        },
+        {
+            threshold: 0.5
+        }
+    )
+
+    onBeforeUnmount(() => {
+        stop()
     })
+
+
 
 
 </script>

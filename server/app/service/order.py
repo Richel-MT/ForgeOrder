@@ -1,9 +1,11 @@
 from enum import Enum, auto
-from typing import TypedDict
+from typing import TypedDict, Literal, cast
 import datetime
 import uuid
 
+from app.service.shop import ShopService
 from .base import Service, Result
+from ..db.repository.orders import _OrdersRow, _SubOrdersRow, _OrderItemsRow
 
 class ResultCode(Enum):
     INVALID_ORDER_TYPE = auto() # 订单类型不正确
@@ -23,15 +25,19 @@ class ResultCode(Enum):
 
     ORDER_ALREADY_EXIST = auto()
 
-
+    # 成功
     SUCCESS = auto()
+
+    ORDER_NOT_FOUND = auto() # 找不到订单
+    HAS_PARTIAL_ERROR = auto()
 
 class DishesDict(TypedDict):
     id: int
     count: int
     choices: dict
-    
 
+# 找不到菜品异常
+class OrderNotFoundError(Exception): ... 
 
 class OrderService(Service):
     RESULT = ResultCode
@@ -208,8 +214,105 @@ class OrderService(Service):
                 result["finished"].append(order_)
 
         return Result(self.RESULT.SUCCESS, result)
+
+
+    def _getOrderInfo(self, orderId: str, orderInfo: dict):
+        if len(orderInfo) != 0:
+            return
+        
+        row = self.repos.orders.get(id=orderId)
+
+        if row is None:
+            raise OrderNotFoundError()
+        
+        orderInfo.update(row)
+
+    def _getSubOrdersInfo(self, orderId: str, subOrdersInfo: list):
+        if len(subOrdersInfo) != 0:
+            pass
+
+        row = self.repos.subOrders.getAll(totalOrderId=orderId)
+
+        subOrdersInfo.extend(row)
+
+    def _getOrderDishesInfo(self, orderId: str, dishesInfo: list):
+        if len(dishesInfo) != 0:
+            pass
+
+
+        row = self.repos.orderItems.getAll(orderId=orderId)
+
+        dishesInfo.extend(row)
+            
+
+    def get(self, orderId: str, queries: Literal["tableName", "subOrdersCount", "dishesCount"]):
+
+        result = {}
+
+        errors = {}
+
+        orderInfo: _OrdersRow = cast(_OrdersRow, {})
+        orderStatusInfo = {}
+        subOrdersInfo: list[_SubOrdersRow] = [] 
+        orderDishesInfo: list[_OrderItemsRow] = []
+        
+        try:
+            if "tableName" in queries:
+
+                self._getOrderInfo(orderId, orderInfo) #type: ignore
+                
+                shopService = ShopService(self.repos)
+
+                if orderInfo["tableId"] is None:
+                    # 当订单类型为1（外带）时，无桌台信息
+                    errors["tableName"] = "NoTableInfo"
+
+                status, data = shopService.tables.get(orderInfo["tableId"])
+
+                result["tableName"] = data["name"] #type: ignore
+
+            if "subOrdersCount" in queries:
+                finishedCount, totalCount = 0, 0
+
+                self._getSubOrdersInfo(orderId, subOrdersInfo)
+
+                for subOrder in subOrdersInfo:
+                    if subOrder["finishedAt"]:
+                        finishedCount += 1
+
+                    totalCount += 1
+
+                result["subOrdersCount"] = {
+                    "finished": finishedCount,
+                    "total": totalCount
+                }
+
+            if "dishesCount" in queries:
+                finishedCount, totalCount = 0, 0
+
+                self._getOrderDishesInfo(orderId, orderDishesInfo)
+
+                for dish in orderDishesInfo:
+                    if dish["finishedAt"]:
+                        finishedCount += 1
+                    totalCount += 1
+
+                result["dishesCount"] = {
+                    "finished": finishedCount,
+                    "total": totalCount
+                }
+
+
+        except OrderNotFoundError:
+            return Result(self.RESULT.ORDER_NOT_FOUND)
+
+        return Result(self.RESULT.SUCCESS if len(errors) == 0 else self.RESULT.HAS_PARTIAL_ERROR, {
+            "result": result,
+            "errors": errors 
+        })
         
 
+            
         
 
         

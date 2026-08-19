@@ -32,7 +32,7 @@
                 <mdui-circular-progress></mdui-circular-progress>
             </div>
 
-            <div v-if="!hasMore">没有更多了。</div>
+            <div v-if="!hasMore" class="loading-container">没有更多了。</div>
             
         </div>
 
@@ -145,7 +145,7 @@
     }
 
     .main-container {
-        height: calc(100vh - 64px - 80px)
+        height: calc(100vh - 64px - 80px - 32px)
     }
 
     .loading-container {
