@@ -6,6 +6,11 @@
                     <div class="header-left">
 
                         <div>
+                            <!-- <span class="header-left-item-key"></span> -->
+                            <span class="header-left-item-value">{{ displayCode }}</span>
+                        </div>
+
+                        <div>
                             <span class="header-left-item-value">
                                 {{ orderType == 0 ? '堂食' : '外带' }}
                             </span>
@@ -27,8 +32,8 @@
 
                 <!--进度信息-->
                 <div class="progress-content">
-                    <div class="progress-label">订单：
-                        <span v-if="finishedSubOrders != -1 && totalSubOrders != -1">{{ finishedSubOrders }}/ {{ totalSubOrders }}</span>
+                    <div class="progress-label">订单:
+                        <span v-if="finishedSubOrders != -1 && totalSubOrders != -1">{{ finishedSubOrders }}/{{ totalSubOrders }}</span>
                         <span v-else>加载中</span>
                     </div>
                     <mdui-linear-progress :value=" finishedSubOrders != -1 ? finishedSubOrders : undefined" :max="totalSubOrders != -1 ? totalSubOrders : undefined" class="progress-bar"></mdui-linear-progress>
@@ -36,8 +41,8 @@
             
                 <!--进度信息-->
                 <div class="progress-content">
-                    <div class="progress-label">菜品：
-                        <span v-if="finishedDishes != -1 && totalSubOrders != -1">{{ finishedDishes }}/ {{ totalDishes }}</span>
+                    <div class="progress-label">菜品:
+                        <span v-if="finishedDishes != -1 && totalSubOrders != -1">{{ finishedDishes }}/{{ totalDishes }}</span>
                         <span v-else>加载中</span>
                     </div>
                     <mdui-linear-progress :value="finishedDishes != -1 ? finishedDishes : undefined" :max="totalDishes != -1 ? totalDishes : undefined" class="progress-bar"></mdui-linear-progress>
@@ -112,6 +117,10 @@
         totalPrice: { // 总金额（单位：分）
             type: Number,
             default: 0
+        },
+        displayCode: {
+            type: Number,
+            default: -1
         }
     })
 
@@ -233,6 +242,7 @@
 
     .header-left-item-key {
         margin-right: 5px;
+        font-size: 12px
     }
 
     .header-left-item-value {
@@ -264,38 +274,10 @@
         font-size: 14px;
     }
 
-    .tags-content {
-        display: flex;
-         gap: 8px;
-    }
-
-    .tag-card {
-        font-size: 14px;
-        padding-top: 2px;
-        padding-bottom: 2px;
-        padding-left: 6px;
-        padding-right: 6px;
-        
-    }
-
-    .tag-card-red {
-        border: 1px solid #BB1614;
-        color: #BB1614;
-    }
-
-    .tag-card-blue {
-        border: 1px solid #18489c;
-        color: #18489c;
-    }
-
-    .tag-card-green {
-        border: 1px solid #189C25;
-        color: #189C25;
-    }
 
     .footer-content {
         display: flex;
-         justify-content: space-between;
+        justify-content: space-between;
     }
 
     .footer-item {

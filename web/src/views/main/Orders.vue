@@ -13,10 +13,9 @@
         <div class="container mdui-prose main-container" ref="contentContainer">
             <h2>{{$t('orders.main.today')}}</h2>
 
-            <h3>未完成</h3>
-
             <div v-for="order in unfinishedOrders" :key="order.id">
                 <OrderCard 
+            :displayCode="order.displayCode"
             :orderId="order.id" 
             :tableId="order.tableId" 
             :partySize="order.partySize" 
@@ -145,7 +144,7 @@
     }
 
     .main-container {
-        height: calc(100vh - 64px - 80px - 32px)
+        height: calc(100dvh - 64px - 80px - 24px)
     }
 
     .loading-container {

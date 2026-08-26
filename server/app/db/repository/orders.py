@@ -6,6 +6,7 @@ from core.database.repository.schema import Integer, String, JSON, DateTime, Boo
 
 class _OrdersRow(TypedDict):
     id: str
+    displayCode: int
     type: int
     tableId: int
     partySize: int
@@ -49,6 +50,7 @@ class OrdersRepository(Repository[_OrdersRow]):
 
     columns = [
         Column("id", String(36), primaryKey=True), # uuid v7
+        Column("displayCode", Integer(), notNull=True), # 订单显示码
         Column("type", Integer(), notNull=True), #  0: 堂食 --1：打包
         Column("tableId", Integer(), foreign=("tables", "id")),
         Column("partySize", Integer(), notNull=True, default=1), # 人数，默认1人 

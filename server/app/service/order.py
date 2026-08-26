@@ -6,6 +6,7 @@ import uuid
 from app.service.shop import ShopService
 from .base import Service, Result
 from ..db.repository.orders import _OrdersRow, _SubOrdersRow, _OrderItemsRow
+from core.utils.common import uuidToShortCode
 
 class ResultCode(Enum):
     INVALID_ORDER_TYPE = auto() # 订单类型不正确
@@ -130,7 +131,9 @@ class OrderService(Service):
             totalPrice += dishTotalPrice
 
         # 生成订单ID
-        orderId = str(uuid.uuid7())
+        orderUUID = uuid.uuid7()
+        orderDisplayCode = uuidToShortCode(orderUUID)
+        orderId = str(orderUUID)
 
         currentTime= datetime.datetime.now()
 
@@ -141,6 +144,7 @@ class OrderService(Service):
             type=orderType,
             tableId=tableId if orderType == 0 else None,
             partySize=partySize,
+            displayCode=orderDisplayCode,
         )
 
 
@@ -244,8 +248,18 @@ class OrderService(Service):
 
         dishesInfo.extend(row)
             
+    def _getOrderStatusInfo(self, orderId: str, orderStatusInfo: dict):
+        if len(orderStatusInfo) != 0:
+            pass
 
-    def get(self, orderId: str, queries: Literal["tableName", "subOrdersCount", "dishesCount"]):
+        row = self.repos.orderStatus.get(id=orderId)
+
+        if row is None:
+            raise OrderNotFoundError()
+
+        orderStatusInfo.update(row)
+        
+    def get(self, orderId: str, queries: Literal["tableName", "subOrdersCount", "dishesCount", "basicInfo"]):
 
         result = {}
 
@@ -302,6 +316,16 @@ class OrderService(Service):
                     "total": totalCount
                 }
 
+            if "basicInfo" in queries:
+                self._getOrderInfo(orderId, orderInfo) #type: ignore
+                self._getOrderStatusInfo(orderId, orderStatusInfo)
+
+                result_ = dict(orderInfo.copy())
+                result_.update(orderStatusInfo)
+
+                print(result_)
+
+                result["basicInfo"] = result_ 
 
         except OrderNotFoundError:
             return Result(self.RESULT.ORDER_NOT_FOUND)

@@ -95,7 +95,7 @@ def getTodayOrders():
 @ordersBlueprint.post("/api/order/get", requiresAuth=True,
     arguments=[
         _Field("id", str, True, None),
-        _Field("queries", list, True, None, ForEach(Choices("tableName", "subOrdersCount", "dishesCount")))
+        _Field("queries", list, True, None, ForEach(Choices("tableName", "subOrdersCount", "dishesCount", "basicInfo")))
     ], responses=[
         _Res(0, "OK", None),
         _Res(3001, "PartialError", None),

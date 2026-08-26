@@ -1,16 +1,7 @@
-import traceback
+from uuid import UUID
 from typing import Literal
-import os
+import datetime
 
-# import extensions
-
-# def create_server_info_by_exception(e: Exception):
-#     info = ""
-#     for line in traceback.format_exception(type(e), e, e.__traceback__):
-#         info += line
-#         info += "\n"
-    
-#     return info
 
 def padString(string: str,
                length: int,
@@ -29,4 +20,35 @@ def padString(string: str,
         return padChar * padLength + string
     else:
         return string + padChar * padLength
-    
+
+def uuid7ToDatetime(uuid: UUID) -> datetime.datetime:
+
+    # 转换为时间戳
+    timestamp = (uuid.int >> 80) & 0xFFFFFFFFFFFF
+
+    # 转换为datetime
+    dt = datetime.datetime.fromtimestamp(timestamp / 1000.0 ) # 转换为小数秒
+
+    # 保留毫秒精度
+    dt = dt.replace(microsecond=0)
+
+    dt.astimezone() # 使用系统默认时区
+
+    return dt
+
+def datetimeToShortCode(dt: datetime.datetime):
+
+    dayStart = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # 计算与00:00:00的差值
+    diff = dt - dayStart
+
+    # 计算已经过去的秒数
+    seconds = diff.total_seconds()
+
+    return int(seconds)
+
+def uuidToShortCode(uuid: UUID):
+    dt = uuid7ToDatetime(uuid)
+
+    return datetimeToShortCode(dt)
