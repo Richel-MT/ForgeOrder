@@ -9,18 +9,19 @@ class Validator:
     allowTypes : type | None = None # None 表示接收任意类型
 
     def validate(self, value: Any = None, context: Any = None) -> ValidationResult:
-        if self.allowTypes is None or isinstance(value, self.allowTypes):
-
-            result =  self._validate(value, context)
-            
-            return ValidationResult(result.success, result.error)
-        else:
-            # return VerifyResult(False, ValueTypeError(self.allow_types))
-        
+        if not (self.allowTypes is None or isinstance(value, self.allowTypes)):
             raise UnsupportedTypeError(type(self), self.allowTypes, type(value))
         
+        result =  self._validate(value, context)
+        
+        
+        return ValidationResult(result.success, result.error)
+
+        
+
+        
     def _validate(self, value: Any, context: Any = None) -> ValidationResult: #type: ignore
-        pass
+        raise NotImplementedError
 
     def __call__(self, value: Any) -> ValidationResult:
         return self.validate(value)
