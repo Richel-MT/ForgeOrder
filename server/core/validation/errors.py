@@ -21,9 +21,12 @@ class ValidationError:
 
 @dataclass
 class ValueTypeError(ValidationError):
-    expectedType: type
+    expectedType: type | tuple[type]
 
     def __str__(self) -> str:
-        return f"The handler only allows {self.expectedType} type."
+        if isinstance(self.expectedType, type):
+            return f"The value must be {self.expectedType.__name__} type."
+        else:
+            return f"The value must be {",".join(map(lambda x: x.__name__, self.expectedType))} type"
 
 
