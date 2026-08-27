@@ -13,12 +13,11 @@ class RangeError(ValidationError):
     def __str__(self):
         return f"Value must be in {self._range}"
 
-@dataclass
-class UncomparableError(ValidationError):
-    obj: Any
+class UncomparableValueError(Exception):
 
-    def __str__(self):
-        return f"Validator 'Range' only supports comparable types. {self.obj} is not comparable."
+    def __init__(self, valueType: type):
+
+        super().__init__(f"The type of value {valueType} is not compareable.")
 
 class Range(Validator):
     '''
@@ -71,7 +70,7 @@ class Range(Validator):
                         return ValidationResult(False, RangeError(self))
 
             except TypeError:
-                return ValidationResult(False, UncomparableError(value))
+                raise UncomparableValueError(type(value))
 
         if self.maxValue:
             try:
@@ -83,13 +82,10 @@ class Range(Validator):
                         return ValidationResult(False, RangeError(self))
 
             except TypeError:
-                return ValidationResult(False, UncomparableError(value))
+                raise UncomparableValueError(type(value))
     
-        if self.minValue and self.maxValue:
-            if value > self.maxValue.value:
-                return ValidationResult(False, RangeError(self))
     
-            return ValidationResult(True)
+        return ValidationResult(True)
     
     def __str__(self):
         if self.minValue and self.maxValue:
