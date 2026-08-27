@@ -24,7 +24,16 @@ class AllOfError(ValidationError):
     def __str__(self) -> str:
         return "The value must match all of the following validators: " + ", ".join([str(child) for child in self.children])
 
+class AllOfAssertError(ValidationError):
+    children: ValidationError
 
+    def __init__(self, children: ValidationError):
+        self.children = children
+
+    def __str__(self) -> str:
+        return f"Validation abort because: {self.children}"
+
+    
 
 class AnyOf(Validator):
     '''
@@ -43,8 +52,6 @@ class AnyOf(Validator):
             result = validator.validate(value, context)
             if result.success:
                 return result
-            elif isinstance(result.error, ValueTypeError):
-                return ValidationResult(False, result.error)
             else:
                 errors.append(result.error)
         
@@ -71,7 +78,11 @@ class AllOf(Validator):
         for validator in self.validators:
             result = validator.validate(value, context)
             if not result.success:
+
+                if isinstance(result.error, ValueTypeError):
+                    return ValidationResult(False, AllOfAssertError(result.error))
                 errors.append(result.error)
+            
             
         if len(errors) == 0:
             return ValidationResult(True)
