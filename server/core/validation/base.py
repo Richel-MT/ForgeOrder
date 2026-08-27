@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
 
 from ._errors import ValidationError
 
@@ -12,5 +11,3 @@ class ValidationResult:
     def __bool__(self):
         return self.success
 
-def validate(value: Any, validator: 'Validator') -> ValidationResult:
-    return validator.validate(value)
