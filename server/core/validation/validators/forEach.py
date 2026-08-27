@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 from .base import Validator, ValidationResult
 from ..errors import ValidationError
+from .always import AlwaysPass
+from .logical import AllOf
 
 class NotIterableError(Exception):
     '''
@@ -35,8 +37,13 @@ class ForEach(Validator):
     '''
     allowTypes = None
     
-    def __init__(self, validator: Validator):
-        self.validator = validator
+    def __init__(self, *validators):
+        if len(validators) == 0:
+            self.validator = AlwaysPass()
+        elif len(validators) > 1:
+            self.validator = AllOf(*validators)
+        else:
+            self.validator = validators[0]
 
     def _validate(self, value: Any, context: Any = None):
         if not hasattr(value, "__iter__"):

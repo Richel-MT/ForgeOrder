@@ -1,6 +1,9 @@
 from ..base import ValidationResult
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from ..exceptions import UnsupportedTypeError
+
+if TYPE_CHECKING:
+    from .logical import AllOf, AnyOf, Not
 
 class Validator:
     allowTypes : type | None = None # None 表示接收任意类型
@@ -21,6 +24,18 @@ class Validator:
 
     def __call__(self, value: Any) -> ValidationResult:
         return self.validate(value)
+
+    def __and__(self, other: 'Validator') -> 'AllOf':
+        from .logical import AllOf
+        return AllOf(self, other)
+
+    def __or__(self, other: 'Validator') -> 'AnyOf':
+        from .logical import AnyOf
+        return AnyOf(self, other)
+
+    def __invert__(self) -> 'Not':
+        from .logical import Not
+        return Not(self)
 
     def bind(self, value: Any) -> 'ValidatorWithValue':
         return ValidatorWithValue(self, value)

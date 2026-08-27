@@ -1,7 +1,7 @@
 from typing import Any
 
 from .base import Validator, ValidationResult
-from ..errors import ValidationError
+from ..errors import ValidationError, ValueTypeError
 
 
 class AnyOfError(ValidationError):  
@@ -43,6 +43,8 @@ class AnyOf(Validator):
             result = validator.validate(value, context)
             if result.success:
                 return result
+            elif isinstance(result.error, ValueTypeError):
+                return ValidationResult(False, result.error)
             else:
                 errors.append(result.error)
         
