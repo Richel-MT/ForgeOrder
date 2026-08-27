@@ -2,7 +2,7 @@ from typing import Any
 from dataclasses import dataclass
 
 from .base import Validator, ValidationResult
-from ..errors import ValidationError, ValueTypeError
+from .._errors import ValidationError, ValueTypeError
 
 
 class AnyOfError(ValidationError):  

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .base import Validator, ValidationResult
-from ..errors import ValidationError
+from .._errors import ValidationError
 
 @dataclass
 class ChoicesError(ValidationError):

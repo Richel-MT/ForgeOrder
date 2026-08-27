@@ -1,7 +1,7 @@
 from typing import Any
 
 from .base import Validator, ValidationResult
-from ..errors import ValidationError
+from .._errors import ValidationError
 
 class EmptyError(ValidationError):
     def __str__(self):

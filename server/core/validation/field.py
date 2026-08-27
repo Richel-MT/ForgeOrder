@@ -3,7 +3,7 @@ from typing import Any
 
 from .validators import Validator
 from .base import ValidationResult
-from .errors import ValueTypeError
+from ._errors import ValueTypeError
 
 @dataclass
 class FieldDefinition:

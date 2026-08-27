@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from .errors import ValidationError
+from ._errors import ValidationError
 
 @dataclass
 class ValidationResult:
