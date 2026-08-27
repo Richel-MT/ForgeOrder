@@ -1,4 +1,5 @@
 from typing import Any
+from dataclasses import dataclass
 
 from .base import Validator, ValidationResult
 from ..errors import ValidationError, ValueTypeError
@@ -24,11 +25,9 @@ class AllOfError(ValidationError):
     def __str__(self) -> str:
         return "The value must match all of the following validators: " + ", ".join([str(child) for child in self.children])
 
+@dataclass
 class AllOfAssertError(ValidationError):
     children: ValidationError
-
-    def __init__(self, children: ValidationError):
-        self.children = children
 
     def __str__(self) -> str:
         return f"Validation abort because: {self.children}"
