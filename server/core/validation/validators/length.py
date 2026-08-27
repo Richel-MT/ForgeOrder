@@ -12,23 +12,41 @@ class LengthError(ValidationError):
     def __str__(self) -> str:
         return f"The length of value must be between {self.min} and {self.max}."
 
+class LengthIsUnavailableError(Exception):
+    
+    def __init__(self, valueType: type):
+        super().__init__(f"Failed to get the length of {valueType}.")
+
 
 class Length(Validator):
     '''
     限制值长度在指定范围内。
     允许的类型：str
     '''
-    allowTypes = str | dict | list | None #type: ignore
+    allowTypes = None
 
     def __init__(self, minValue: int | None, maxValue: int | None):
         self.minValue = minValue
         self.maxValue = maxValue
         
     def _validate(self, value: Any, context: Any = None):
-        if not isinstance(value, str):
-            return ValidationResult(False, LengthError(self.minValue, self.maxValue))
 
-        if self.minValue is None or self.minValue <= len(value) and self.maxValue is None or self.maxValue >= len(value):
-            return ValidationResult(True)
-        else:
-            return  ValidationResult(False, LengthError(self.minValue, self.maxValue))
+        result = True
+
+        if self.minValue:
+            try:
+                result = len(value) >= self.minValue
+            except ValueError:
+                raise LengthIsUnavailableError(type(value))
+
+        if self.maxValue:
+            try:
+                result = len(value) <= self.maxValue
+            except ValueError:
+                raise LengthIsUnavailableError(type(value))
+
+        return ValidationResult(
+            result,
+            None if result else LengthError(self.minValue, self.maxValue)
+        )
+                                       
