@@ -1,7 +1,7 @@
 import os
 
 from core.validation.field import FieldDefinition
-from core.validation.validators import Choices, NotEmpty, Interval, FunctionHandler, AllOf, Open, Closed
+from core.validation.validators import Choices, NotEmpty, Interval, AllOf, Open, Closed
 from core.validation.base import ValidationResult
 
 

@@ -2,7 +2,7 @@ from .base import Validator
 from .choices import Choices
 from .dictOf import DictOf
 from .forEach import ForEach
-from .interval import Interval
+from .interval import Interval, Closed, Open
 from .length import Length
 from .logical import AnyOf, AllOf, Not
 from .notEmpty import NotEmpty

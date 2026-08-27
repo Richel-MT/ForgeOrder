@@ -5,47 +5,70 @@ from .base import Service
 from .exceptions import *
 from core.typeConvert import converter, TypeConvertError
 from core.validation.field import FieldDefinition
-from core.validation.validators import Choices, Interval, NotEmpty, Closed, If
+from core.validation.validators import Choices, Interval, NotEmpty, Closed, If, Ref, Equal
 from core.validation.condition import RefEqual
 
 
-SETTINGS = [
-    FieldDefinition("shop.name", str, "ForgeOrder", NotEmpty()),
+class SETTINGS:
+    SHOP_NAME = "shop.name"
+    SHOP_IS_BUSINESS = "shop.isBusiness"
 
-    FieldDefinition("shop.isBusiness", bool, False), # 是否是营业状态
+    PRINTER_ENABLED = "printer.enabled"
+    PRINTER_CONNECTION_TYPE = "printer.connection.type"
+    PRINTER_ENCODING = "printer.encoding"
+    PRINTER_PROFILE = "printer.profile"
 
-    FieldDefinition("printer.enabled", bool, False), # 是否启用打印机
+    PRINTER_NETWORK_IP = "printer.connection.network.ip"
+    PRINTER_NETWORK_PORT = "printer.connection.network.port"
+    PRINTER_NETWORK_TIMEOUT = "printer.connection.network.timeout"
 
-    FieldDefinition("printer.connection.type", str, "", 
-                    If(RefEqual("printer.enabled", True),Choices("Network", "Usb", "Win32Raw",))),
+    PRINTER_USB_VID = "printer.connection.usb.vid"
+    PRINTER_USB_PID = "printer.connection.usb.pid"
+
+    PRINTER_WIN32_NAME = "printer.connection.win32.name"
+    PRINTER_DOTS_PER_LINE = "printer.dotsPerLine"
+    PRINTER_QR_MODEL = "printer.QRCode.model"
+    PRINTER_QR_NATIVE = "printer.QRCode.native"
+    PRINTER_QR_CORRECTION = "printer.QRCode.correction"
+    
+
+
+SETTINGS_SCHEMA = [
+    FieldDefinition(SETTINGS.SHOP_NAME, str, "ForgeOrder", NotEmpty()),
+
+    FieldDefinition(SETTINGS.SHOP_IS_BUSINESS, bool, False), # 是否是营业状态
+
+    FieldDefinition(SETTINGS.PRINTER_ENABLED, bool, False), # 是否启用打印机
+
+    FieldDefinition(SETTINGS.PRINTER_CONNECTION_TYPE, str, "", 
+                    If(Ref("printer.enabled") == True,Choices("Network", "Usb", "Win32Raw",))),
 
     FieldDefinition("printer.connection.network.ip", str, "",
-                     If(RefEqual("printer.connection.type", "Network"), NotEmpty())),
+                     If(Ref(SETTINGS.PRINTER_CONNECTION_TYPE) == "Network", NotEmpty())),
 
     FieldDefinition("printer.connection.network.port", int, 9100, 
-                     If(RefEqual("printer.connection.type", "Network"),Interval(Closed(1), Closed(65535)))
-                     ),
+                     If(Ref(SETTINGS.PRINTER_CONNECTION_TYPE) == "Network",Interval(Closed(1), Closed(65535)))),
     FieldDefinition("printer.connection.network.timeout", int, 10, 
-                     If(RefEqual("printer.connection.type", "Network"),Interval(0, None))),
+                     If(Ref(SETTINGS.PRINTER_CONNECTION_TYPE) == "Network",Interval(0, None))),
 
     FieldDefinition("printer.connection.usb.vid", int, 0, 
-                     If(RefEqual("printer.connection.type", "Usb"),NotEmpty())),
+                     If(Ref(SETTINGS.PRINTER_CONNECTION_TYPE) == "Usb" ,NotEmpty())),
 
     FieldDefinition("printer.connection.usb.pid", int, 0, 
-                     If(RefEqual("printer.connection.type", "Usb"),NotEmpty())),
+                     If(Ref(SETTINGS.PRINTER_CONNECTION_TYPE) == "Usb", NotEmpty())),
 
     FieldDefinition("printer.connection.win32.name", str, "", 
-                     If(RefEqual("printer.connection.type", "Win32Raw"),NotEmpty())),
+                     If(Ref(SETTINGS.PRINTER_CONNECTION_TYPE) == "Win32Raw", NotEmpty())),
 
 
-    FieldDefinition("printer.encoding", str, "UTF-8", NotEmpty()),
+    FieldDefinition(SETTINGS.PRINTER_ENCODING, str, "UTF-8", NotEmpty()),
 
-    FieldDefinition("printer.profile", str, "Generic", NotEmpty()),
-    FieldDefinition("printer.dotsPerLine", int, 576, Interval(1, None)),  # 每行像素数
+    FieldDefinition(SETTINGS.PRINTER_PROFILE, str, "Generic", NotEmpty()),
+    FieldDefinition(SETTINGS.PRINTER_DOTS_PER_LINE, int, 576, Interval(1, None)),  # 每行像素数
 
-    FieldDefinition("printer.QRCode.model", int, 2, Choices(1, 2, 3)), # 二维码模式，1是QR Code Model1，2是QR Code Model2，3是Micro QR Code （仅支持部分打印机）
-    FieldDefinition("printer.QRCode.native", bool, False), # 是打印机生成qrcode还是escpos库生成
-    FieldDefinition("printer.QRCode.correction", str, "Q", Choices("L", "M", "Q", "H")), # 错误纠正等级
+    FieldDefinition(SETTINGS.PRINTER_QR_MODEL, int, 2, Choices(1, 2, 3)), # 二维码模式，1是QR Code Model1，2是QR Code Model2，3是Micro QR Code （仅支持部分打印机）
+    FieldDefinition(SETTINGS.PRINTER_QR_NATIVE, bool, False), # 是打印机生成qrcode还是escpos库生成
+    FieldDefinition(SETTINGS.PRINTER_QR_CORRECTION, str, "Q", Choices("L", "M", "Q", "H")), # 错误纠正等级
 ]
 
 
@@ -57,7 +80,7 @@ class SettingsService(Service):
         初始化设置项。
         '''
 
-        for prop in SETTINGS:
+        for prop in SETTINGS_SCHEMA:
 
             row = self.repositoryManager.settings.get(key=prop.key)
 
@@ -92,7 +115,7 @@ class SettingsService(Service):
         '''
         获取设置项的值。
         '''
-        prop = next((prop for prop in SETTINGS if prop.key == key), None)
+        prop = next((prop for prop in SETTINGS_SCHEMA if prop.key == key), None)
         
         if prop is None:
             raise SettingNotFoundError(key)
@@ -110,7 +133,7 @@ class SettingsService(Service):
         '''
         设置设置项的值。
         '''
-        prop = next((prop for prop in SETTINGS if prop.key == key), None)
+        prop = next((prop for prop in SETTINGS_SCHEMA if prop.key == key), None)
         
         if prop is None:
             raise SettingNotFoundError(key)

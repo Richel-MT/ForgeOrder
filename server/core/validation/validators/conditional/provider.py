@@ -1,11 +1,15 @@
 from typing import Any, Callable
 
 from .exceptions import ContextAccessError
+from .condition import Equal
 
 
 class ValueProvider:
     def get(self, context: Any):
         raise NotImplementedError
+
+    def __eq__(self, other): #type: ignore
+        return Equal(self, other)
 
 
 class Ref(ValueProvider):

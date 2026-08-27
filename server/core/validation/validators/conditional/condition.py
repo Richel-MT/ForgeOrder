@@ -1,6 +1,5 @@
-from typing import Any, Callable
+from typing import Any, Callable, TYPE_CHECKING
 
-from .provider import Ref
 
 
 class Condition:
@@ -30,13 +29,3 @@ class Equal(Condition):
     def __str__(self):
         return f"{self.leftValue} == {self.rightValue}"
 
-class RefEqual(Condition):
-    def __init__(self, name: str, value: Any):
-        self.ref = Ref(name)
-        self.value = value
-
-    def check(self, context: Any = None):
-        return self.ref.get(context) == self.value
-
-    def __str__(self):
-        return f"{self.ref} == {self.value}"
