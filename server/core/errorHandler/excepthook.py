@@ -1,4 +1,3 @@
-from concurrent.futures import thread
 import datetime
 import sys
 import threading
@@ -56,12 +55,11 @@ def excepthook(type, value, tb, thread: threading.Thread | None = None):
             action="UncaughtException",
         )
             
+    else:
+        consoleLogger = getConsoleLogger("errorHandler")
+        consoleLogger.error(f"Uncaught exception: {type.__name__}: {value}  in thread {thread.name}")
         
-        
-    consoleLogger = getConsoleLogger("errorHandler")
-    consoleLogger.error(f"Uncaught exception: {type.__name__}: {value}  in thread {thread.name}")
-    
-    consoleLogger.error(''.join(traceback.format_exception(type, value, tb)))
+        consoleLogger.error(''.join(traceback.format_exception(type, value, tb)))
 
     generateErrorReport(
         errorType="critical",

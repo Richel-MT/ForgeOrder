@@ -1,0 +1,30 @@
+from dataclasses import dataclass
+from typing import Any
+
+from .base import Validator, ValidationResult
+from ..errors import ValidationError
+
+@dataclass
+class ChoicesError(ValidationError):
+    choices: tuple[Any, ...]
+
+    def __str__(self) -> str:
+        return f"The value must be in {self.choices}"
+
+    
+class Choices(Validator):
+    '''
+    限制值只能是指定的选项。
+    允许的类型：Any
+    '''
+    allowTypes = None
+
+    def __init__(self, *choices):
+        self.choices = choices
+        
+    def _validate(self, value: Any, context: Any = None):
+        if value in self.choices:
+            return ValidationResult(True)
+        else:
+            return ValidationResult(False, ChoicesError(self.choices))
+

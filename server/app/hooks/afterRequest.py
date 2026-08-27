@@ -21,15 +21,19 @@ def afterRequest(response: Response):
 
     g.logger.info(logInfo, "ResponseInfo")
 
-    if response.json:
-        if not response.json.get("status") and not response.json.get("message"):
-            raise ValueError(f"Response is invalid.")
+    data = response.json
+
+    if data:
+
+        print(data, type(data))
+        if  data.get("status") == None and data.get("message") == None:
+            pass
         else:
-            if response.json["status"] != 0:
-                g.logger.warning({
-                                "status": response.json["status"],
-                                "message": response.json["message"],
-                }, "ResponseStatusError")
+            if data["status"] != 0:
+                g.logger.info({
+                                "status": data["status"],
+                                "message": data["message"],
+                }, "StatusWarning")
 
     if cost > 500:
         g.logger.warning('', "TooSlowRequest")
