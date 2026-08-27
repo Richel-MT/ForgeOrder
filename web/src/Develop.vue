@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-    import TopBar from '@/components/Topbar.vue'
+    import TopBar from '@/components/TopBar.vue'
 
     import 'mdui/components/list.js';
     import 'mdui/components/list-item.js';
