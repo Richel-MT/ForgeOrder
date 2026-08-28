@@ -1,30 +1,32 @@
 from typing import Any, Literal
+import warnings
 
 from .base import Validator, ValidationResult
 from .typeOf import TypeOf
 from .length import Length
 from .choices import Choices
 from ..exceptions import NonMergeableValidatorError
+from ..warnings import ValidationWarning
 
 class StringOf(Validator):
 
-    def __init__(self, minLength: int | None = None, maxLength: int | None = None, *choices):
-        if choices and (minLength or maxLength):
+    def __init__(self, *choices, min: int | None = None, max: int | None = None, ):
+        if choices and (min or max):
             raise ValueError("choices and minLength/maxLength cannot be used together.")
 
         self.choices = choices
-        self.minLength = minLength
-        self.maxLength = maxLength
+        self.minLength = min
+        self.maxLength = max
 
         self._validator = TypeOf(str)
         self._length = None
         self._choices = None
 
-        if minLength or maxLength:
-            self._length = Length(minLength, maxLength)
+        if min or max:
+            self._length = Length(min, max)
             self._validator &= self._length
 
-        if choices:
+
             self._choices = Choices(*choices)
 
             self._validator &= self._choices
@@ -65,5 +67,14 @@ class StringOf(Validator):
 
     def __eq__(self, other):
         return isinstance(other, StringOf) and self._validator == other._validator
+
+    def __repr__(self):
+        args = []
+
+        args.append(f"min={self.minLength}") if self.minLength is not None else ...
+        args.append(f"max={self.maxLength}") if self.maxLength is not None else ...
+        args.append(f"choices={self.choices}")     if self.choices else ""
+
+        return f"StringOf({", ".join(args)})"
 
     
