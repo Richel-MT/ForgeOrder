@@ -162,6 +162,9 @@ class Range(Validator):
                 self.isMaxEqual == other.isMaxEqual
                 )
 
+    def __repr__(self):
+        return f"Range({str(self)})"
+
                 
             
 
