@@ -18,6 +18,9 @@ class ListOf(Validator):
 
     def mergeAnd(self, other: 'ListOf') -> 'ListOf':
         return ListOf(*(self.subValidators + other.subValidators))
+
+    def __eq__(self, other):
+        return isinstance(other, ListOf) and self.subValidators == other.subValidators
     
 
 

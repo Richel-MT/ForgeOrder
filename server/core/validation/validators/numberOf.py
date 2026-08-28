@@ -70,6 +70,9 @@ class NumberOf(Validator):
         newValidator._range = newRange
 
         return newValidator
+
+    def __eq__(self, other):
+        return isinstance(other, NumberOf) and self.valueType == other.valueType and self._range == other._range
          
     
 

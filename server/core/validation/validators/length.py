@@ -73,4 +73,7 @@ class Length(Validator):
 
         return Length(newMin, newMax)
 
+    def __eq__(self, other):
+        return isinstance(other, Length) and self.minValue == other.minValue and self.maxValue == other.maxValue
+
                                        

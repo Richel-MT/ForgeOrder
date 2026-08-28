@@ -154,6 +154,15 @@ class Range(Validator):
 
         return newRange
 
+    def __eq__(self, other):
+        return (isinstance(other, Range)            and 
+                self.minValue   == other.minValue   and
+                self.isMinEqual == other.isMinEqual and
+                self.maxValue   == other.maxValue   and
+                self.isMaxEqual == other.isMaxEqual
+                )
+
+                
             
 
 

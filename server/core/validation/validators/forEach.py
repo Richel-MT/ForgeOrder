@@ -63,6 +63,8 @@ class ForEach(Validator):
             return ValidationResult(False, ForEachError(*errors))
 
     def mergeAnd(self, other: 'ForEach'):
-
         return ForEach(self.validator & other.validator)
+
+    def __eq__(self, other):
+        return isintance(other, ForEach) and self.validator == other.validator
 

@@ -34,3 +34,6 @@ class Choices(Validator):
 
     def __repr__(self):
         return f"Choices({", ".join([repr(choice) for choice in self.choices])})"
+
+    def __eq__(self, other): return isinstance(other, Choices) and self.choices == other.choices
+    

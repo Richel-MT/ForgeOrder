@@ -1,6 +1,6 @@
 from typing import Any, cast
 from dataclasses import dataclass
-from collections import defaultdict
+from collections import defaultdict, Counter
 from functools import reduce
 
 from .base import Validator, ValidationResult
@@ -40,17 +40,23 @@ def mergeValidator(parentValidatorClass: type[AnyOf] | type[AllOf], subValidator
         return subValidators
 
 
+    subValidators_ = []
     groups: dict[type[Validator], list[Validator]] = defaultdict(list)
-
     mergedValidators: list[Validator] = []
 
+    # 展平
     for v in subValidators:
 
         if type(v) is parentValidatorClass:
-            mergedValidators.extend(v.validators)
+            subValidators_.extend(v.validators)
         else:
-            groups[type(v)].append(v)
+            subValidators_.append(v)
 
+    # 分类
+    for v in subValidators_:
+        groups[type(v)].append(v)
+
+    # 合并
     for _, validators in groups.items():
         try:
             mergedValidators.append(reduce(
@@ -89,6 +95,9 @@ class AnyOf(Validator):
 
     def __repr__(self):
         return f"AnyOf({', '.join([repr(v) for v in self.validators])})"
+
+    def __eq__(self, other):
+        return isinstance(other, AnyOf) and Counter(self.validators) == Counter(other.validators)
     
     def _validate(self, value: Any, context: Any = None):
         errors = []
@@ -156,6 +165,9 @@ class AllOf(Validator):
     def __repr__(self):
         return f"AllOf({', '.join([repr(v) for v in self.validators])})"
 
+    def __eq__(self, other):
+        return isinstance(other, AllOf) and Counter(self.validators) == Counter(other.validators)
+
 class Not(Validator):
     allowTypes = None
 
@@ -177,4 +189,7 @@ class Not(Validator):
 
     def __repr__(self):
         return f"Not({repr(self.validator)})"
+
+    def __eq__(self, other):
+        return isinstance(other, Not) and self.validator == other.validator
         

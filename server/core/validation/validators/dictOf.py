@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
+from collections import Counter
 
 from .base import Validator, ValidationResult
 from .._errors import ValidationError
@@ -130,3 +131,9 @@ class DictOf(Validator):
 
     def __repr__(self):
         return f"DictOf(strictMode={self.strictMode},\n{"    \n".join([repr(field) for field in self.fields])}\n)"
+
+    def __eq__(self, other): 
+        if isinstance(other, DictOf):
+            return Counter(self.fields) == Counter(other.fields)
+        else:
+            return False

@@ -15,6 +15,8 @@ class TypeOf(Validator):
             return ValidationResult(False, ValueTypeError(self.valueTypes))
 
     def mergeOr(self, other: 'TypeOf') -> 'TypeOf':
-
         return TypeOf(*(self.valueTypes + other.valueTypes))
+
+    def __eq__(self, other):
+        return isinstance(other, TypeOf) and self.valueTypes == other.valueTypes
         

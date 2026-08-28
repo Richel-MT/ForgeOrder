@@ -63,4 +63,7 @@ class StringOf(Validator):
     def mergeOr(self, other: 'StringOf') -> 'StringOf':
         return self._merge(other, "or")
 
+    def __eq__(self, other):
+        return isinstance(other, StringOf) and self._validator == other._validator
+
     

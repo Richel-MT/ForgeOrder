@@ -35,4 +35,7 @@ class NotEmpty(Validator):
         else:
             return ValidationResult(True)
 
+    def __eq__(self, other):
+        return isinstance(other, NotEmpty)
+
     
