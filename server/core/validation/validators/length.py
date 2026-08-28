@@ -1,10 +1,12 @@
 from typing import Any
 from dataclasses import dataclass
+import warnings
 
 from core.validation.exceptions import NonMergeableValidatorError
 
 from .base import Validator, ValidationResult
 from .._errors import ValidationError
+from ..warnings import ValidationWarning
 
 @dataclass
 class LengthError(ValidationError):
@@ -30,6 +32,9 @@ class Length(Validator):
     def __init__(self, minValue: int | None, maxValue: int | None):
         self.minValue = minValue
         self.maxValue = maxValue
+
+        if minValue and maxValue and minValue > maxValue:
+            warnings.warn("minLength must be less than or equal to maxLength.", category=ValidationWarning)
         
     def _validate(self, value: Any, context: Any = None):
 

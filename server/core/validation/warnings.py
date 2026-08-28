@@ -1,0 +1,3 @@
+
+class ValidationWarning(UserWarning):
+    pass
