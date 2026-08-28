@@ -1,8 +1,11 @@
-from typing import Any
+from typing import Any, cast
 from dataclasses import dataclass
+from collections import defaultdict
+from functools import reduce
 
 from .base import Validator, ValidationResult
 from .._errors import ValidationError, ValueTypeError
+from ..exceptions import NonMergeableValidatorError
 
 
 class AnyOfError(ValidationError):  
@@ -13,7 +16,6 @@ class AnyOfError(ValidationError):
 
     def __str__(self) -> str:
         return "The value must match any of the following validators: " + ", ".join([str(child) for child in self.children])
-
 
 
 class AllOfError(ValidationError):
@@ -32,17 +34,61 @@ class AllOfAssertError(ValidationError):
     def __str__(self) -> str:
         return f"Validation abort because: {self.children}"
 
-    
 
+def mergeValidator(parentValidatorClass: type[AnyOf] | type[AllOf], subValidators: list[Validator]):
+    if len(subValidators) <= 1:
+        return subValidators
+
+
+    groups: dict[type[Validator], list[Validator]] = defaultdict(list)
+
+    mergedValidators: list[Validator] = []
+
+    for v in subValidators:
+
+        if type(v) is parentValidatorClass:
+            mergedValidators.extend(v.validators)
+        else:
+            groups[type(v)].append(v)
+
+    for _, validators in groups.items():
+        try:
+            mergedValidators.append(reduce(
+                (lambda x, y: (x.mergeAnd(y) if parentValidatorClass is AllOf else x.mergeOr(y)) if x != y else x),
+                validators))
+        except NonMergeableValidatorError:
+            mergedValidators.extend(validators)
+
+    return mergedValidators
+
+
+  
 class AnyOf(Validator):
     '''
     限制值必须匹配任意一个验证器。
     允许的类型：Any
     '''
     allowTypes = None
+
+    def __new__(cls, *validators: Validator):
+        mergedValidators = mergeValidator(cls, list(validators))
+
+        if len(mergedValidators) == 1:
+            return mergedValidators[0]
+        else:
+            instance =  super().__new__(cls, *mergedValidators)
+
+            instance.validators = mergedValidators
+
+            return instance
+
     
     def __init__(self, *validators: Validator):
-        self.validators = validators
+        if not hasattr(self, 'validators'):
+            self.validators = list(validators)
+
+    def __repr__(self):
+        return f"AnyOf({', '.join([repr(v) for v in self.validators])})"
     
     def _validate(self, value: Any, context: Any = None):
         errors = []
@@ -67,9 +113,25 @@ class AllOf(Validator):
     允许的类型：Any
     '''
     allowTypes = None
+
+    def __new__(cls, *validators: Validator):
+
+        mergedValidator = mergeValidator(cls, list(validators))
+
+        if len(mergedValidator) == 1:
+            return mergedValidator[0]
+        else:
+            instance = super().__new__(cls,)
+
+            instance.validators = mergedValidator
+
+            return instance
+
+
     
     def __init__(self, *validators: Validator):
-        self.validators = validators
+        if not hasattr(self, 'validators'):
+            self.validators = list(validators)
     
     def _validate(self, value: Any, context: Any = None):
         errors = []
@@ -90,9 +152,19 @@ class AllOf(Validator):
         else:
             return ValidationResult(False, AllOfError(*errors))
 
+
+    def __repr__(self):
+        return f"AllOf({', '.join([repr(v) for v in self.validators])})"
+
 class Not(Validator):
     allowTypes = None
-    
+
+    def __new__(cls, validator: Validator):
+        if isinstance(validator, Not):
+            return validator.validator
+        else:
+            return super().__new__(cls)
+
     def __init__(self, validator: Validator):
         self.validator = validator
 
@@ -102,3 +174,7 @@ class Not(Validator):
             return ValidationResult(False, ValidationError("value must failed to validate."))
         else:
             return ValidationResult(True)
+
+    def __repr__(self):
+        return f"Not({repr(self.validator)})"
+        

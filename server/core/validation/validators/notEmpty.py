@@ -34,3 +34,5 @@ class NotEmpty(Validator):
             return ValidationResult(False, EmptyError())
         else:
             return ValidationResult(True)
+
+    

@@ -3,7 +3,7 @@ from typing import Any
 
 from .base import Validator, ValidationResult
 from .._errors import ValidationError, ValueTypeError
-
+from ..exceptions import NonMergeableValidatorError
 
 
 @dataclass
@@ -59,14 +59,14 @@ class Range(Validator):
         self.isMaxEqual = True
         
     def _validate(self, value: Any, context: Any = None):
-        if self.minValue:
+        if self.minValue is not None:
 
             try:
                 if self.isMinEqual:
-                    if value < self.minValue.value:
+                    if value < self.minValue:
                         return ValidationResult(False, RangeError(self))
                 else:
-                    if value <= self.minValue.value:
+                    if value <= self.minValue:
                         return ValidationResult(False, RangeError(self))
 
             except TypeError:
@@ -75,10 +75,10 @@ class Range(Validator):
         if self.maxValue:
             try:
                 if self.isMaxEqual:
-                    if value > self.maxValue.value:
+                    if value > self.maxValue:
                         return ValidationResult(False, RangeError(self))
                 else:
-                    if value <= self.maxValue.value:
+                    if value >= self.maxValue:
                         return ValidationResult(False, RangeError(self))
 
             except TypeError:
@@ -95,4 +95,68 @@ class Range(Validator):
 
         else:
             return f"value {"<=" if self.isMaxEqual else "<"} {self.maxValue}"
+
+
+    def mergeAnd(self, other: 'Range'):
+
+        newRange = Range()
+
+        # 合并下限
+
+        if self.minValue is None:
+            # 没有下限，用other的下限
+            newRange.minValue = other.minValue
+            newRange.isMinEqual = other.isMinEqual
+
+        elif other.minValue is None:
+            # other没有下限，用当前的下限
+            newRange.minValue = self.minValue
+            newRange.isMinEqual = self.isMinEqual
+
+        else:
+            # 均有下限，判断大小
+
+            if self.minValue >= other.minValue:
+                newRange.minValue = self.minValue
+                newRange.isMinEqual = self.isMinEqual or other.isMinEqual
+            
+            else:
+                newRange.minValue = other.minValue
+                newRange.isMinEqual = other.isMinEqual
+
+        # 合并上限
+        if self.maxValue is None:
+            # 没有上限，用other的上限
+            newRange.maxValue = other.maxValue
+            newRange.isMaxEqual = other.isMaxEqual
+        elif other.maxValue is None:
+            # other没有上限，用当前的上限
+            newRange.maxValue = self.maxValue
+            newRange.isMaxEqual = self.isMaxEqual
+        else:
+            # 均有上限，判断大小
+            if self.maxValue <= other.maxValue:
+                newRange.maxValue = self.maxValue
+                newRange.isMaxEqual = self.isMaxEqual or other.isMaxEqual
+            else:
+                newRange.maxValue = other.maxValue
+                newRange.isMaxEqual = other.isMaxEqual
+
+
+        # 检查有效性
+        if newRange.minValue is not None and newRange.maxValue is not None:
+            if newRange.minValue > newRange.maxValue:
+                raise NonMergeableValidatorError(type(newRange))
+
+            if newRange.minValue == newRange.maxValue:
+                if not (newRange.isMinEqual and newRange.isMaxEqual):
+                    raise NonMergeableValidatorError(type(newRange))
+
+        return newRange
+
+            
+
+
     
+    
+

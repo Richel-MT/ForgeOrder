@@ -83,6 +83,7 @@ class DictOf(Validator):
         field = _Field(key, valueType, required, validator)
 
         self.fields.append(field)
+
         return self
 
     def _validate(self, value: dict, context: Any = None):
@@ -122,3 +123,10 @@ class DictOf(Validator):
             return ValidationResult(True)
         else:
             return ValidationResult(False, DictOfError(*errors))
+
+    def mergeAnd(self, other: 'DictOf'):
+        return DictOf(self.strictMode & other.strictMode, *(self.fields + other.fields))
+    
+
+    def __repr__(self):
+        return f"DictOf(strictMode={self.strictMode},\n{"    \n".join([repr(field) for field in self.fields])}\n)"

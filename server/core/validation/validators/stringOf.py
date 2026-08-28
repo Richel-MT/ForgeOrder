@@ -1,9 +1,10 @@
-from typing import Any
+from typing import Any, Literal
 
 from .base import Validator, ValidationResult
 from .typeOf import TypeOf
 from .length import Length
 from .choices import Choices
+from ..exceptions import NonMergeableValidatorError
 
 class StringOf(Validator):
 
@@ -16,13 +17,50 @@ class StringOf(Validator):
         self.maxLength = maxLength
 
         self._validator = TypeOf(str)
+        self._length = None
+        self._choices = None
 
         if minLength or maxLength:
-            self._validator &= Length(minLength, maxLength)
+            self._length = Length(minLength, maxLength)
+            self._validator &= self._length
 
         if choices:
-            self._validator &= Choices(*choices)
+            self._choices = Choices(*choices)
+
+            self._validator &= self._choices
 
     def _validate(self, value: Any, context: Any = None) -> ValidationResult:
         return self._validator.validate(value, context)
+
+    def _merge(self, other: 'StringOf', mergeType: Literal["and", "or"]) -> 'StringOf':
+        if self._length is not None:
+            if other._length is not None:
+                instance = StringOf()
+
+                instance._length = self._length.mergeAnd(other._length) if mergeType == "and" else self._length.mergeOr(other._length)
+
+                return instance
+            else:
+                raise NonMergeableValidatorError(type(self))
+
+        elif self._choices is not None:
+            if other._choices is not None:
+                instance = StringOf()
+
+                instance._choices = self._choices.mergeAnd(other._choices) if mergeType == "or" else self._choices.mergeOr(other._choices)
+
+                return instance
+            else:
+                raise NonMergeableValidatorError(type(self))
+
+        else:
+            return other
+
+
+    def mergeAnd(self, other: 'StringOf') -> 'StringOf':
+        return self._merge(other, "and")
+
+    def mergeOr(self, other: 'StringOf') -> 'StringOf':
+        return self._merge(other, "or")
+
     

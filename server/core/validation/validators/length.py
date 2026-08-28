@@ -1,6 +1,8 @@
 from typing import Any
 from dataclasses import dataclass
 
+from core.validation.exceptions import NonMergeableValidatorError
+
 from .base import Validator, ValidationResult
 from .._errors import ValidationError
 
@@ -49,4 +51,26 @@ class Length(Validator):
             result,
             None if result else LengthError(self.minValue, self.maxValue)
         )
+
+    def mergeAnd(self, other: 'Length'):
+
+        if self.minValue is None:
+            newMin = other.minValue
+        elif other.minValue is None:
+            newMin = self.minValue
+        else:
+            newMin = max(self.minValue, other.minValue)
+
+        if self.maxValue is None:
+            newMax = other.maxValue
+        elif other.maxValue is None:
+            newMax = self.maxValue
+        else:
+            newMax = min(self.maxValue, other.maxValue)
+
+        if newMin is not None and newMax is not None and newMin > newMax:
+            raise NonMergeableValidatorError(type(self))
+
+        return Length(newMin, newMax)
+
                                        

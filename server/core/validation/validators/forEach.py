@@ -37,7 +37,7 @@ class ForEach(Validator):
     '''
     allowTypes = None
     
-    def __init__(self, *validators):
+    def __init__(self, *validators: Validator):
         if len(validators) == 0:
             self.validator = AlwaysPass()
         elif len(validators) > 1:
@@ -61,4 +61,8 @@ class ForEach(Validator):
             return ValidationResult(True)
         else:
             return ValidationResult(False, ForEachError(*errors))
+
+    def mergeAnd(self, other: 'ForEach'):
+
+        return ForEach(self.validator & other.validator)
 

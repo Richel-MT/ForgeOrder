@@ -21,7 +21,7 @@ class ValidationError:
 
 @dataclass
 class ValueTypeError(ValidationError):
-    expectedType: type | tuple[type]
+    expectedType: type | tuple[type, ...]
 
     def __str__(self) -> str:
         if isinstance(self.expectedType, type):

@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 from typing import Any
+from dataclasses import dataclass
 
 from .base import Validator, ValidationResult
 from .._errors import ValidationError
@@ -11,7 +11,7 @@ class ChoicesError(ValidationError):
     def __str__(self) -> str:
         return f"The value must be in {self.choices}"
 
-    
+
 class Choices(Validator):
     '''
     限制值只能是指定的选项。
@@ -28,3 +28,9 @@ class Choices(Validator):
         else:
             return ValidationResult(False, ChoicesError(self.choices))
 
+    def mergeOr(self, other: 'Choices'):
+        return Choices(*(list(self.choices) + list(other.choices)))
+
+
+    def __repr__(self):
+        return f"Choices({", ".join([repr(choice) for choice in self.choices])})"
