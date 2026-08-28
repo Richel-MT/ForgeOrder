@@ -5,7 +5,7 @@ class UnsupportedTypeError(Exception):
     '''
     无法处理这个值的类型。
     '''
-    def __init__(self, validatorClass: type, expectedType: type, valueType: type):
+    def __init__(self, validatorClass: type, expectedType: type | tuple[type, ...], valueType: type):
         self.validatorClass = validatorClass
         self.expectedType = expectedType
         self.expectedType = expectedType
