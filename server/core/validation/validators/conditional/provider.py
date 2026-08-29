@@ -22,6 +22,7 @@ class Ref(ValueProvider):
             return context.get(self.name)
         else:
             raise ContextAccessError(context)
+            raise ContextAccessError(context)
 
     def __str__(self):
         return self.name
